@@ -1,0 +1,15 @@
+import { useMemo } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { haptic } from "@/lib/haptics";
+import { useLumen } from "@/lib/lumen-workspace";
+import type { TaskPriority } from "@/lib/lumen-types";
+
+const priorities: Array<TaskPriority | "all"> = ["all", "high", "medium", "low"];
+
+export function TaskFilterBar() {
+  const { activePriority = "all", activeTag, allTags, palette, setFilters } = useLumen();
+  const styles = useMemo(() => makeStyles(palette), [palette]);
+  return <View style={styles.root}><Text style={styles.label}>FILTER TASKS</Text><ScrollView contentContainerStyle={styles.rail} horizontal showsHorizontalScrollIndicator={false}>{priorities.map((priority) => <Pressable accessibilityState={{ selected: activePriority === priority }} key={priority} onPress={() => { haptic.selection(); setFilters(priority, activeTag); }} style={({ pressed }) => [styles.chip, activePriority === priority && styles.chipActive, pressed && styles.pressed]}><Text style={[styles.chipText, activePriority === priority && styles.chipTextActive]}>{priority.toUpperCase()}</Text></Pressable>)}{allTags.length ? <View style={styles.divider} /> : null}{allTags.map((tag) => <Pressable accessibilityState={{ selected: activeTag === tag }} key={tag} onPress={() => { haptic.selection(); setFilters(activePriority, activeTag === tag ? undefined : tag); }} style={({ pressed }) => [styles.chip, activeTag === tag && styles.tagActive, pressed && styles.pressed]}><Text style={[styles.chipText, activeTag === tag && styles.tagTextActive]}>#{tag}</Text></Pressable>)}</ScrollView>{activeTag ? <Pressable accessibilityRole="button" onPress={() => setFilters(activePriority, undefined)} style={styles.clear}><Text style={styles.clearText}>CLEAR #{activeTag}</Text></Pressable> : null}</View>;
+}
+
+const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) => StyleSheet.create({ root: { borderBottomColor: palette.border, borderBottomWidth: StyleSheet.hairlineWidth, paddingBottom: 14, paddingTop: 16 }, label: { color: palette.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1, paddingHorizontal: 22 }, rail: { gap: 7, paddingHorizontal: 22, paddingTop: 9 }, chip: { alignItems: "center", borderColor: palette.border, borderRadius: 15, borderWidth: 1, justifyContent: "center", minHeight: 31, paddingHorizontal: 11 }, chipActive: { backgroundColor: palette.foreground, borderColor: palette.foreground }, tagActive: { backgroundColor: palette.accentSoft, borderColor: palette.accent }, chipText: { color: palette.muted, fontSize: 10, fontWeight: "900", letterSpacing: 0.65 }, chipTextActive: { color: palette.inverseText }, tagTextActive: { color: palette.accent }, divider: { backgroundColor: palette.border, height: 20, marginHorizontal: 2, marginTop: 5, width: 1 }, clear: { alignSelf: "flex-start", marginLeft: 22, marginTop: 9 }, clearText: { color: palette.accent, fontSize: 10, fontWeight: "900", letterSpacing: 0.7 }, pressed: { opacity: 0.66 } });

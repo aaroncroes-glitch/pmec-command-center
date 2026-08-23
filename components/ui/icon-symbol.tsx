@@ -7,6 +7,7 @@ const MAPPING = {
   "folder.fill": "folder",
   target: "my-location",
   "gearshape.fill": "settings",
+  "calendar": "calendar-today",
   "chevron.left": "chevron-left",
   "house.fill": "home",
   "chevron.right": "chevron-right",
