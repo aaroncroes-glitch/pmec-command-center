@@ -1,48 +1,16 @@
-import { ScrollView, Text, View, TouchableOpacity } from "react-native";
-
+import { useMemo, useState } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import Animated, { FadeInDown, LinearTransition } from "react-native-reanimated";
+import { NewItemSheet } from "@/components/lumen/new-item-sheet";
+import { TaskRow } from "@/components/lumen/task-row";
 import { ScreenContainer } from "@/components/screen-container";
-
-/**
- * Home Screen - NativeWind Example
- *
- * This template uses NativeWind (Tailwind CSS for React Native).
- * You can use familiar Tailwind classes directly in className props.
- *
- * Key patterns:
- * - Use `className` instead of `style` for most styling
- * - Theme colors: use tokens directly (bg-background, text-foreground, bg-primary, etc.); no dark: prefix needed
- * - Responsive: standard Tailwind breakpoints work on web
- * - Custom colors defined in tailwind.config.js
- */
-export default function HomeScreen() {
-  return (
-    <ScreenContainer className="p-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="flex-1 gap-8">
-          {/* Hero Section */}
-          <View className="items-center gap-2">
-            <Text className="text-4xl font-bold text-foreground">Welcome</Text>
-            <Text className="text-base text-muted text-center">
-              Edit app/(tabs)/index.tsx to get started
-            </Text>
-          </View>
-
-          {/* Example Card */}
-          <View className="w-full max-w-sm self-center bg-surface rounded-2xl p-6 shadow-sm border border-border">
-            <Text className="text-lg font-semibold text-foreground mb-2">NativeWind Ready</Text>
-            <Text className="text-sm text-muted leading-relaxed">
-              Use Tailwind CSS classes directly in your React Native components.
-            </Text>
-          </View>
-
-          {/* Example Button */}
-          <View className="items-center">
-            <TouchableOpacity className="bg-primary px-6 py-3 rounded-full active:opacity-80">
-              <Text className="text-background font-semibold">Get Started</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </ScreenContainer>
-  );
+import { haptic } from "@/lib/haptics";
+import { useLumen } from "@/lib/lumen-workspace";
+import { addDays, dayAbbreviation, formatDate, formatWeekday, projectProgress, toDateKey } from "@/lib/lumen-utils";
+import { useMotionPreference } from "@/hooks/use-motion-preference";
+export default function TodayScreen() {
+  const router = useRouter(); const {activeDate, palette, projects, setActiveDate, tasks, tasksForDate, toggleTask} = useLumen(); const reduceMotion = useMotionPreference(); const styles = useMemo(() => makeStyles(palette), [palette]); const [composerOpen, setComposerOpen] = useState(false); const taskList = tasksForDate(activeDate); const openTaskCount = taskList.filter((task) => !task.completed).length; const dayItems = useMemo(() => { const base = toDateKey(new Date()); return [-1, 0, 1, 2, 3, 4].map((offset) => addDays(base, offset)); }, []);
+  return <ScreenContainer containerClassName={styles.container} edges={["top","left","right"]}><FlatList contentContainerStyle={styles.content} data={taskList} keyExtractor={(task) => task.id} ListHeaderComponent={<><Animated.View entering={reduceMotion ? undefined : FadeInDown.duration(320).springify().damping(24)} style={styles.hero}><Text style={styles.kicker}>{openTaskCount === 0 ? "A CLEAN SLATE" : `${openTaskCount} OPEN ${openTaskCount === 1 ? "TASK" : "TASKS"}`}</Text><Text style={styles.day}>{formatWeekday(activeDate).toUpperCase()}</Text><Text style={styles.date}>{formatDate(activeDate)}</Text></Animated.View><FlatList contentContainerStyle={styles.dayRailContent} data={dayItems} horizontal keyExtractor={(item) => item} showsHorizontalScrollIndicator={false} renderItem={({item}) => { const selected = item === activeDate; return <Pressable accessibilityState={{selected}} onPress={() => {haptic.selection(); setActiveDate(item);}} style={({pressed}) => [styles.dayChip, selected && styles.dayChipSelected, pressed && styles.pressed]}><Text style={[styles.dayChipLabel, selected && styles.dayChipLabelSelected]}>{dayAbbreviation(item)}</Text><Text style={[styles.dayChipNumber, selected && styles.dayChipNumberSelected]}>{new Date(`${item}T12:00:00`).getDate()}</Text></Pressable>; }}/><Pressable onPress={() => router.push("/(tabs)/projects")} style={({pressed}) => [styles.progressPanel, pressed && styles.pressed]}><View><Text style={styles.panelKicker}>WORK IN MOTION</Text><Text style={styles.panelTitle}>Three worlds, one calm plan.</Text></View><View style={styles.projectBars}>{projects.slice(0, 3).map((project) => <View key={project.id} style={styles.projectBarTrack}><View style={[styles.projectBarFill,{backgroundColor:project.color,width:`${Math.max(projectProgress(project.id,tasks),12)}%`}]} /></View>)}</View></Pressable><View style={styles.sectionHeader}><Text style={styles.sectionTitle}>TODAY’S LIST</Text><Text style={styles.sectionMeta}>{taskList.length === 0 ? "CLEAR" : `${taskList.length} ITEMS`}</Text></View></>} ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyKicker}>NOTHING DEMANDING</Text><Text style={styles.emptyTitle}>Leave space for what matters.</Text></View>} renderItem={({item,index}) => { const project = projects.find((candidate) => candidate.id === item.projectId); return <Animated.View entering={reduceMotion ? undefined : FadeInDown.delay(90 + index * 35).duration(260)} layout={reduceMotion ? undefined : LinearTransition.duration(180)}><TaskRow projectColor={project?.color} projectName={project?.name} task={item} onToggle={() => toggleTask(item.id)}/></Animated.View>; }} ListFooterComponent={<View style={styles.footerSpace}/>} showsVerticalScrollIndicator={false}/><Pressable accessibilityLabel="Add a task" accessibilityRole="button" onPress={() => {haptic.light();setComposerOpen(true);}} style={({pressed}) => [styles.floatingAction,pressed && styles.floatingActionPressed]}><Text style={styles.floatingActionText}>+</Text></Pressable><NewItemSheet mode="task" onClose={() => setComposerOpen(false)} visible={composerOpen}/></ScreenContainer>;
 }
+const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) => StyleSheet.create({ container:{backgroundColor:palette.background},content:{paddingBottom:106},hero:{paddingHorizontal:22,paddingTop:18,paddingBottom:22},kicker:{color:palette.accent,fontSize:10,fontWeight:"900",letterSpacing:1.2,marginBottom:10},day:{color:palette.foreground,fontSize:47,fontWeight:"900",letterSpacing:-2.1,lineHeight:52},date:{color:palette.muted,fontSize:13,fontWeight:"600",letterSpacing:0.1,marginTop:5},dayRailContent:{gap:8,paddingHorizontal:22,paddingBottom:20},dayChip:{alignItems:"center",borderColor:palette.border,borderRadius:18,borderWidth:1,gap:2,justifyContent:"center",minHeight:60,minWidth:54},dayChipSelected:{backgroundColor:palette.foreground,borderColor:palette.foreground},dayChipLabel:{color:palette.muted,fontSize:9,fontWeight:"900",letterSpacing:0.7},dayChipLabelSelected:{color:palette.inverseText},dayChipNumber:{color:palette.foreground,fontSize:17,fontWeight:"900",letterSpacing:-0.4},dayChipNumberSelected:{color:palette.inverseText},progressPanel:{backgroundColor:palette.surfaceStrong,borderBottomColor:palette.border,borderTopColor:palette.border,borderBottomWidth:StyleSheet.hairlineWidth,borderTopWidth:StyleSheet.hairlineWidth,gap:18,paddingHorizontal:22,paddingVertical:17},panelKicker:{color:palette.muted,fontSize:10,fontWeight:"900",letterSpacing:1.1},panelTitle:{color:palette.foreground,fontSize:19,fontWeight:"800",letterSpacing:-0.5,marginTop:5},projectBars:{gap:5},projectBarTrack:{backgroundColor:palette.border,borderRadius:2,height:4,overflow:"hidden",width:"100%"},projectBarFill:{borderRadius:2,height:4},sectionHeader:{alignItems:"center",borderBottomColor:palette.border,borderBottomWidth:StyleSheet.hairlineWidth,flexDirection:"row",justifyContent:"space-between",paddingHorizontal:22,paddingVertical:18},sectionTitle:{color:palette.foreground,fontSize:12,fontWeight:"900",letterSpacing:0.85},sectionMeta:{color:palette.muted,fontSize:10,fontWeight:"800",letterSpacing:0.9},emptyState:{borderBottomColor:palette.border,borderBottomWidth:StyleSheet.hairlineWidth,gap:7,paddingHorizontal:22,paddingVertical:30},emptyKicker:{color:palette.accent,fontSize:10,fontWeight:"900",letterSpacing:1},emptyTitle:{color:palette.foreground,fontSize:23,fontWeight:"900",letterSpacing:-0.8},footerSpace:{height:22},floatingAction:{alignItems:"center",backgroundColor:palette.accent,borderColor:palette.background,borderRadius:28,borderWidth:5,bottom:14,height:60,justifyContent:"center",position:"absolute",right:18,width:60},floatingActionPressed:{opacity:0.9,transform:[{scale:0.96}]},floatingActionText:{color:"#FFFFFF",fontSize:31,fontWeight:"300",lineHeight:33},pressed:{opacity:0.72} });

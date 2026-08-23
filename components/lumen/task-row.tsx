@@ -1,0 +1,17 @@
+import { memo, useEffect, useMemo } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { haptic } from "@/lib/haptics";
+import { useLumen } from "@/lib/lumen-workspace";
+import type { Task } from "@/lib/lumen-types";
+
+type TaskRowProps = { task: Task; projectName?: string; projectColor?: string; onToggle: () => void; compact?: boolean };
+function TaskRowComponent({ task, projectName, projectColor, onToggle, compact = false }: TaskRowProps) {
+  const { palette } = useLumen(); const styles = useMemo(() => makeStyles(palette), [palette]); const completion = useSharedValue(task.completed ? 1 : 0);
+  useEffect(() => { completion.value = withTiming(task.completed ? 1 : 0, { duration: 190 }); }, [completion, task.completed]);
+  const checkboxStyle = useAnimatedStyle(() => ({ backgroundColor: interpolateColor(completion.value, [0, 1], ["transparent", palette.accent]), borderColor: interpolateColor(completion.value, [0, 1], [palette.foreground, palette.accent]), transform: [{ scale: 0.94 + completion.value * 0.06 }] }));
+  const textStyle = useAnimatedStyle(() => ({ opacity: 1 - completion.value * 0.47 }));
+  return <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: task.completed }} accessibilityLabel={`${task.title}, ${task.completed ? "completed" : "not completed"}`} onPress={() => { task.completed ? haptic.light() : haptic.success(); onToggle(); }} style={({ pressed }) => [styles.row, compact && styles.compactRow, pressed && styles.rowPressed]}><Animated.View style={[styles.checkbox, checkboxStyle]}>{task.completed ? <Text style={styles.checkmark}>✓</Text> : null}</Animated.View><View style={styles.copyBlock}><Animated.Text numberOfLines={2} style={[styles.title, textStyle]}>{task.title}</Animated.Text>{!compact ? <View style={styles.metadata}>{projectColor ? <View style={[styles.projectDot, { backgroundColor: projectColor }]} /> : null}<Text style={styles.projectName}>{projectName ?? "Personal"}</Text><Text style={styles.priority}>{task.priority.toUpperCase()}</Text></View> : null}</View><View style={[styles.priorityMarker, { backgroundColor: task.priority === "high" ? palette.accent : palette.border }]} /></Pressable>;
+}
+const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) => StyleSheet.create({ row: { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: palette.border, paddingHorizontal: 22, paddingVertical: 12 }, compactRow: { minHeight: 62, paddingHorizontal: 0 }, rowPressed: { opacity: 0.68, transform: [{ scale: 0.985 }] }, checkbox: { height: 24, width: 24, borderRadius: 5, borderWidth: 1.5, alignItems: "center", justifyContent: "center" }, checkmark: { color: "#FFFFFF", fontSize: 15, fontWeight: "900", lineHeight: 16 }, copyBlock: { flex: 1, gap: 5 }, title: { color: palette.foreground, fontSize: 16, fontWeight: "700", lineHeight: 21, letterSpacing: -0.15 }, metadata: { flexDirection: "row", alignItems: "center", gap: 6 }, projectDot: { height: 6, width: 6, borderRadius: 3 }, projectName: { color: palette.muted, fontSize: 11, fontWeight: "700", letterSpacing: 0.5, textTransform: "uppercase" }, priority: { color: palette.muted, fontSize: 10, fontWeight: "800", letterSpacing: 0.6, marginLeft: "auto" }, priorityMarker: { height: 8, width: 8, borderRadius: 4 } });
+export const TaskRow = memo(TaskRowComponent);
