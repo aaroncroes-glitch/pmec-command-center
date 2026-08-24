@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Task } from "../lib/lumen-types";
-import { addDays, compareTasks, inclusiveDayCount, matchesTaskFilters, monthCells, nextOccurrenceDate, nextOccurrenceReminder, normalizeTags, projectProgress } from "../lib/lumen-utils";
+import { addDays, compareTasks, inclusiveDayCount, matchesTaskFilters, monthCells, nextOccurrenceDate, nextOccurrenceReminder, normalizeTags, projectProgress, workingDayCount } from "../lib/lumen-utils";
 
 const baseTask: Task = {
   id: "task-1",
@@ -23,6 +23,11 @@ describe("Lumen workspace utilities", () => {
     expect(inclusiveDayCount("2026-08-23", "2026-08-23")).toBe(1);
     expect(inclusiveDayCount("2026-08-23", "2026-08-27")).toBe(5);
     expect(inclusiveDayCount("2026-08-27", "2026-08-23")).toBe(0);
+  });
+
+  it("excludes weekends and configured holidays from vacation-day totals", () => {
+    expect(workingDayCount("2026-08-21", "2026-08-25")).toBe(3);
+    expect(workingDayCount("2026-08-21", "2026-08-25", ["2026-08-24"])).toBe(2);
   });
 
   it("orders open high-priority work before completed work", () => {

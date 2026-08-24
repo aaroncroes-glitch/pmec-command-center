@@ -17,6 +17,7 @@ type EssWorkspace = EssState & {
   clockOut: () => void;
   updateProjectTask: (projectId: string, phaseId: string, taskId: string, status: ProjectTaskStatus) => void;
   addLeaveRequest: (request: Omit<LeaveRequest, "id" | "status">) => void;
+  reviewLeaveRequest: (requestId: string, status: "approved" | "rejected", managerNote?: string) => void;
   addEvent: (event: Omit<PersonalEvent, "id">) => void;
   updatePin: (pin: string) => void;
   resetEssDemo: () => void;
@@ -37,7 +38,7 @@ export function EssWorkspaceProvider({ children }: PropsWithChildren) {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored) as unknown;
-          if (isEssState(parsed)) setState({ ...initialEssState, ...parsed });
+          if (isEssState(parsed)) setState({ ...initialEssState, ...parsed, publicHolidays: parsed.publicHolidays ?? initialEssState.publicHolidays });
         }
       } finally {
         setReady(true);
@@ -90,6 +91,12 @@ export function EssWorkspaceProvider({ children }: PropsWithChildren) {
     leaveRequests: [{ ...request, id: `leave-${Date.now()}`, status: "pending" }, ...current.leaveRequests],
     activity: [makeActivity("Leave request submitted", `${request.type} · ${request.startDate}`, "accent"), ...current.activity],
   })), []);
+  const reviewLeaveRequest = useCallback((requestId: string, status: "approved" | "rejected", managerNote?: string) => setState((current: EssState) => {
+    const request = current.leaveRequests.find((item) => item.id === requestId);
+    if (!request) return current;
+    const detail = status === "rejected" ? `${request.type} · ${managerNote?.trim() || "Manager note added"}` : `${request.type} approved`;
+    return { ...current, leaveRequests: current.leaveRequests.map((item) => item.id === requestId ? { ...item, status, managerNote: status === "rejected" ? managerNote?.trim() || "Manager review required a different date range." : undefined } : item), activity: [makeActivity(`Leave request ${status}`, detail, status === "approved" ? "success" : "accent"), ...current.activity] };
+  }), []);
   const addEvent = useCallback((event: Omit<PersonalEvent, "id">) => setState((current: EssState) => ({ ...current, events: [{ ...event, id: `event-${Date.now()}` }, ...current.events] })), []);
   const updatePin = useCallback((pin: string) => { if (/^\d{4}$/.test(pin)) setState((current: EssState) => ({ ...current, employee: { ...current.employee, pin } })); }, []);
   const resetEssDemo = useCallback(() => { void AsyncStorage.removeItem(STORAGE_KEY); setState(initialEssState); }, []);
@@ -98,9 +105,9 @@ export function EssWorkspaceProvider({ children }: PropsWithChildren) {
     ...state,
     ready,
     isAuthenticated: Boolean(state.sessionEmployeeId),
-    completeOnboarding, signIn, signOut, clockIn, clockOut, updateProjectTask, addLeaveRequest, addEvent, updatePin, resetEssDemo,
+    completeOnboarding, signIn, signOut, clockIn, clockOut, updateProjectTask, addLeaveRequest, reviewLeaveRequest, addEvent, updatePin, resetEssDemo,
     todayAttendance: state.attendance.find((record) => record.date === toDateKey(new Date())),
-  }), [state, ready, completeOnboarding, signIn, signOut, clockIn, clockOut, updateProjectTask, addLeaveRequest, addEvent, updatePin, resetEssDemo]);
+  }), [state, ready, completeOnboarding, signIn, signOut, clockIn, clockOut, updateProjectTask, addLeaveRequest, reviewLeaveRequest, addEvent, updatePin, resetEssDemo]);
 
   return <EssContext.Provider value={value}>{children}</EssContext.Provider>;
 }

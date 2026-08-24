@@ -32,3 +32,7 @@
 - [x] Add a visual calendar-range picker to the leave request composer.
 - [x] Improve pending, approved, and rejected leave-request status indicators.
 - [x] Validate leave-date selection and request-status behavior, then save a checkpoint.
+- [x] Add working-day vacation calculation that excludes weekends and configured public holidays.
+- [x] Add manager rejection-note support and detailed rejected-request presentation.
+- [x] Add an employee dashboard forecast for monthly leave balance and booked days.
+- [x] Add deterministic leave-management tests and validate the full upgrade before saving a checkpoint.

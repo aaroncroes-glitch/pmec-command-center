@@ -17,7 +17,8 @@ export const initialEssState: EssState = {
     makeProject("project-103", "Office Fit-out", "OF-2026", "Oranjestad Business Park", "#96734C", "planning", ["Collect client brief", "Define work package", "Confirm supplier scope", "Draft installation plan", "Prepare safety checklist", "Review material lead times", "Schedule handover", "Prepare close-out file"]),
     makeProject("project-104", "Solar Panel Array", "SP-2025", "WEB Aruba", "#6059A8", "completed", ["Review commissioning notes", "Archive site photos", "Confirm performance figures", "Update completion file", "Complete final inspection", "Share QA certificate", "File acceptance letter", "Close work order"]),
   ],
-  leaveRequests: [{ id: "leave-1", type: "Vacation", startDate: addDays(today, 18), endDate: addDays(today, 21), reason: "Family time", status: "approved" }],
+  leaveRequests: [{ id: "leave-1", type: "Vacation", startDate: addDays(today, 18), endDate: addDays(today, 21), reason: "Family time", status: "approved" }, { id: "leave-2", type: "Vacation", startDate: addDays(today, 28), endDate: addDays(today, 30), reason: "Travel plans", status: "rejected", managerNote: "Please resubmit after the site handover scheduled for that week." }],
+  publicHolidays: [{ date: "2026-01-01", label: "New Year’s Day" }, { date: "2026-04-27", label: "King’s Day" }, { date: "2026-12-25", label: "Christmas Day" }, { date: "2026-12-26", label: "Boxing Day" }],
   payslips: [
     { id: "payslip-july", label: "July 2026", payDate: "2026-07-25", gross: 7100, deductions: 1694, net: 5406, hours: 176 },
     { id: "payslip-june", label: "June 2026", payDate: "2026-06-25", gross: 7100, deductions: 1694, net: 5406, hours: 168 },
