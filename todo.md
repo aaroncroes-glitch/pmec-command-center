@@ -54,3 +54,8 @@
 - [x] Define PMEC-specific job-order, status, assignment, schedule, and financial summary data for the local demo.
 - [x] Adapt the administrative dashboard into a PMEC project-manager-only job-order workspace while retaining Lumen branding.
 - [x] Validate the PMEC job-order demonstration and save a checkpoint.
+- [x] Map restored workforce and HR controls to PMEC job-order assignments, employee tasks, and logged hours.
+- [x] Add local workforce, assignment, attendance-hours, and HR delivery-signal data to the PMEC control center.
+- [x] Restore unified People, HR Leave, allocation, attendance, and capacity management views alongside Job Orders.
+- [x] Add manager task assignment and employee-hours tracking interactions to job-order delivery flows.
+- [x] Validate the merged PMEC HR and project-management control center and save a checkpoint.

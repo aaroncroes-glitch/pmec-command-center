@@ -9,6 +9,7 @@ import { REMINDER_DONE_ACTION, LumenReminderProvider } from "@/lib/lumen-reminde
 import { EssWorkspaceProvider } from "@/lib/ess-workspace";
 import { useLumen, LumenWorkspaceProvider } from "@/lib/lumen-workspace";
 import { PmecJobOrderWorkspaceProvider } from "@/lib/pmec-job-order-workspace";
+import { PmecControlWorkspaceProvider } from "@/lib/pmec-control-workspace";
 
 function NotificationObserver() {
   const router = useRouter();
@@ -31,5 +32,5 @@ function NotificationObserver() {
 }
 
 export default function RootLayout() {
-  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><LumenWorkspaceProvider><EssWorkspaceProvider><PmecJobOrderWorkspaceProvider><LumenReminderProvider><NotificationObserver /><Stack screenOptions={{ headerShown: false, animation: "fade" }}><Stack.Screen name="(tabs)" /><Stack.Screen name="admin" /><Stack.Screen name="job-orders" /><Stack.Screen name="ess/onboarding" /><Stack.Screen name="ess/login" /><Stack.Screen name="attendance" /><Stack.Screen name="work-project/[id]" /><Stack.Screen name="leave" /><Stack.Screen name="payslips" /><Stack.Screen name="analytics" /><Stack.Screen name="activity" /><Stack.Screen name="personal-calendar" /><Stack.Screen name="profile" /><Stack.Screen name="project/[id]" /></Stack></LumenReminderProvider></PmecJobOrderWorkspaceProvider></EssWorkspaceProvider></LumenWorkspaceProvider></SafeAreaProvider></GestureHandlerRootView>;
+  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><LumenWorkspaceProvider><EssWorkspaceProvider><PmecJobOrderWorkspaceProvider><PmecControlWorkspaceProvider><LumenReminderProvider><NotificationObserver /><Stack screenOptions={{ headerShown: false, animation: "fade" }}><Stack.Screen name="(tabs)" /><Stack.Screen name="admin" /><Stack.Screen name="control-center" /><Stack.Screen name="job-orders" /><Stack.Screen name="ess/onboarding" /><Stack.Screen name="ess/login" /><Stack.Screen name="attendance" /><Stack.Screen name="work-project/[id]" /><Stack.Screen name="leave" /><Stack.Screen name="payslips" /><Stack.Screen name="analytics" /><Stack.Screen name="activity" /><Stack.Screen name="personal-calendar" /><Stack.Screen name="profile" /><Stack.Screen name="project/[id]" /></Stack></LumenReminderProvider></PmecControlWorkspaceProvider></PmecJobOrderWorkspaceProvider></EssWorkspaceProvider></LumenWorkspaceProvider></SafeAreaProvider></GestureHandlerRootView>;
 }

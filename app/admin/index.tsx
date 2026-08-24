@@ -1,5 +1,5 @@
 import { Redirect } from "expo-router";
 
 export default function AdminDashboardRedirect() {
-  return <Redirect href="/job-orders" />;
+  return <Redirect href="/control-center" />;
 }
