@@ -39,3 +39,9 @@
 - [x] Add prior-year carry-over days to the employee leave balance data.
 - [x] Show an annual balance breakdown and carry-over-aware forecast in leave and dashboard views.
 - [x] Validate carry-over calculations and save the updated leave-balance experience.
+- [x] Define the HR and project-manager roles, administrative information architecture, and shared-data pipeline boundaries.
+- [x] Create a separate desktop/iPad-first administrative dashboard foundation with shared workforce demo data.
+- [x] Build HR employee, contractor, leave, attendance, and payroll oversight features.
+- [x] Build project-manager project health, work allocation, contractor, and delivery-control features.
+- [x] Add desktop/iPad access gating and deploy the admin dashboard to a separate Vercel URL.
+- [x] Validate the administrative dashboard and document the future shared-backend integration path.
