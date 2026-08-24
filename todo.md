@@ -80,3 +80,6 @@
 - [x] Validate HR forecasting calculations, filters, sorting, and save a checkpoint.
 - [x] Rename the project-facing PMEC application branding to PMEC Command Center.
 - [x] Save a dedicated resumable checkpoint under the PMEC Command Center name.
+- [x] Define the role-comparison layout and scoped project/HR summaries.
+- [x] Build a desktop/iPad side-by-side Project Manager and HR comparison page.
+- [x] Validate the dual-role comparison page and save a checkpoint.
