@@ -24,7 +24,8 @@
 - [x] Add deterministic local demo-flow tests and validate the employee self-service extension without a database or domain setup.
 - [x] Add editable start and end dates plus an HR-readable duration to leave requests.
 - [x] Validate leave-duration calculations and save the updated leave-request flow.
-- [ ] Inspect the connected GitHub and Vercel integrations, publish Lumen to GitHub, and deploy it through Vercel.
-- [ ] Diagnose and resolve the interrupted GitHub/Vercel connector verification workflow.
+- [x] Inspect the connected GitHub and Vercel integrations, publish Lumen to GitHub, and deploy it through Vercel.
+- [x] Diagnose the interrupted GitHub/Vercel connector verification workflow; Vercel currently has no GitHub origin connection.
 - [x] Publish the current Lumen source to the private aaroncroes-glitch/lumen-ess GitHub repository.
-- [ ] Configure a Vercel-compatible Expo web build and deploy the repository.
+- [x] Configure a Vercel-compatible Expo web build and deploy the repository.
+- [x] Verify the live https://lumen-ess-preview.vercel.app/ Vercel preview deployment.
