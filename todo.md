@@ -90,3 +90,7 @@
 - [x] Add previous/next month controls to the HR capacity calendar.
 - [x] Include approved, pending, and total leave-hour impact in the monthly summary card.
 - [x] Validate future-month navigation and leave-hour reporting, then save a checkpoint.
+- [x] Review production identity, role, device, and PMEC access requirements.
+- [x] Draft Clerk/Auth.js integration guidance for employee, PM, and HR sign-in flows.
+- [x] Draft a Neon Postgres schema for identities, roles, workforce records, and PMEC access control.
+- [x] Validate and deliver the production authentication and database design.
