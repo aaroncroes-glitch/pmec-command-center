@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCapacityForecast, filterAndSortCapacityPeople, summarizeCapacityForecast } from "../lib/pmec-capacity-forecast";
+import { buildCapacityForecast, filterAndSortCapacityPeople, summarizeCapacityForecast, summarizeUpcomingCapacityMonth } from "../lib/pmec-capacity-forecast";
 
 const people = [
   { id: "civil-lead", name: "Luis", role: "Civil Lead", discipline: "Civil", status: "Active" as const, allocation: 90, weeklyCapacity: 40 },
@@ -30,5 +30,15 @@ describe("PMEC HR capacity forecasting", () => {
     expect(filterAndSortCapacityPeople(people, { role: "Civil Engineer", sort: "name" }).map((person) => person.id)).toEqual(["civil-engineer"]);
     expect(filterAndSortCapacityPeople(people, { sort: "risk" })[0].id).toBe("civil-engineer");
     expect(filterAndSortCapacityPeople(people, { sort: "room" })[0].id).toBe("civil-lead");
+  });
+
+  it("compares confirmed available room against overlapping leave requests for the first forecast month", () => {
+    const leave = [
+      { employeeId: "civil-engineer", startDate: "2026-04-13", endDate: "2026-04-13", status: "approved" as const },
+      { employeeId: "electrical-engineer", startDate: "2026-04-16", endDate: "2026-04-16", status: "pending" as const },
+    ];
+    const summary = summarizeUpcomingCapacityMonth(buildCapacityForecast(people, leave, 5), leave);
+
+    expect(summary).toEqual({ monthKey: "2026-04", confirmedAvailableHours: 32, projectedAvailableHours: 24, leaveRequests: 2, approvedLeaveRequests: 1, pendingLeaveRequests: 1 });
   });
 });

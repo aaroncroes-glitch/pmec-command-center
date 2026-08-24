@@ -95,3 +95,19 @@ export function summarizeCapacityForecast(days: CapacityForecastDay[]) {
     watchDays: days.filter((day) => day.level === "watch").length,
   };
 }
+
+export function summarizeUpcomingCapacityMonth(days: CapacityForecastDay[], leaveRequests: CapacityForecastLeave[]) {
+  const monthKey = days[0]?.date.slice(0, 7) ?? null;
+  const monthDays = monthKey ? days.filter((day) => day.date.startsWith(monthKey)) : [];
+  const firstDate = monthDays[0]?.date ?? null;
+  const lastDate = monthDays[monthDays.length - 1]?.date ?? null;
+  const overlappingLeave = firstDate && lastDate ? leaveRequests.filter((request) => request.status !== "rejected" && request.startDate <= lastDate && request.endDate >= firstDate) : [];
+  return {
+    monthKey,
+    confirmedAvailableHours: monthDays.reduce((total, day) => total + day.confirmedRoomHours, 0),
+    projectedAvailableHours: monthDays.reduce((total, day) => total + day.projectedRoomHours, 0),
+    leaveRequests: overlappingLeave.length,
+    approvedLeaveRequests: overlappingLeave.filter((request) => request.status === "approved").length,
+    pendingLeaveRequests: overlappingLeave.filter((request) => request.status === "pending").length,
+  };
+}

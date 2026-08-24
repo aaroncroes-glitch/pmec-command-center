@@ -83,3 +83,6 @@
 - [x] Define the role-comparison layout and scoped project/HR summaries.
 - [x] Build a desktop/iPad side-by-side Project Manager and HR comparison page.
 - [x] Validate the dual-role comparison page and save a checkpoint.
+- [x] Define the upcoming-month available-capacity versus leave-request metric.
+- [x] Add an upcoming-month capacity-versus-leave summary card to HR planning.
+- [x] Validate the summary card with a department-filtered forecast and save a checkpoint.

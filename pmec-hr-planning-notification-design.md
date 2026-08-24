@@ -10,6 +10,10 @@ The dashboard will add a five-week, workday-based availability calendar beginnin
 
 Planning controls will scope every forecast, capacity band, and roster item by **department** (the existing PMEC discipline field) and **role**. HR can then order the filtered roster by risk, allocation, available room, or name. These are client-side planning controls over the existing PMEC demo workforce; they do not alter employee allocation, leave records, or delivery assignments.
 
+## Upcoming-month availability summary
+
+The forecast will include a summary card for the first calendar month represented in the current filtered workday forecast. It will total the selected workforce’s **confirmed available room** after current allocation and approved leave, then place that capacity beside the count of overlapping leave requests. Pending requests remain explicitly labelled as a planning reserve, so HR can compare dependable capacity with the demand that still needs a leave decision.
+
 ## Employee notification control
 
 Employee notifications will keep their shared PMEC delivery routing but gain two preference switches: new work assignments and time-log approvals. Both are enabled by default. A notification can be archived without deleting delivery history; archived updates are hidden from the active inbox, excluded from unread count, and can be restored from Notification Settings. Notification-generation code will consult the employee preference before inserting assignment or time-approved events.
