@@ -8,6 +8,7 @@ const MAPPING = {
   target: "my-location",
   "gearshape.fill": "settings",
   "calendar": "calendar-today",
+  "creditcard.fill": "credit-card",
   "chevron.left": "chevron-left",
   "house.fill": "home",
   "chevron.right": "chevron-right",

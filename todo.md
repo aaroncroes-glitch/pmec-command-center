@@ -15,3 +15,10 @@
 - [x] Schedule, respond to, and manage actionable local upcoming-task reminders.
 - [x] Add deterministic tests for recurrence, filtering, and reminder behavior.
 - [x] Validate the scheduling and organization upgrade across themes and save a checkpoint.
+- [x] Add local ADMANCO demo employee, attendance, project, leave, payslip, and profile models.
+- [x] Build a first-run onboarding sequence and local employee-number/PIN access gate.
+- [x] Build attendance clock-in/out with project, phase, task selection and a simulated face-scan confirmation.
+- [x] Build assigned-project list, project detail, phase progress, and inline project-task status updates.
+- [x] Build local leave-request, payslip, personal-calendar, activity, analytics, and profile flows.
+- [x] Integrate the existing Lumen task workspace, calendar, recurrence, tags, filters, and reminders into the expanded navigation.
+- [x] Add deterministic local demo-flow tests and validate the employee self-service extension without a database or domain setup.
