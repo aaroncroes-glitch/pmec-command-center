@@ -26,3 +26,5 @@
 - [x] Validate leave-duration calculations and save the updated leave-request flow.
 - [ ] Inspect the connected GitHub and Vercel integrations, publish Lumen to GitHub, and deploy it through Vercel.
 - [ ] Diagnose and resolve the interrupted GitHub/Vercel connector verification workflow.
+- [x] Publish the current Lumen source to the private aaroncroes-glitch/lumen-ess GitHub repository.
+- [ ] Configure a Vercel-compatible Expo web build and deploy the repository.
