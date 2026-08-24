@@ -2,12 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, type PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
 
 export type PmecControlRole = "pm" | "hr";
-export type PmecPermission = "delivery" | "assign" | "capacity" | "hoursApprove" | "hoursRead" | "people" | "leaveReview" | "hrPlanning";
+export type PmecPermission = "delivery" | "assign" | "capacity" | "hoursApprove" | "hoursRead" | "people" | "leaveReview" | "hrPlanning" | "payroll";
 
 const STORAGE_KEY = "lumen.pmec.control-role.v1";
 export const permissionMap: Record<PmecControlRole, PmecPermission[]> = {
   pm: ["delivery", "assign", "capacity", "hoursApprove", "hoursRead"],
-  hr: ["hoursRead", "people", "leaveReview", "hrPlanning"],
+  hr: ["hoursRead", "people", "leaveReview", "hrPlanning", "payroll"],
 };
 export const roleCan = (role: PmecControlRole, permission: PmecPermission) => permissionMap[role].includes(permission);
 type AccessContextValue = { role: PmecControlRole; ready: boolean; setRole: (role: PmecControlRole) => void; can: (permission: PmecPermission) => boolean; label: string; description: string };

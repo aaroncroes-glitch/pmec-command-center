@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "jurisdiction": "Aruba",
+    "authority": "Departamento di Impuesto (DIMP)",
+    "svbAuthority": "Sociale Verzekeringsbank Aruba (SVb)",
+    "currency": "AWG",
+    "effectiveYears": ["2025", "2026"],
+    "lastVerified": "2026-08-24",
+    "officialSources": [
+      "https://www.gobierno.aw/nl/het-tarief-van-de-inkomstenbelasting-en-de-loonbelasting-verandert-vanaf-1-januari-2025",
+      "https://www.impuesto.aw/premiegrenzen-aovaww",
+      "https://www.impuesto.aw/premiegrenzen-azv",
+      "https://www.svbaruba.org/employer/summary-of-tariffs/summary-of-tariffs-2025/",
+      "https://www.gobierno.aw/en/pensioners-to-pay-lower-azv-premiums-starting-january-1-2026"
+    ]
+  },
+  "2025": {
+    "belastingvrijeSom": 30000,
+    "wageTaxBrackets": [
+      { "from": 0, "to": 34930, "fixedAmount": 0, "marginalRate": 0.0 },
+      { "from": 34930, "to": 63904, "fixedAmount": 0, "marginalRate": 0.21 },
+      { "from": 63904, "to": 135527, "fixedAmount": 6084.54, "marginalRate": 0.42 },
+      { "from": 135527, "to": null, "fixedAmount": 36166.20, "marginalRate": 0.52 }
+    ],
+    "aovAww": {
+      "premieGrens": 85000,
+      "employeeRate": 0.05,
+      "employerRate": 0.105,
+      "totalRate": 0.155,
+      "pensionerExempt": true,
+      "pensionerAge": 65
+    },
+    "azv": {
+      "premieGrens": 85000,
+      "employeeRate": 0.016,
+      "employerRate": 0.089,
+      "totalRate": 0.105,
+      "pensionerTier1Limit": 30000,
+      "pensionerTier1Rate": 0.05,
+      "pensionerTier2Rate": 0.105
+    },
+    "svb": {
+      "zvOvPremieGrens": 70200,
+      "zvEmployerRate": 0.0265,
+      "ovEmployerRateMin": 0.0025,
+      "ovEmployerRateMax": 0.025,
+      "ovDefaultGevarenklasse": 2.5,
+      "cessantiaAnnual": 40
+    },
+    "deductions": {
+      "verwervingskostenRate": 0.03,
+      "verwervingskostenMaxAnnual": 1500,
+      "savingsFundMaxRate": 0.05,
+      "savingsFundMaxAnnual": 3360
+    },
+    "filingDeadlines": {
+      "monthlyDeclarationDay": 15,
+      "monthlyDeclarationRule": "15th of the month following the payroll period",
+      "verzamelloonstaatDeadline": "March 31 of the following year"
+    }
+  },
+  "2026": {
+    "inheritsFrom": "2025",
+    "changes": {
+      "azv.pensionerTier1Rate": 0.0,
+      "note": "From 2026-01-01 pensioners pay 0% AZV on first AWG 30,000 (was 5% in 2025). All other rates unchanged per DIMP/SVb 2026 publications."
+    }
+  }
+}

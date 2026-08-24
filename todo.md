@@ -98,3 +98,7 @@
 - [x] Draft Clerk-first role-based access control implementation guidance and reviewed Neon SQL.
 - [x] Design the invitation and mobile onboarding journey for PMEC employees.
 - [x] Validate and deliver the Clerk implementation guide and onboarding flow artifacts.
+- [x] Review the supplied Aruba payroll module and document compatible PMEC HR capabilities.
+- [x] Design the HR-only payroll workspace, payroll-period workflow, and safe demonstration data boundaries.
+- [x] Implement the PMEC-branded HR payroll module and role-scoped navigation.
+- [x] Validate payroll calculations, HR-only access, and module interactions, then save a checkpoint.
