@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertPmecAssignment, InsertPmecTimeLog, InsertUser, pmecAssignments, pmecTimeLogs, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,46 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function listPmecAssignments(employeeId?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return employeeId ? db.select().from(pmecAssignments).where(eq(pmecAssignments.employeeId, employeeId)).orderBy(desc(pmecAssignments.updatedAt)) : db.select().from(pmecAssignments).orderBy(desc(pmecAssignments.updatedAt));
+}
+
+export async function upsertPmecAssignment(record: InsertPmecAssignment) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.insert(pmecAssignments).values(record).onDuplicateKeyUpdate({ set: { employeeId: record.employeeId, employeeName: record.employeeName, discipline: record.discipline, status: record.status, progress: record.progress, assignedBy: record.assignedBy, dueDate: record.dueDate, jobOrderTitle: record.jobOrderTitle, taskTitle: record.taskTitle } });
+  const rows = await db.select().from(pmecAssignments).where(eq(pmecAssignments.id, record.id)).limit(1);
+  return rows[0];
+}
+
+export async function updatePmecAssignment(id: string, update: Partial<Pick<InsertPmecAssignment, "status" | "progress">>) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.update(pmecAssignments).set(update).where(eq(pmecAssignments.id, id));
+  const rows = await db.select().from(pmecAssignments).where(eq(pmecAssignments.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function listPmecTimeLogs(employeeId?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return employeeId ? db.select().from(pmecTimeLogs).where(eq(pmecTimeLogs.employeeId, employeeId)).orderBy(desc(pmecTimeLogs.workDate), desc(pmecTimeLogs.createdAt)) : db.select().from(pmecTimeLogs).orderBy(desc(pmecTimeLogs.workDate), desc(pmecTimeLogs.createdAt));
+}
+
+export async function createPmecTimeLog(record: InsertPmecTimeLog) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.insert(pmecTimeLogs).values(record);
+  const rows = await db.select().from(pmecTimeLogs).where(eq(pmecTimeLogs.id, record.id)).limit(1);
+  return rows[0];
+}
+
+export async function reviewPmecTimeLog(id: string, status: "approved" | "rejected", reviewerNote?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.update(pmecTimeLogs).set({ status, reviewerNote: reviewerNote ?? null }).where(eq(pmecTimeLogs.id, id));
+  const rows = await db.select().from(pmecTimeLogs).where(eq(pmecTimeLogs.id, id)).limit(1);
+  return rows[0];
+}

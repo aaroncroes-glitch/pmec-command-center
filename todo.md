@@ -59,3 +59,8 @@
 - [x] Restore unified People, HR Leave, allocation, attendance, and capacity management views alongside Job Orders.
 - [x] Add manager task assignment and employee-hours tracking interactions to job-order delivery flows.
 - [x] Validate the merged PMEC HR and project-management control center and save a checkpoint.
+- [x] Define shared assignment and time-log synchronization between employee workspace and PMEC Control Center.
+- [x] Create shared assignment and employee time-log data services for the local delivery workflow.
+- [x] Add an employee assigned-work inbox and mobile time-entry experience.
+- [x] Connect PMEC Control Center assignments and hours approval to shared employee activity.
+- [x] Validate synchronized employee and project-manager workflows and save a checkpoint.
