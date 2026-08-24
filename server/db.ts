@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertPmecAssignment, InsertPmecTimeLog, InsertUser, pmecAssignments, pmecTimeLogs, users } from "../drizzle/schema";
+import { InsertPmecAssignment, InsertPmecNotification, InsertPmecTimeLog, InsertUser, pmecAssignments, pmecNotifications, pmecTimeLogs, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -98,8 +98,10 @@ export async function listPmecAssignments(employeeId?: string) {
 export async function upsertPmecAssignment(record: InsertPmecAssignment) {
   const db = await getDb();
   if (!db) throw new Error("Shared delivery database is not available");
+  const previous = await db.select().from(pmecAssignments).where(eq(pmecAssignments.id, record.id)).limit(1);
   await db.insert(pmecAssignments).values(record).onDuplicateKeyUpdate({ set: { employeeId: record.employeeId, employeeName: record.employeeName, discipline: record.discipline, status: record.status, progress: record.progress, assignedBy: record.assignedBy, dueDate: record.dueDate, jobOrderTitle: record.jobOrderTitle, taskTitle: record.taskTitle } });
   const rows = await db.select().from(pmecAssignments).where(eq(pmecAssignments.id, record.id)).limit(1);
+  if (!previous[0] || previous[0].employeeId !== record.employeeId) await createPmecNotification({ id: `pmec-notify-${Date.now()}`, employeeId: record.employeeId, type: "assignment", title: "New PMEC work assigned", body: `${record.taskTitle} · ${record.jobOrderTitle}`, route: "/assigned-work" });
   return rows[0];
 }
 
@@ -128,7 +130,32 @@ export async function createPmecTimeLog(record: InsertPmecTimeLog) {
 export async function reviewPmecTimeLog(id: string, status: "approved" | "rejected", reviewerNote?: string) {
   const db = await getDb();
   if (!db) throw new Error("Shared delivery database is not available");
+  const before = await db.select().from(pmecTimeLogs).where(eq(pmecTimeLogs.id, id)).limit(1);
   await db.update(pmecTimeLogs).set({ status, reviewerNote: reviewerNote ?? null }).where(eq(pmecTimeLogs.id, id));
   const rows = await db.select().from(pmecTimeLogs).where(eq(pmecTimeLogs.id, id)).limit(1);
+  const log = rows[0];
+  if (log && status === "approved" && before[0]?.status !== "approved") await createPmecNotification({ id: `pmec-notify-${Date.now()}`, employeeId: log.employeeId, type: "time_approved", title: "Hours approved", body: `${(log.minutes / 60).toFixed(1)} hours approved for ${log.workDate}`, route: "/assigned-work" });
+  return rows[0];
+}
+
+export async function listPmecNotifications(employeeId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(pmecNotifications).where(eq(pmecNotifications.employeeId, employeeId)).orderBy(desc(pmecNotifications.createdAt));
+}
+
+export async function createPmecNotification(record: InsertPmecNotification) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.insert(pmecNotifications).values(record);
+  const rows = await db.select().from(pmecNotifications).where(eq(pmecNotifications.id, record.id)).limit(1);
+  return rows[0];
+}
+
+export async function markPmecNotificationRead(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.update(pmecNotifications).set({ readAt: new Date() }).where(eq(pmecNotifications.id, id));
+  const rows = await db.select().from(pmecNotifications).where(eq(pmecNotifications.id, id)).limit(1);
   return rows[0];
 }

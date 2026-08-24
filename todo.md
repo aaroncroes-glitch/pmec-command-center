@@ -64,3 +64,8 @@
 - [x] Add an employee assigned-work inbox and mobile time-entry experience.
 - [x] Connect PMEC Control Center assignments and hours approval to shared employee activity.
 - [x] Validate synchronized employee and project-manager workflows and save a checkpoint.
+- [x] Define distinct PM and HR permissions, role-scoped views, and assignment/time-log notification events.
+- [x] Add Project Manager and HR role selection with scoped Control Center navigation and action permissions.
+- [x] Add shared employee notification storage and create events for assignments and approved time logs.
+- [x] Build a mobile employee notification center with unread/read interactions and work deep links.
+- [x] Validate role-based Control Center views and employee notification workflows and save a checkpoint.

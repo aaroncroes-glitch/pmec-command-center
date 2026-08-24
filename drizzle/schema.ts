@@ -59,7 +59,21 @@ export const pmecTimeLogs = mysqlTable("pmec_time_logs", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 
+/** Persistent in-app updates shown in the employee PMEC workspace. */
+export const pmecNotifications = mysqlTable("pmec_notifications", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  employeeId: varchar("employee_id", { length: 96 }).notNull(),
+  type: mysqlEnum("type", ["assignment", "time_approved"]).notNull(),
+  title: varchar("title", { length: 160 }).notNull(),
+  body: text("body").notNull(),
+  route: varchar("route", { length: 160 }).notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type PmecAssignment = typeof pmecAssignments.$inferSelect;
 export type InsertPmecAssignment = typeof pmecAssignments.$inferInsert;
 export type PmecTimeLog = typeof pmecTimeLogs.$inferSelect;
 export type InsertPmecTimeLog = typeof pmecTimeLogs.$inferInsert;
+export type PmecNotification = typeof pmecNotifications.$inferSelect;
+export type InsertPmecNotification = typeof pmecNotifications.$inferInsert;
