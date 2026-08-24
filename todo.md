@@ -22,3 +22,5 @@
 - [x] Build local leave-request, payslip, personal-calendar, activity, analytics, and profile flows.
 - [x] Integrate the existing Lumen task workspace, calendar, recurrence, tags, filters, and reminders into the expanded navigation.
 - [x] Add deterministic local demo-flow tests and validate the employee self-service extension without a database or domain setup.
+- [x] Add editable start and end dates plus an HR-readable duration to leave requests.
+- [x] Validate leave-duration calculations and save the updated leave-request flow.

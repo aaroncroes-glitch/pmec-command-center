@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Task } from "../lib/lumen-types";
-import { addDays, compareTasks, matchesTaskFilters, monthCells, nextOccurrenceDate, nextOccurrenceReminder, normalizeTags, projectProgress } from "../lib/lumen-utils";
+import { addDays, compareTasks, inclusiveDayCount, matchesTaskFilters, monthCells, nextOccurrenceDate, nextOccurrenceReminder, normalizeTags, projectProgress } from "../lib/lumen-utils";
 
 const baseTask: Task = {
   id: "task-1",
@@ -17,6 +17,12 @@ describe("Lumen workspace utilities", () => {
   it("moves dates forward and backward without changing the date format", () => {
     expect(addDays("2026-08-23", 2)).toBe("2026-08-25");
     expect(addDays("2026-08-23", -3)).toBe("2026-08-20");
+  });
+
+  it("counts inclusive leave days and rejects backwards ranges", () => {
+    expect(inclusiveDayCount("2026-08-23", "2026-08-23")).toBe(1);
+    expect(inclusiveDayCount("2026-08-23", "2026-08-27")).toBe(5);
+    expect(inclusiveDayCount("2026-08-27", "2026-08-23")).toBe(0);
   });
 
   it("orders open high-priority work before completed work", () => {

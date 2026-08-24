@@ -5,6 +5,7 @@ const months = ["January", "February", "March", "April", "May", "June", "July", 
 
 export function toDateKey(date: Date) { const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000); return local.toISOString().slice(0, 10); }
 export function addDays(dateKey: string, amount: number) { const date = new Date(`${dateKey}T12:00:00`); date.setDate(date.getDate() + amount); return toDateKey(date); }
+export function inclusiveDayCount(startDate: string, endDate: string) { const start = new Date(`${startDate}T12:00:00`); const end = new Date(`${endDate}T12:00:00`); if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return 0; return Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1; }
 export function formatWeekday(dateKey: string) { return weekdays[new Date(`${dateKey}T12:00:00`).getDay()]; }
 export function formatDate(dateKey: string) { const date = new Date(`${dateKey}T12:00:00`); return `${months[date.getMonth()].slice(0, 3)} ${date.getDate()}, ${date.getFullYear()}`; }
 export function formatCompactDate(dateKey: string) { const date = new Date(`${dateKey}T12:00:00`); return `${months[date.getMonth()].slice(0, 3)} ${date.getDate()}`; }
