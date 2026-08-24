@@ -10,6 +10,8 @@ export type DemoEmployee = {
   department: string;
   address: string;
   monthlySalary: number;
+  currentYearAllowance: number;
+  carryOverDays: number;
   vacationBalance: number;
 };
 

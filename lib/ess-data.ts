@@ -6,7 +6,7 @@ const makeProject = (id: string, name: string, code: string, client: string, col
 
 export const initialEssState: EssState = {
   onboarded: false,
-  employee: { id: "employee-76", firstName: "Percy", lastName: "Solagnier", employeeNumber: "76", pin: "1234", role: "Mechanical Engineer", department: "Office", address: "Wayaka 97, Aruba", monthlySalary: 7100, vacationBalance: 14.5 },
+  employee: { id: "employee-76", firstName: "Percy", lastName: "Solagnier", employeeNumber: "76", pin: "1234", role: "Mechanical Engineer", department: "Office", address: "Wayaka 97, Aruba", monthlySalary: 7100, currentYearAllowance: 12, carryOverDays: 2.5, vacationBalance: 14.5 },
   attendance: [
     { id: "attendance-yesterday", date: addDays(today, -1), clockIn: `${addDays(today, -1)}T08:04:00.000Z`, clockOut: `${addDays(today, -1)}T17:02:00.000Z`, projectId: "project-101", phaseId: "project-101-phase-2", late: false },
     { id: "attendance-two-days", date: addDays(today, -2), clockIn: `${addDays(today, -2)}T08:12:00.000Z`, clockOut: `${addDays(today, -2)}T16:45:00.000Z`, projectId: "project-102", phaseId: "project-102-phase-2", late: true },

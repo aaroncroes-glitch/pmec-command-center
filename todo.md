@@ -36,3 +36,6 @@
 - [x] Add manager rejection-note support and detailed rejected-request presentation.
 - [x] Add an employee dashboard forecast for monthly leave balance and booked days.
 - [x] Add deterministic leave-management tests and validate the full upgrade before saving a checkpoint.
+- [x] Add prior-year carry-over days to the employee leave balance data.
+- [x] Show an annual balance breakdown and carry-over-aware forecast in leave and dashboard views.
+- [x] Validate carry-over calculations and save the updated leave-balance experience.
