@@ -68,7 +68,16 @@ export const pmecNotifications = mysqlTable("pmec_notifications", {
   body: text("body").notNull(),
   route: varchar("route", { length: 160 }).notNull(),
   readAt: timestamp("read_at"),
+  archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+/** Employee-controlled inbox preferences for shared PMEC delivery updates. */
+export const pmecNotificationPreferences = mysqlTable("pmec_notification_preferences", {
+  employeeId: varchar("employee_id", { length: 96 }).primaryKey(),
+  assignmentsEnabled: int("assignments_enabled").default(1).notNull(),
+  timeApprovedEnabled: int("time_approved_enabled").default(1).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 
 export type PmecAssignment = typeof pmecAssignments.$inferSelect;
@@ -77,3 +86,5 @@ export type PmecTimeLog = typeof pmecTimeLogs.$inferSelect;
 export type InsertPmecTimeLog = typeof pmecTimeLogs.$inferInsert;
 export type PmecNotification = typeof pmecNotifications.$inferSelect;
 export type InsertPmecNotification = typeof pmecNotifications.$inferInsert;
+export type PmecNotificationPreference = typeof pmecNotificationPreferences.$inferSelect;
+export type InsertPmecNotificationPreference = typeof pmecNotificationPreferences.$inferInsert;

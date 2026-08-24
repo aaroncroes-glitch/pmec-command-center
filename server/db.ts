@@ -1,6 +1,6 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertPmecAssignment, InsertPmecNotification, InsertPmecTimeLog, InsertUser, pmecAssignments, pmecNotifications, pmecTimeLogs, users } from "../drizzle/schema";
+import { InsertPmecAssignment, InsertPmecNotification, InsertPmecNotificationPreference, InsertPmecTimeLog, InsertUser, pmecAssignments, pmecNotificationPreferences, pmecNotifications, pmecTimeLogs, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -138,15 +138,17 @@ export async function reviewPmecTimeLog(id: string, status: "approved" | "reject
   return rows[0];
 }
 
-export async function listPmecNotifications(employeeId: string) {
+export async function listPmecNotifications(employeeId: string, archived = false) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(pmecNotifications).where(eq(pmecNotifications.employeeId, employeeId)).orderBy(desc(pmecNotifications.createdAt));
+  return db.select().from(pmecNotifications).where(and(eq(pmecNotifications.employeeId, employeeId), archived ? isNotNull(pmecNotifications.archivedAt) : isNull(pmecNotifications.archivedAt))).orderBy(desc(pmecNotifications.createdAt));
 }
 
 export async function createPmecNotification(record: InsertPmecNotification) {
   const db = await getDb();
   if (!db) throw new Error("Shared delivery database is not available");
+  const preferences = await getPmecNotificationPreferences(record.employeeId);
+  if ((record.type === "assignment" && !preferences.assignmentsEnabled) || (record.type === "time_approved" && !preferences.timeApprovedEnabled)) return null;
   await db.insert(pmecNotifications).values(record);
   const rows = await db.select().from(pmecNotifications).where(eq(pmecNotifications.id, record.id)).limit(1);
   return rows[0];
@@ -158,4 +160,36 @@ export async function markPmecNotificationRead(id: string) {
   await db.update(pmecNotifications).set({ readAt: new Date() }).where(eq(pmecNotifications.id, id));
   const rows = await db.select().from(pmecNotifications).where(eq(pmecNotifications.id, id)).limit(1);
   return rows[0];
+}
+
+export async function archivePmecNotification(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.update(pmecNotifications).set({ archivedAt: new Date(), readAt: new Date() }).where(eq(pmecNotifications.id, id));
+  const rows = await db.select().from(pmecNotifications).where(eq(pmecNotifications.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function restorePmecNotification(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.update(pmecNotifications).set({ archivedAt: null }).where(eq(pmecNotifications.id, id));
+  const rows = await db.select().from(pmecNotifications).where(eq(pmecNotifications.id, id)).limit(1);
+  return rows[0];
+}
+
+export async function getPmecNotificationPreferences(employeeId: string) {
+  const db = await getDb();
+  const fallback = { employeeId, assignmentsEnabled: true, timeApprovedEnabled: true };
+  if (!db) return fallback;
+  const rows = await db.select().from(pmecNotificationPreferences).where(eq(pmecNotificationPreferences.employeeId, employeeId)).limit(1);
+  const row = rows[0];
+  return row ? { employeeId: row.employeeId, assignmentsEnabled: row.assignmentsEnabled === 1, timeApprovedEnabled: row.timeApprovedEnabled === 1 } : fallback;
+}
+
+export async function updatePmecNotificationPreferences(employeeId: string, update: Pick<InsertPmecNotificationPreference, "assignmentsEnabled" | "timeApprovedEnabled">) {
+  const db = await getDb();
+  if (!db) throw new Error("Shared delivery database is not available");
+  await db.insert(pmecNotificationPreferences).values({ employeeId, ...update }).onDuplicateKeyUpdate({ set: { ...update } });
+  return getPmecNotificationPreferences(employeeId);
 }

@@ -25,8 +25,12 @@ export const appRouter = router({
     timeLogs: publicProcedure.input(z.object({ employeeId: z.string().min(1).optional() }).optional()).query(({ input }) => db.listPmecTimeLogs(input?.employeeId)),
     submitTime: publicProcedure.input(z.object({ id: z.string().min(1), assignmentId: z.string().min(1), employeeId: z.string().min(1), employeeName: z.string().min(1), jobOrderId: z.string().min(1), taskId: z.string().min(1), workDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), minutes: z.number().int().min(15).max(960), note: z.string().min(3).max(1000) })).mutation(({ input }) => db.createPmecTimeLog({ ...input, status: "submitted" })),
     reviewTime: publicProcedure.input(z.object({ id: z.string().min(1), status: z.enum(["approved", "rejected"]), reviewerNote: z.string().max(1000).optional() })).mutation(({ input }) => db.reviewPmecTimeLog(input.id, input.status, input.reviewerNote)),
-    notifications: publicProcedure.input(z.object({ employeeId: z.string().min(1) })).query(({ input }) => db.listPmecNotifications(input.employeeId)),
+    notifications: publicProcedure.input(z.object({ employeeId: z.string().min(1), archived: z.boolean().optional() })).query(({ input }) => db.listPmecNotifications(input.employeeId, input.archived)),
     markNotificationRead: publicProcedure.input(z.object({ id: z.string().min(1) })).mutation(({ input }) => db.markPmecNotificationRead(input.id)),
+    archiveNotification: publicProcedure.input(z.object({ id: z.string().min(1) })).mutation(({ input }) => db.archivePmecNotification(input.id)),
+    restoreNotification: publicProcedure.input(z.object({ id: z.string().min(1) })).mutation(({ input }) => db.restorePmecNotification(input.id)),
+    notificationPreferences: publicProcedure.input(z.object({ employeeId: z.string().min(1) })).query(({ input }) => db.getPmecNotificationPreferences(input.employeeId)),
+    updateNotificationPreferences: publicProcedure.input(z.object({ employeeId: z.string().min(1), assignmentsEnabled: z.boolean(), timeApprovedEnabled: z.boolean() })).mutation(({ input }) => db.updatePmecNotificationPreferences(input.employeeId, { assignmentsEnabled: input.assignmentsEnabled ? 1 : 0, timeApprovedEnabled: input.timeApprovedEnabled ? 1 : 0 })),
   }),
 });
 

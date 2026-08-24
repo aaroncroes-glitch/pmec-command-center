@@ -69,3 +69,8 @@
 - [x] Add shared employee notification storage and create events for assignments and approved time logs.
 - [x] Build a mobile employee notification center with unread/read interactions and work deep links.
 - [x] Validate role-based Control Center views and employee notification workflows and save a checkpoint.
+- [x] Define HR leave-demand and workforce-capacity planning metrics plus notification preference behavior.
+- [x] Add shared employee notification preferences and archive state to the PMEC delivery service.
+- [x] Build an HR visual dashboard for leave demand, coverage risk, and team capacity.
+- [x] Build employee notification settings, preference toggles, and archive management.
+- [x] Validate HR planning and employee notification management workflows and save a checkpoint.
