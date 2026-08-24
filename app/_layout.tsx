@@ -8,6 +8,7 @@ import * as Notifications from "expo-notifications";
 import { REMINDER_DONE_ACTION, LumenReminderProvider } from "@/lib/lumen-reminders";
 import { EssWorkspaceProvider } from "@/lib/ess-workspace";
 import { useLumen, LumenWorkspaceProvider } from "@/lib/lumen-workspace";
+import { PmecJobOrderWorkspaceProvider } from "@/lib/pmec-job-order-workspace";
 
 function NotificationObserver() {
   const router = useRouter();
@@ -30,5 +31,5 @@ function NotificationObserver() {
 }
 
 export default function RootLayout() {
-  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><LumenWorkspaceProvider><EssWorkspaceProvider><LumenReminderProvider><NotificationObserver /><Stack screenOptions={{ headerShown: false, animation: "fade" }}><Stack.Screen name="(tabs)" /><Stack.Screen name="admin" /><Stack.Screen name="ess/onboarding" /><Stack.Screen name="ess/login" /><Stack.Screen name="attendance" /><Stack.Screen name="work-project/[id]" /><Stack.Screen name="leave" /><Stack.Screen name="payslips" /><Stack.Screen name="analytics" /><Stack.Screen name="activity" /><Stack.Screen name="personal-calendar" /><Stack.Screen name="profile" /><Stack.Screen name="project/[id]" /></Stack></LumenReminderProvider></EssWorkspaceProvider></LumenWorkspaceProvider></SafeAreaProvider></GestureHandlerRootView>;
+  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><LumenWorkspaceProvider><EssWorkspaceProvider><PmecJobOrderWorkspaceProvider><LumenReminderProvider><NotificationObserver /><Stack screenOptions={{ headerShown: false, animation: "fade" }}><Stack.Screen name="(tabs)" /><Stack.Screen name="admin" /><Stack.Screen name="job-orders" /><Stack.Screen name="ess/onboarding" /><Stack.Screen name="ess/login" /><Stack.Screen name="attendance" /><Stack.Screen name="work-project/[id]" /><Stack.Screen name="leave" /><Stack.Screen name="payslips" /><Stack.Screen name="analytics" /><Stack.Screen name="activity" /><Stack.Screen name="personal-calendar" /><Stack.Screen name="profile" /><Stack.Screen name="project/[id]" /></Stack></LumenReminderProvider></PmecJobOrderWorkspaceProvider></EssWorkspaceProvider></LumenWorkspaceProvider></SafeAreaProvider></GestureHandlerRootView>;
 }

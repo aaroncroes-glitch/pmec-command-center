@@ -50,3 +50,7 @@
 - [x] Add interactive project-health and workforce-capacity chart views.
 - [x] Add detailed employee and contractor profile modal views with leave, assignment, and status context.
 - [x] Validate administrative interaction enhancements and save a checkpoint.
+- [x] Review the PMEC job-order module specification and map project-manager workflows.
+- [x] Define PMEC-specific job-order, status, assignment, schedule, and financial summary data for the local demo.
+- [x] Adapt the administrative dashboard into a PMEC project-manager-only job-order workspace while retaining Lumen branding.
+- [x] Validate the PMEC job-order demonstration and save a checkpoint.

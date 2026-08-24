@@ -27,7 +27,7 @@ async function collect(directory) {
 const files = await collect(root);
 files.push({ file: "vercel.json", data: JSON.stringify({ rewrites: [{ source: "/(.*)", destination: "/" }] }) });
 const request = {
-  name: "lumen-admin-console-preview",
+  name: "pmec-job-order-demo-preview",
   target: "preview",
   teamId: "team_fJkYltAFbW5PsfCerv2U4hTn",
   files,
