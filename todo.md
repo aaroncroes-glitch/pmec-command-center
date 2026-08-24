@@ -94,3 +94,7 @@
 - [x] Draft Clerk/Auth.js integration guidance for employee, PM, and HR sign-in flows.
 - [x] Draft a Neon Postgres schema for identities, roles, workforce records, and PMEC access control.
 - [x] Validate and deliver the production authentication and database design.
+- [x] Confirm current Expo/tRPC architecture and the equivalent Next.js Clerk implementation boundary.
+- [x] Draft Clerk-first role-based access control implementation guidance and reviewed Neon SQL.
+- [x] Design the invitation and mobile onboarding journey for PMEC employees.
+- [x] Validate and deliver the Clerk implementation guide and onboarding flow artifacts.
