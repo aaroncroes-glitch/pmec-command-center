@@ -29,3 +29,6 @@
 - [x] Publish the current Lumen source to the private aaroncroes-glitch/lumen-ess GitHub repository.
 - [x] Configure a Vercel-compatible Expo web build and deploy the repository.
 - [x] Verify the live https://lumen-ess-preview.vercel.app/ Vercel preview deployment.
+- [x] Add a visual calendar-range picker to the leave request composer.
+- [x] Improve pending, approved, and rejected leave-request status indicators.
+- [x] Validate leave-date selection and request-status behavior, then save a checkpoint.
