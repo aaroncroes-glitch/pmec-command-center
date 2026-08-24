@@ -86,6 +86,33 @@ export function buildCapacityForecast(people: CapacityForecastPerson[], leaveReq
   return result;
 }
 
+export function buildCapacityForecastForMonth(people: CapacityForecastPerson[], leaveRequests: CapacityForecastLeave[], monthKey: string): CapacityForecastDay[] {
+  const relevantLeave = leaveRequests.filter((request) => request.status !== "rejected");
+  const [year, month] = monthKey.split("-").map(Number);
+  const cursor = new Date(Date.UTC(year, month - 1, 1, 12));
+  const result: CapacityForecastDay[] = [];
+  const peopleById = new Map(people.map((person) => [person.id, person]));
+  const totalDailyCapacity = people.reduce((total, person) => total + person.weeklyCapacity / 5, 0);
+  const baseRoomHours = people.reduce((total, person) => total + (person.weeklyCapacity / 5) * (100 - person.allocation) / 100, 0);
+
+  while (cursor.getUTCMonth() === month - 1) {
+    if (isWeekday(cursor)) {
+      const date = iso(cursor);
+      const approvedIds = new Set(relevantLeave.filter((request) => request.status === "approved" && date >= request.startDate && date <= request.endDate).map((request) => request.employeeId));
+      const pendingIds = new Set(relevantLeave.filter((request) => request.status === "pending" && date >= request.startDate && date <= request.endDate).map((request) => request.employeeId));
+      const approvedLeaveHours = [...approvedIds].reduce((total, employeeId) => total + (peopleById.get(employeeId)?.weeklyCapacity ?? 0) / 5, 0);
+      const pendingLeaveHours = [...pendingIds].reduce((total, employeeId) => total + (peopleById.get(employeeId)?.weeklyCapacity ?? 0) / 5, 0);
+      const confirmedRoomHours = baseRoomHours - approvedLeaveHours;
+      const projectedRoomHours = confirmedRoomHours - pendingLeaveHours;
+      const constrained = projectedRoomHours <= 0 || (totalDailyCapacity > 0 && projectedRoomHours / totalDailyCapacity < 0.12);
+      const watch = !constrained && (approvedIds.size > 0 || pendingIds.size > 0 || (totalDailyCapacity > 0 && projectedRoomHours / totalDailyCapacity < 0.24));
+      result.push({ date, baseRoomHours: Math.round(baseRoomHours), confirmedRoomHours: Math.round(confirmedRoomHours), projectedRoomHours: Math.round(projectedRoomHours), approvedAway: approvedIds.size, pendingAway: pendingIds.size, level: constrained ? "constrained" : watch ? "watch" : "clear" });
+    }
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return result;
+}
+
 export function summarizeCapacityForecast(days: CapacityForecastDay[]) {
   const lowest = days.reduce<CapacityForecastDay | undefined>((current, day) => !current || day.projectedRoomHours < current.projectedRoomHours ? day : current, undefined);
   return {
@@ -106,6 +133,9 @@ export function summarizeUpcomingCapacityMonth(days: CapacityForecastDay[], leav
     monthKey,
     confirmedAvailableHours: monthDays.reduce((total, day) => total + day.confirmedRoomHours, 0),
     projectedAvailableHours: monthDays.reduce((total, day) => total + day.projectedRoomHours, 0),
+    approvedLeaveHours: monthDays.reduce((total, day) => total + (day.baseRoomHours - day.confirmedRoomHours), 0),
+    pendingLeaveHours: monthDays.reduce((total, day) => total + (day.confirmedRoomHours - day.projectedRoomHours), 0),
+    totalLeaveHours: monthDays.reduce((total, day) => total + (day.baseRoomHours - day.projectedRoomHours), 0),
     leaveRequests: overlappingLeave.length,
     approvedLeaveRequests: overlappingLeave.filter((request) => request.status === "approved").length,
     pendingLeaveRequests: overlappingLeave.filter((request) => request.status === "pending").length,

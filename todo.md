@@ -86,3 +86,7 @@
 - [x] Define the upcoming-month available-capacity versus leave-request metric.
 - [x] Add an upcoming-month capacity-versus-leave summary card to HR planning.
 - [x] Validate the summary card with a department-filtered forecast and save a checkpoint.
+- [x] Define month navigation behavior and selected-month leave-hour totals for HR planning.
+- [x] Add previous/next month controls to the HR capacity calendar.
+- [x] Include approved, pending, and total leave-hour impact in the monthly summary card.
+- [x] Validate future-month navigation and leave-hour reporting, then save a checkpoint.

@@ -14,6 +14,8 @@ Planning controls will scope every forecast, capacity band, and roster item by *
 
 The forecast will include a summary card for the first calendar month represented in the current filtered workday forecast. It will total the selected workforce’s **confirmed available room** after current allocation and approved leave, then place that capacity beside the count of overlapping leave requests. Pending requests remain explicitly labelled as a planning reserve, so HR can compare dependable capacity with the demand that still needs a leave decision.
 
+The calendar will now use a selected-month control with previous and next actions. Each selection shows every workday in that calendar month and recalculates the same department/role scope. The summary card will report **approved leave hours**, **pending leave-reserve hours**, and their combined leave-hour impact by comparing the calendar’s base room, confirmed room, and projected room. This keeps exact absence impact in the same capacity unit as the available-room forecast.
+
 ## Employee notification control
 
 Employee notifications will keep their shared PMEC delivery routing but gain two preference switches: new work assignments and time-log approvals. Both are enabled by default. A notification can be archived without deleting delivery history; archived updates are hidden from the active inbox, excluded from unread count, and can be restored from Notification Settings. Notification-generation code will consult the employee preference before inserting assignment or time-approved events.

@@ -13,3 +13,9 @@ The updated full-workforce HR forecast displayed the **Upcoming Month Capacity**
 With the **Electrical** department filter applied, the same card recalculated to 48 confirmed available hours versus one leave request for April 2026, with 40 projected hours after the pending reserve. The scoped seven-person calendar correctly highlighted April 28 as the 4-hour constrained low point and left the Electrical roster and capacity band visible alongside it.
 
 The final update passed TypeScript and 28 deterministic tests, including dedicated upcoming-month summary coverage.
+
+The selected-month implementation rendered **April 2026** with previous and next controls, all 22 workdays in the month, 1,554 confirmed available hours, two leave requests, and a 16-hour total leave impact split into 8 approved hours and 8 pending-reserve hours.
+
+Selecting **Next** moved the calendar to May 2026, showing 21 workdays, 1,491 confirmed available hours, one leave request, and a 40-hour impact entirely marked as pending reserve. Selecting **Previous** restored the original April calendar and its 16-hour split impact.
+
+TypeScript and 29 deterministic tests passed, including monthly calendar generation and approved/pending leave-hour impact coverage.

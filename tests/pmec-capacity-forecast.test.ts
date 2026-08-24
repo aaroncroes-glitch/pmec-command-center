@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCapacityForecast, filterAndSortCapacityPeople, summarizeCapacityForecast, summarizeUpcomingCapacityMonth } from "../lib/pmec-capacity-forecast";
+import { buildCapacityForecast, buildCapacityForecastForMonth, filterAndSortCapacityPeople, summarizeCapacityForecast, summarizeUpcomingCapacityMonth } from "../lib/pmec-capacity-forecast";
 
 const people = [
   { id: "civil-lead", name: "Luis", role: "Civil Lead", discipline: "Civil", status: "Active" as const, allocation: 90, weeklyCapacity: 40 },
@@ -39,6 +39,18 @@ describe("PMEC HR capacity forecasting", () => {
     ];
     const summary = summarizeUpcomingCapacityMonth(buildCapacityForecast(people, leave, 5), leave);
 
-    expect(summary).toEqual({ monthKey: "2026-04", confirmedAvailableHours: 32, projectedAvailableHours: 24, leaveRequests: 2, approvedLeaveRequests: 1, pendingLeaveRequests: 1 });
+    expect(summary).toEqual({ monthKey: "2026-04", confirmedAvailableHours: 32, projectedAvailableHours: 24, approvedLeaveHours: 8, pendingLeaveHours: 8, totalLeaveHours: 16, leaveRequests: 2, approvedLeaveRequests: 1, pendingLeaveRequests: 1 });
+  });
+
+  it("builds each selected calendar month as workdays and resets leave-hour impact when moving ahead", () => {
+    const leave = [{ employeeId: "civil-engineer", startDate: "2026-04-13", endDate: "2026-04-13", status: "approved" as const }];
+    const april = buildCapacityForecastForMonth(people, leave, "2026-04");
+    const may = buildCapacityForecastForMonth(people, leave, "2026-05");
+
+    expect(april[0]?.date).toBe("2026-04-01");
+    expect(april.at(-1)?.date).toBe("2026-04-30");
+    expect(april.some((day) => ["2026-04-04", "2026-04-05"].includes(day.date))).toBe(false);
+    expect(may[0]?.date).toBe("2026-05-01");
+    expect(summarizeUpcomingCapacityMonth(may, leave)).toMatchObject({ monthKey: "2026-05", approvedLeaveHours: 0, pendingLeaveHours: 0, totalLeaveHours: 0 });
   });
 });
