@@ -74,3 +74,7 @@
 - [x] Build an HR visual dashboard for leave demand, coverage risk, and team capacity.
 - [x] Build employee notification settings, preference toggles, and archive management.
 - [x] Validate HR planning and employee notification management workflows and save a checkpoint.
+- [x] Define calendar-based capacity forecasting metrics and planning controls for HR.
+- [x] Build time-based team capacity forecasting in the HR Leave & Capacity dashboard.
+- [x] Add department/role filters and sorting to HR capacity planning views.
+- [x] Validate HR forecasting calculations, filters, sorting, and save a checkpoint.
