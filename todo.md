@@ -78,3 +78,5 @@
 - [x] Build time-based team capacity forecasting in the HR Leave & Capacity dashboard.
 - [x] Add department/role filters and sorting to HR capacity planning views.
 - [x] Validate HR forecasting calculations, filters, sorting, and save a checkpoint.
+- [x] Rename the project-facing PMEC application branding to PMEC Command Center.
+- [x] Save a dedicated resumable checkpoint under the PMEC Command Center name.
