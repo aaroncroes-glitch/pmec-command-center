@@ -45,3 +45,8 @@
 - [x] Build project-manager project health, work allocation, contractor, and delivery-control features.
 - [x] Add desktop/iPad access gating and deploy the admin dashboard to a separate Vercel URL.
 - [x] Validate the administrative dashboard and document the future shared-backend integration path.
+- [x] Define bulk leave decision safeguards, interactive chart states, and employee profile data views.
+- [x] Add multi-select bulk leave approval and rejection workflows with manager notes.
+- [x] Add interactive project-health and workforce-capacity chart views.
+- [x] Add detailed employee and contractor profile modal views with leave, assignment, and status context.
+- [x] Validate administrative interaction enhancements and save a checkpoint.
