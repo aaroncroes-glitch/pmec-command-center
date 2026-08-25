@@ -159,3 +159,4 @@
 - [ ] Replace the employee workspace’s local-only demo PIN gate with a Clerk sign-in path for production-role demonstrations.
 - [ ] Route the Expo web Clerk frontend proxy path through the PMEC Vercel deployment so dummy-role sign-in requests do not fail closed with HTTP 405.
 - [ ] Add a one-time Clerk ticket entry for isolated demo accounts while the production password sign-in endpoint is unavailable.
+- [ ] Add a clearly labeled local-only PMEC showcase login that routes dummy Employee, PM, and HR credentials to existing isolated demonstration views without granting production API access.
