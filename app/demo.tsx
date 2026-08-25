@@ -18,7 +18,7 @@ const demoAccounts: DemoAccount[] = [
 
 export default function PmecDemoScreen() {
   const router = useRouter();
-  const { employee, signIn } = useEss();
+  const { completeOnboarding, employee, signIn } = useEss();
   const { setRole } = usePmecAccess();
   const { palette } = useLumen();
   const styles = useMemo(() => makeStyles(palette), [palette]);
@@ -39,6 +39,7 @@ export default function PmecDemoScreen() {
       return;
     }
     if (account.role === "employee") {
+      completeOnboarding();
       signIn(employee.employeeNumber, employee.pin);
       router.replace("/(tabs)");
       return;
