@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth, useSignIn } from "@clerk/expo";
 
@@ -17,6 +17,10 @@ export default function PmecDemoTicketScreen() {
   const attempted = useRef(false);
   const [state, setState] = useState<"working" | "error">("working");
   const [message, setMessage] = useState("Verifying your one-time PMEC demonstration access.");
+
+  useEffect(() => {
+    if (Platform.OS === "web" && token) window.history.replaceState({}, "", "/ess/demo-ticket");
+  }, [token]);
 
   useEffect(() => {
     if (!isLoaded || attempted.current) return;

@@ -8,6 +8,7 @@ describe("PMEC one-time demonstration access", () => {
     expect(source).toContain('signIn.create({ strategy: "ticket", ticket: token })');
     expect(source).toContain("signIn.finalize()");
     expect(source).toContain('router.replace("/ess/login")');
+    expect(source).toContain('window.history.replaceState({}, "", "/ess/demo-ticket")');
     expect(source).not.toContain("AsyncStorage");
   });
 });
