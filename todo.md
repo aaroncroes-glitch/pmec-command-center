@@ -125,4 +125,4 @@
 - [x] Verify the user-confirmed active pmec.group registration in the Vercel Domains dashboard.
 - [ ] Establish a production PMEC deployment target that supports the current Clerk, Neon, and server authorization runtime before routing public subdomains.
 - [x] Inspect the current PMEC Git state and safely prepare a GitHub repository for production source control.
-- [ ] Connect the production PMEC GitHub repository to a new Vercel project without routing public traffic to the legacy demo.
+- [x] Connect the production PMEC GitHub repository to a new Vercel project without routing public traffic to the legacy demo.
