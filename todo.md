@@ -152,3 +152,8 @@
 - [x] Build the admin interface and server-side membership mapping actions for real Production Clerk users.
 - [x] Display clear employee, Project Manager, and HR permission boundaries throughout the PMEC dashboards.
 - [x] Run authenticated delivery acceptance tests and verify unsigned payroll and delivery feedback states.
+- [ ] Define isolated PMEC dummy Employee, Project Manager, and HR demo identities with resettable credentials.
+- [ ] Provision dummy Production Clerk users and scoped Neon memberships without touching real personnel data.
+- [ ] Seed a self-contained PMEC demonstration delivery dataset for the three dummy roles.
+- [ ] Deploy and validate role-specific live showcase links and sign-in journeys.
+- [ ] Replace the employee workspace’s local-only demo PIN gate with a Clerk sign-in path for production-role demonstrations.
