@@ -126,3 +126,11 @@
 - [ ] Establish a production PMEC deployment target that supports the current Clerk, Neon, and server authorization runtime before routing public subdomains.
 - [x] Inspect the current PMEC Git state and safely prepare a GitHub repository for production source control.
 - [x] Connect the production PMEC GitHub repository to a new Vercel project without routing public traffic to the legacy demo.
+- [x] Create the Clerk production instance and configure portal.pmec.group as the PMEC primary application domain.
+- [x] Capture and apply the exact Clerk-issued DNS records for clerk.portal.pmec.group without committing secrets.
+- [ ] Verify Clerk SSL issuance, pull the production environment configuration safely, and set the live values in the production API and Vercel environments.
+- [ ] Configure production Google OAuth credentials and native application redirect allowlists if Google sign-in will be offered.
+- [ ] Add public PMEC privacy-policy and terms-of-service routes required for Google OAuth publication.
+- [x] Implement host-aware portal, HR, and Project Manager entry routing with server-enforced authorization preserved.
+- [x] Establish a Vercel-compatible production API deployment path before attaching public PMEC subdomains.
+- [x] Build PMEC privacy-policy and terms-of-service routes and validate their web rendering before publication.
