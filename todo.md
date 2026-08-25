@@ -148,3 +148,7 @@
 - [ ] Validate migrated delivery reads and writes locally and in Vercel Production before public-domain attachment.
 - [x] Re-run TypeScript and deterministic delivery-migration tests using the restricted Neon runtime credential.
 - [ ] Map real Clerk Production users to active Neon people and memberships before migrating any employee-linked legacy delivery records.
+- [x] Design the HR-admin production Clerk-to-Neon identity mapping workflow with least-privilege constraints.
+- [x] Build the admin interface and server-side membership mapping actions for real Production Clerk users.
+- [x] Display clear employee, Project Manager, and HR permission boundaries throughout the PMEC dashboards.
+- [x] Run authenticated delivery acceptance tests and verify unsigned payroll and delivery feedback states.

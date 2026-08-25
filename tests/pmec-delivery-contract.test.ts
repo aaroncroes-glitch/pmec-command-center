@@ -38,4 +38,14 @@ describe("PMEC shared delivery contract", () => {
     expect(deliveryRouter).toContain('const organizationTimeReadPermissions = ["time_log.approve_assigned", "time_log.read_organization"]');
     expect(deliveryRouter).not.toContain("people.read_organization");
   });
+
+  it("shows access boundaries in the employee and control-center dashboards while using a server-side Clerk principal", () => {
+    const employeeScreen = readFileSync(resolve(process.cwd(), "app/(tabs)/index.tsx"), "utf8");
+    const controlCenter = readFileSync(resolve(process.cwd(), "app/control-center/index.tsx"), "utf8");
+    expect(deliveryRouter).toContain("pmecAccess");
+    expect(deliveryRouter).toContain("resolvePmecClerkPrincipal(ctx.req)");
+    expect(employeeScreen).toContain("YOUR PMEC ACCESS · EMPLOYEE");
+    expect(controlCenter).toContain("ACCESS BOUNDARIES");
+    expect(controlCenter).toContain("Local role preview never expands server authority");
+  });
 });

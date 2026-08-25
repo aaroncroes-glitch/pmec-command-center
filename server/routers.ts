@@ -5,7 +5,8 @@ import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as delivery from "./pmec-delivery-store";
-import { assertPayrollReviewPermission, hasPmecPermission, resolvePmecClerkPrincipal, type PmecClerkPrincipal } from "./pmec-clerk-access";
+import * as identityAdmin from "./pmec-identity-admin";
+import { assertMembershipManagePermission, assertPayrollReviewPermission, hasPmecPermission, resolvePmecClerkPrincipal, type PmecClerkPrincipal } from "./pmec-clerk-access";
 
 const assignmentManagerPermissions = ["assignment.manage_assigned"];
 const organizationTimeReadPermissions = ["time_log.approve_assigned", "time_log.read_organization"];
@@ -54,6 +55,40 @@ export const appRouter = router({
         role: authorized.roles.includes("hr_manager") ? "hr_manager" : "authorized",
         permissions: authorized.permissions,
       };
+    }),
+  }),
+  pmecAccess: router({
+    me: publicProcedure.query(async ({ ctx }) => {
+      const principal = await resolvePmecClerkPrincipal(ctx.req);
+      return {
+        roles: principal.roles,
+        permissions: principal.permissions,
+        employeeScope: employeeScope(principal),
+      };
+    }),
+  }),
+  pmecIdentityAdmin: router({
+    overview: publicProcedure.query(async ({ ctx }) => {
+      const principal = assertMembershipManagePermission(await resolvePmecClerkPrincipal(ctx.req));
+      const [people, clerkUsers] = await Promise.all([
+        identityAdmin.listIdentityMappings(principal.organizationId),
+        identityAdmin.listProductionClerkUsers(),
+      ]);
+      return { people, clerkUsers };
+    }),
+    mapProductionUser: publicProcedure.input(z.object({
+      clerkUserId: z.string().min(1),
+      workEmail: z.string().email(),
+      firstName: z.string().min(1).max(120),
+      lastName: z.string().min(1).max(120),
+      preferredName: z.string().max(120).optional(),
+      department: z.string().min(1).max(120),
+      jobTitle: z.string().min(1).max(160),
+      legacyEmployeeId: z.string().max(96).optional(),
+      role: z.enum(identityAdmin.MAPPABLE_ROLES),
+    })).mutation(async ({ ctx, input }) => {
+      const principal = assertMembershipManagePermission(await resolvePmecClerkPrincipal(ctx.req));
+      return identityAdmin.mapProductionClerkUser(principal.organizationId, principal.personId, input);
     }),
   }),
   pmecDelivery: router({

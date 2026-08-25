@@ -4,6 +4,7 @@ import { TRPCError } from "@trpc/server";
 import type { IncomingMessage } from "http";
 
 export const PAYROLL_REVIEW_PERMISSION = "payroll.review";
+export const MEMBERSHIP_MANAGE_PERMISSION = "membership.manage";
 
 export type PmecClerkPrincipal = {
   clerkUserId: string;
@@ -28,6 +29,13 @@ export function hasPmecPermission(principal: Pick<PmecClerkPrincipal, "permissio
 export function assertPayrollReviewPermission(principal: PmecClerkPrincipal) {
   if (!hasPmecPermission(principal, PAYROLL_REVIEW_PERMISSION)) {
     throw new TRPCError({ code: "FORBIDDEN", message: "A verified HR payroll membership is required." });
+  }
+  return principal;
+}
+
+export function assertMembershipManagePermission(principal: PmecClerkPrincipal) {
+  if (!hasPmecPermission(principal, MEMBERSHIP_MANAGE_PERMISSION)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "A verified PMEC organization administrator membership is required." });
   }
   return principal;
 }
