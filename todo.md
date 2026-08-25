@@ -114,9 +114,9 @@
 - [x] Verify the confirmed PMEC Clerk sign-in appears in the linked development instance before granting payroll authority.
 - [x] Fix Clerk publishable-key propagation so the linked PMEC desktop route can initialize its authenticated session reliably.
 - [x] Recover the linked Clerk development configuration automatically through the authenticated CLI instead of requiring manual key entry.
-- [ ] Configure a Vercel-managed production custom domain for the PMEC app and Clerk authentication after the user supplies the target domain.
+- [x] Configure a Vercel-managed production custom domain for the PMEC app and Clerk authentication after the user supplies the target domain.
 - [ ] Check portal.pmec-group.com availability and attach it to the PMEC Vercel project if the connected account controls the domain.
-- [ ] Prepare Clerk production authentication-domain records and verify the portal.pmec-group.com cutover path.
+- [x] Prepare Clerk production authentication-domain records and verify the portal.pmec-group.com cutover path.
 - [x] Check and quote pmec.group registration through Vercel before any purchase.
 - [ ] Configure the PMEC production hostname plan: portal.pmec.group, hr.pmec.group, and pm.pmec.group.
 - [x] Register pmec.group through the approved one-year Vercel quote with auto-renew enabled.
@@ -161,3 +161,5 @@
 - [ ] Add a one-time Clerk ticket entry for isolated demo accounts while the production password sign-in endpoint is unavailable.
 - [x] Add a clearly labeled local-only PMEC showcase login that routes dummy Employee, PM, and HR credentials to existing isolated demonstration views without granting production API access.
 - [x] Ensure the local Employee showcase completes its first-run setup before routing to the Employee workspace.
+- [ ] Diagnose and safely remediate the Clerk Production password sign-in `internal_clerk_error` without weakening PMEC authorization.
+- [x] Attach `portal.pmec.group` to the authorized PMEC Vercel deployment and complete the corresponding Clerk Production domain validation.
