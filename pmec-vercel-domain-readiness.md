@@ -20,6 +20,20 @@ First, select the base domain and intended application hostname. Then attach tha
 
 Provide the exact PMEC domain or subdomain, for example `portal.pmec-group.com`. Once selected, the final Vercel and Clerk DNS records can be prepared and reviewed before any public cutover.
 
+## Current PMEC domain decision
+
+The approved target is `pmec.group`, with `portal.pmec.group` for the shared PMEC portal, `hr.pmec.group` for the HR workspace, and `pm.pmec.group` for project-manager access. The existing `pmec-control-center-demo-preview` Vercel project is ready but is a manual demonstration deployment; it must not receive production traffic until the production build, Clerk production instance, and database runtime configuration have been deliberately connected.
+
+`pmec.group` is now active and Vercel-managed, with Vercel CDN nameservers active and automatic renewal enabled. The Vercel team currently shows no PMEC project connected to a source repository and no project attached to the new domain, so assigning any of the public subdomains now would route to an unsuitable demo rather than the current authenticated PMEC runtime.
+
+Vercel’s MCP registration quote expired twice before order submission despite renewed confirmation. The next safe path is Vercel’s authenticated Domains dashboard, where the user can complete the registration directly and its purchase workflow can retain control of the payment and registration state.
+
+The previous Vercel project browser view became stale during the handoff, so the Domains dashboard will be reopened directly for the remaining registration workflow.
+
+After the user completed the registration manually, the shared automation browser no longer retained its Vercel session. The user-confirmed purchase therefore remains the source of truth until a read-only Vercel account query or a renewed browser session confirms the managed-domain entry.
+
+The Vercel browser session continues to reset to a blank page after automation handoffs. Direct browser routes can still be reopened when needed, but the remaining DNS configuration should be treated as a controlled user-dashboard action unless a stable interactive session is available.
+
 ## References
 
 [1] [Clerk: Deploying to production](https://clerk.com/docs/guides/development/deployment/production)

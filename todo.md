@@ -115,3 +115,14 @@
 - [x] Fix Clerk publishable-key propagation so the linked PMEC desktop route can initialize its authenticated session reliably.
 - [x] Recover the linked Clerk development configuration automatically through the authenticated CLI instead of requiring manual key entry.
 - [ ] Configure a Vercel-managed production custom domain for the PMEC app and Clerk authentication after the user supplies the target domain.
+- [ ] Check portal.pmec-group.com availability and attach it to the PMEC Vercel project if the connected account controls the domain.
+- [ ] Prepare Clerk production authentication-domain records and verify the portal.pmec-group.com cutover path.
+- [x] Check and quote pmec.group registration through Vercel before any purchase.
+- [ ] Configure the PMEC production hostname plan: portal.pmec.group, hr.pmec.group, and pm.pmec.group.
+- [x] Register pmec.group through the approved one-year Vercel quote with auto-renew enabled.
+- [x] Submit the approved pmec.group order with Aaron Croes’s supplied Aruba registrant contact details.
+- [x] Submit the renewed five-minute Vercel quote for pmec.group after explicit confirmation.
+- [x] Verify the user-confirmed active pmec.group registration in the Vercel Domains dashboard.
+- [ ] Establish a production PMEC deployment target that supports the current Clerk, Neon, and server authorization runtime before routing public subdomains.
+- [x] Inspect the current PMEC Git state and safely prepare a GitHub repository for production source control.
+- [ ] Connect the production PMEC GitHub repository to a new Vercel project without routing public traffic to the legacy demo.
