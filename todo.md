@@ -134,3 +134,4 @@
 - [x] Implement host-aware portal, HR, and Project Manager entry routing with server-enforced authorization preserved.
 - [x] Establish a Vercel-compatible production API deployment path before attaching public PMEC subdomains.
 - [x] Build PMEC privacy-policy and terms-of-service routes and validate their web rendering before publication.
+- [ ] Verify the redeployed Vercel serverless API health endpoint before assigning public PMEC domains.

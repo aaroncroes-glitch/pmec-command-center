@@ -138,6 +138,18 @@ Google requires an application home page, public privacy-policy link, and public
 
 The repository now includes `/privacy` and `/terms` public legal routes, host-aware client routing for `portal.pmec.group`, `hr.pmec.group`, and `pm.pmec.group`, and a Vercel catch-all API entry that exports the existing Express/tRPC application. Payroll authorization remains in the server router and its Neon/Clerk validation; hostname routing is only an additional interface boundary. Vercel’s production environment still needs the live Clerk and Neon values before a deployment can be tested.
 
+The validated production-readiness checkpoint has been pushed to the private `aaroncroes-glitch/pmec-command-center` repository and triggered a new Git deployment in Vercel. The Vercel connector’s deployment-list endpoint returns a permissions error, but the authenticated dashboard confirms the build is in progress.
+
+The browser session reset while monitoring that build. No deployment setting or domain assignment was changed by the reset.
+
+The Git deployment completed successfully and is marked Ready in Vercel. Its initial `/api/health` request, however, returned a serverless-function invocation error; no PMEC public domain has been attached while the runtime failure is investigated.
+
+The Vercel dashboard log view also reset the browser session before it returned the function stack trace, so runtime logs will be retrieved through an alternate Vercel project path or addressed through the stateless API bootstrap.
+
+The deployment-specific runtime-log view is now accessible and identifies the failing resource as `/api/[...path]`; log rows are still loading and have not yet provided the exception text.
+
+The runtime log identified a CommonJS `require()` failure for the ESM-only `jose` module inside the legacy session SDK. The SDK now loads `jose` lazily through a cached dynamic import, preserving the same session-signing and verification logic while allowing Vercel’s generated CommonJS function bundle to initialize. TypeScript and the complete deterministic suite pass after this correction; a new Git deployment must still prove `/api/health` at runtime.
+
 The existing Expo web export is static, while PMEC payroll authorization and operational data APIs are currently served by the Express/tRPC runtime. The three public hostnames must remain unattached until the API has a production-compatible deployment and `EXPO_PUBLIC_API_BASE_URL` points to its HTTPS endpoint. This prevents the new subdomains from exposing a non-functional interface or weakening the existing server-side authorization boundary.
 
 Vercel’s MCP registration quote expired twice before order submission despite renewed confirmation. The next safe path is Vercel’s authenticated Domains dashboard, where the user can complete the registration directly and its purchase workflow can retain control of the payment and registration state.

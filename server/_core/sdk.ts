@@ -3,7 +3,6 @@ import { ForbiddenError } from "../../shared/_core/errors.js";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
-import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { ENV } from "./env";
@@ -27,6 +26,12 @@ export type SessionPayload = {
 const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
 const GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
 const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfoWithJwt`;
+
+let joseModulePromise: Promise<typeof import("jose")> | null = null;
+const getJoseModule = () => {
+  joseModulePromise ??= import("jose");
+  return joseModulePromise;
+};
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
@@ -167,6 +172,7 @@ class SDKServer {
     const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
     const secretKey = this.getSessionSecret();
+    const { SignJWT } = await getJoseModule();
 
     return new SignJWT({
       openId: payload.openId,
@@ -188,6 +194,7 @@ class SDKServer {
 
     try {
       const secretKey = this.getSessionSecret();
+      const { jwtVerify } = await getJoseModule();
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
