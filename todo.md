@@ -152,12 +152,12 @@
 - [x] Build the admin interface and server-side membership mapping actions for real Production Clerk users.
 - [x] Display clear employee, Project Manager, and HR permission boundaries throughout the PMEC dashboards.
 - [x] Run authenticated delivery acceptance tests and verify unsigned payroll and delivery feedback states.
-- [ ] Define isolated PMEC dummy Employee, Project Manager, and HR demo identities with resettable credentials.
-- [ ] Provision dummy Production Clerk users and scoped Neon memberships without touching real personnel data.
-- [ ] Seed a self-contained PMEC demonstration delivery dataset for the three dummy roles.
+- [x] Define isolated PMEC dummy Employee, Project Manager, and HR demo identities with resettable credentials.
+- [x] Provision dummy Production Clerk users and scoped Neon memberships without touching real personnel data.
+- [x] Seed a self-contained PMEC demonstration delivery dataset for the three dummy roles.
 - [ ] Deploy and validate role-specific live showcase links and sign-in journeys.
 - [ ] Replace the employee workspace’s local-only demo PIN gate with a Clerk sign-in path for production-role demonstrations.
 - [ ] Route the Expo web Clerk frontend proxy path through the PMEC Vercel deployment so dummy-role sign-in requests do not fail closed with HTTP 405.
 - [ ] Add a one-time Clerk ticket entry for isolated demo accounts while the production password sign-in endpoint is unavailable.
-- [ ] Add a clearly labeled local-only PMEC showcase login that routes dummy Employee, PM, and HR credentials to existing isolated demonstration views without granting production API access.
-- [ ] Ensure the local Employee showcase completes its first-run setup before routing to the Employee workspace.
+- [x] Add a clearly labeled local-only PMEC showcase login that routes dummy Employee, PM, and HR credentials to existing isolated demonstration views without granting production API access.
+- [x] Ensure the local Employee showcase completes its first-run setup before routing to the Employee workspace.
