@@ -4,6 +4,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
+import { ClerkProvider } from "@clerk/expo";
+import { tokenCache } from "@clerk/expo/token-cache";
 
 import { REMINDER_DONE_ACTION, LumenReminderProvider } from "@/lib/lumen-reminders";
 import { EssWorkspaceProvider } from "@/lib/ess-workspace";
@@ -12,7 +15,8 @@ import { PmecJobOrderWorkspaceProvider } from "@/lib/pmec-job-order-workspace";
 import { PmecControlWorkspaceProvider } from "@/lib/pmec-control-workspace";
 import { PmecDeliverySyncProvider } from "@/lib/pmec-delivery-sync";
 import { PmecAccessProvider } from "@/lib/pmec-access";
-import { TrpcProvider } from "@/lib/trpc-provider";
+import { ClerkTrpcProvider, TrpcProvider } from "@/lib/trpc-provider";
+import { hasUsableClerkPublishableKey } from "@/lib/pmec-clerk-config";
 
 function NotificationObserver() {
   const router = useRouter();
@@ -35,5 +39,9 @@ function NotificationObserver() {
 }
 
 export default function RootLayout() {
-  return <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><TrpcProvider><LumenWorkspaceProvider><EssWorkspaceProvider><PmecDeliverySyncProvider><PmecJobOrderWorkspaceProvider><PmecAccessProvider><PmecControlWorkspaceProvider><LumenReminderProvider><NotificationObserver /><Stack screenOptions={{ headerShown: false, animation: "fade" }}><Stack.Screen name="(tabs)" /><Stack.Screen name="admin" /><Stack.Screen name="control-center" /><Stack.Screen name="job-orders" /><Stack.Screen name="assigned-work" /><Stack.Screen name="notifications" /><Stack.Screen name="ess/onboarding" /><Stack.Screen name="ess/login" /><Stack.Screen name="attendance" /><Stack.Screen name="work-project/[id]" /><Stack.Screen name="leave" /><Stack.Screen name="payslips" /><Stack.Screen name="analytics" /><Stack.Screen name="activity" /><Stack.Screen name="personal-calendar" /><Stack.Screen name="profile" /><Stack.Screen name="project/[id]" /></Stack></LumenReminderProvider></PmecControlWorkspaceProvider></PmecAccessProvider></PmecJobOrderWorkspaceProvider></PmecDeliverySyncProvider></EssWorkspaceProvider></LumenWorkspaceProvider></TrpcProvider></SafeAreaProvider></GestureHandlerRootView>;
+  const app = <GestureHandlerRootView style={{ flex: 1 }}><SafeAreaProvider><LumenWorkspaceProvider><EssWorkspaceProvider><PmecDeliverySyncProvider><PmecJobOrderWorkspaceProvider><PmecAccessProvider><PmecControlWorkspaceProvider><LumenReminderProvider><NotificationObserver /><Stack screenOptions={{ headerShown: false, animation: "fade" }}><Stack.Screen name="(tabs)" /><Stack.Screen name="admin" /><Stack.Screen name="control-center" /><Stack.Screen name="job-orders" /><Stack.Screen name="assigned-work" /><Stack.Screen name="notifications" /><Stack.Screen name="ess/onboarding" /><Stack.Screen name="ess/login" /><Stack.Screen name="attendance" /><Stack.Screen name="work-project/[id]" /><Stack.Screen name="leave" /><Stack.Screen name="payslips" /><Stack.Screen name="analytics" /><Stack.Screen name="activity" /><Stack.Screen name="personal-calendar" /><Stack.Screen name="profile" /><Stack.Screen name="project/[id]" /></Stack></LumenReminderProvider></PmecControlWorkspaceProvider></PmecAccessProvider></PmecJobOrderWorkspaceProvider></PmecDeliverySyncProvider></EssWorkspaceProvider></LumenWorkspaceProvider></SafeAreaProvider></GestureHandlerRootView>;
+  const runtimePublishableKey = Constants.expoConfig?.extra?.clerkPublishableKey;
+  const injectedPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const publishableKey = hasUsableClerkPublishableKey(runtimePublishableKey) ? runtimePublishableKey : injectedPublishableKey;
+  return hasUsableClerkPublishableKey(publishableKey) ? <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}><ClerkTrpcProvider>{app}</ClerkTrpcProvider></ClerkProvider> : <TrpcProvider>{app}</TrpcProvider>;
 }

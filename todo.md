@@ -102,3 +102,16 @@
 - [x] Design the HR-only payroll workspace, payroll-period workflow, and safe demonstration data boundaries.
 - [x] Implement the PMEC-branded HR payroll module and role-scoped navigation.
 - [x] Validate payroll calculations, HR-only access, and module interactions, then save a checkpoint.
+- [x] Assess Clerk/Neon credentials, current auth architecture, and production role-enforcement boundaries.
+- [x] Implement server-enforced PMEC role authorization with HR-only payroll access.
+- [x] Add a detailed HR payroll tax and deduction calculation modal.
+- [x] Validate Clerk/Neon persistence, HR payroll restrictions, and calculation-modal interactions, then save a checkpoint.
+- [x] Link the existing PMEC Expo workspace to Clerk application app_3INwedCYPv5crlAJogNCpKWJy0n through the Clerk CLI.
+- [x] Validate the linked Clerk publishable key, sign-in controls, and active HR membership mapping.
+- [x] Link aaroncroes@raiaaruba.com to an active Neon HR-manager membership with the payroll-review permission.
+- [x] Map Clerk user_3IO6MJn5mivgfqoF62PBisNV2f4 to Aaron Croes’s active HR-manager payroll membership in Neon.
+- [x] Resolve the Clerk subject created by Aaron Croes’s confirmed PMEC sign-in and attach the HR payroll role to that active instance identity.
+- [x] Verify the confirmed PMEC Clerk sign-in appears in the linked development instance before granting payroll authority.
+- [x] Fix Clerk publishable-key propagation so the linked PMEC desktop route can initialize its authenticated session reliably.
+- [x] Recover the linked Clerk development configuration automatically through the authenticated CLI instead of requiring manual key entry.
+- [ ] Configure a Vercel-managed production custom domain for the PMEC app and Clerk authentication after the user supplies the target domain.

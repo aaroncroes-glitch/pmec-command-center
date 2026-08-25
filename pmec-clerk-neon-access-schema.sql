@@ -102,6 +102,7 @@ INSERT INTO pmec.role_permissions (role, permission) VALUES
   ('hr_manager', 'leave.review_organization'),
   ('hr_manager', 'capacity.read_hr'),
   ('hr_manager', 'time_log.read_organization'),
+  ('hr_manager', 'payroll.review'),
   ('organization_admin', 'membership.invite_employee'),
   ('organization_admin', 'membership.manage'),
   ('organization_admin', 'audit.read')

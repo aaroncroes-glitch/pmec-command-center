@@ -42,6 +42,9 @@ const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
   version: "1.0.0",
+  extra: {
+    clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "",
+  },
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
@@ -86,6 +89,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    "@clerk/expo",
     [
       "expo-notifications",
       {

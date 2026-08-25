@@ -1,0 +1,4 @@
+{
+  "projectId": "bitter-silence-66821640",
+  "sql": "INSERT INTO pmec.organizations (slug, legal_name, display_name, timezone) VALUES ('pmec', 'PMEC Group', 'PMEC Command Center', 'America/Aruba') ON CONFLICT (slug) DO UPDATE SET legal_name = EXCLUDED.legal_name, display_name = EXCLUDED.display_name, timezone = EXCLUDED.timezone, updated_at = now() RETURNING id, slug, display_name"
+}

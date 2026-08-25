@@ -10,28 +10,33 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const envPath = path.resolve(process.cwd(), ".env");
+const envPaths = [".env", ".env.local"].map((name) => path.resolve(process.cwd(), name));
+const isUsableClerkPublishableKey = (value) => {
+  const match = value?.match(/^pk_(?:test|live)_([A-Za-z0-9_-]+)$/);
+  if (!match) return false;
+  try {
+    const normalized = match[1].replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(match[1].length / 4) * 4, "=");
+    return Buffer.from(normalized, "base64").toString("utf8").includes("clerk");
+  } catch {
+    return false;
+  }
+};
 
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, "utf8");
-  const lines = envContent.split("\n");
+envPaths.forEach((envPath) => {
+  if (!fs.existsSync(envPath)) return;
+  const lines = fs.readFileSync(envPath, "utf8").split("\n");
 
   lines.forEach((line) => {
-    // Skip comments and empty lines
     if (!line || line.trim().startsWith("#")) return;
-
     const match = line.match(/^([^=]+)=(.*)$/);
-    if (match) {
-      const key = match[1].trim();
-      const value = match[2].trim().replace(/^["']|["']$/g, ""); // Remove quotes
+    if (!match) return;
 
-      // Only set if not already defined in environment
-      if (!process.env[key]) {
-        process.env[key] = value;
-      }
-    }
+    const key = match[1].trim();
+    const value = match[2].trim().replace(/^["']|["']$/g, "");
+    const replaceMalformedClerkKey = key === "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY" && !isUsableClerkPublishableKey(process.env[key]);
+    if (!process.env[key] || replaceMalformedClerkKey) process.env[key] = value;
   });
-}
+});
 
 // Map system variables to Expo public variables
 const mappings = {

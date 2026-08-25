@@ -14,6 +14,13 @@ import * as Auth from "@/lib/_core/auth";
  */
 export const trpc = createTRPCReact<AppRouter>();
 
+type ClerkTokenGetter = () => Promise<string | null>;
+let clerkTokenGetter: ClerkTokenGetter | null = null;
+
+export function setClerkTokenGetter(getter: ClerkTokenGetter | null) {
+  clerkTokenGetter = getter;
+}
+
 /**
  * Creates the tRPC client with proper configuration.
  * Call this once in your app's root layout.
@@ -26,6 +33,8 @@ export function createTRPCClient() {
         // tRPC v11: transformer MUST be inside httpBatchLink, not at root
         transformer: superjson,
         async headers() {
+          const clerkToken = clerkTokenGetter ? await clerkTokenGetter() : null;
+          if (clerkToken) return { Authorization: `Bearer ${clerkToken}` };
           const token = await Auth.getSessionToken();
           return token ? { Authorization: `Bearer ${token}` } : {};
         },
