@@ -157,3 +157,4 @@
 - [ ] Seed a self-contained PMEC demonstration delivery dataset for the three dummy roles.
 - [ ] Deploy and validate role-specific live showcase links and sign-in journeys.
 - [ ] Replace the employee workspace’s local-only demo PIN gate with a Clerk sign-in path for production-role demonstrations.
+- [ ] Route the Expo web Clerk frontend proxy path through the PMEC Vercel deployment so dummy-role sign-in requests do not fail closed with HTTP 405.

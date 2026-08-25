@@ -5,6 +5,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/__clerk/:path*",
+      "destination": "https://clerk.portal.pmec.group/:path*"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/[...path]"
     },
