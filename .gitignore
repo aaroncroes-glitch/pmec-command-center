@@ -32,6 +32,8 @@ yarn-error.*
 
 # local env files
 .env*.local
+.clerk-production.tmp
+.pmec-vercel-production-import.txt
 
 # typescript
 *.tsbuildinfo

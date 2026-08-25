@@ -128,10 +128,23 @@
 - [x] Connect the production PMEC GitHub repository to a new Vercel project without routing public traffic to the legacy demo.
 - [x] Create the Clerk production instance and configure portal.pmec.group as the PMEC primary application domain.
 - [x] Capture and apply the exact Clerk-issued DNS records for clerk.portal.pmec.group without committing secrets.
-- [ ] Verify Clerk SSL issuance, pull the production environment configuration safely, and set the live values in the production API and Vercel environments.
+- [x] Verify Clerk SSL issuance, pull the production environment configuration safely, and set the live values in the production API and Vercel environments.
 - [ ] Configure production Google OAuth credentials and native application redirect allowlists if Google sign-in will be offered.
-- [ ] Add public PMEC privacy-policy and terms-of-service routes required for Google OAuth publication.
+- [x] Add public PMEC privacy-policy and terms-of-service routes required for Google OAuth publication.
 - [x] Implement host-aware portal, HR, and Project Manager entry routing with server-enforced authorization preserved.
 - [x] Establish a Vercel-compatible production API deployment path before attaching public PMEC subdomains.
 - [x] Build PMEC privacy-policy and terms-of-service routes and validate their web rendering before publication.
-- [ ] Verify the redeployed Vercel serverless API health endpoint before assigning public PMEC domains.
+- [x] Verify the redeployed Vercel serverless API health endpoint before assigning public PMEC domains.
+- [x] Retrieve the authenticated PMEC live Clerk and Neon configuration securely and apply it to the production environment without exposing values.
+- [x] Revoke all Clerk keys rendered by automation, retain only the untouched default key, and invalidate transient handoff material; browser-visible key creation is now prohibited for this rollout.
+- [x] Validate the expected Neon environment-variable key, rotate the exposed owner credential to a restricted runtime role, and securely store the replacement in Vercel Production.
+- [x] Replace the stale Clerk and Neon Vercel values through a one-time non-rendering, origin-restricted handoff; do not use the browser environment-variable form for protected values.
+- [x] Revoke the newly rendered Clerk replacement keys and prevent their use in any deployment.
+- [ ] Establish a Vercel-reachable managed MySQL delivery data service that preserves the existing PMEC delivery schema and data ownership; the current live read endpoint otherwise returns an empty fallback without `DATABASE_URL`.
+- [ ] Validate real assignments, time logs, notifications, and write-path authorization against the production delivery data service before attaching portal.pmec.group, hr.pmec.group, or pm.pmec.group.
+- [x] Map the existing PMEC MySQL delivery tables and data contract to Neon while preserving MySQL as a legacy/reference system.
+- [x] Create Neon tables, indexes, and least-privilege runtime grants for PMEC assignments, time logs, notifications, and notification preferences.
+- [x] Replace the MySQL-only PMEC delivery repository with a Neon-backed implementation and enforce server-side delivery authorization.
+- [ ] Validate migrated delivery reads and writes locally and in Vercel Production before public-domain attachment.
+- [x] Re-run TypeScript and deterministic delivery-migration tests using the restricted Neon runtime credential.
+- [ ] Map real Clerk Production users to active Neon people and memberships before migrating any employee-linked legacy delivery records.

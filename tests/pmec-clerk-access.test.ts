@@ -7,6 +7,8 @@ import type { TrpcContext } from "../server/_core/context";
 const principal = (permissions: string[]): PmecClerkPrincipal => ({
   clerkUserId: "user_test",
   personId: "person_test",
+  organizationId: "organization_test",
+  legacyEmployeeId: "employee_test",
   roles: permissions.includes("payroll.review") ? ["hr_manager"] : ["project_manager"],
   permissions,
 });

@@ -8,6 +8,8 @@ export const PAYROLL_REVIEW_PERMISSION = "payroll.review";
 export type PmecClerkPrincipal = {
   clerkUserId: string;
   personId: string;
+  organizationId: string;
+  legacyEmployeeId: string | null;
   roles: string[];
   permissions: string[];
 };
@@ -53,14 +55,14 @@ export async function resolvePmecClerkPrincipal(req: IncomingMessage): Promise<P
   try {
     const sql = neon(connectionString);
     const rows = await sql.query(
-      `SELECT p.id AS person_id, m.role::text AS role, rp.permission
+      `SELECT p.id AS person_id, p.legacy_employee_id, m.organization_id, m.role::text AS role, rp.permission
        FROM pmec.auth_identities ai
        JOIN pmec.people p ON p.id = ai.person_id AND p.active
        JOIN pmec.memberships m ON m.person_id = p.id AND m.status = 'active'
        JOIN pmec.role_permissions rp ON rp.role = m.role
        WHERE ai.provider = 'clerk' AND ai.external_subject = $1`,
       [clerkUserId],
-    ) as Array<{ person_id: string; role: string; permission: string }>;
+    ) as Array<{ person_id: string; legacy_employee_id: string | null; organization_id: string; role: string; permission: string }>;
 
     if (rows.length === 0) {
       throw new TRPCError({ code: "FORBIDDEN", message: "No active PMEC membership is linked to this Clerk account." });
@@ -69,6 +71,8 @@ export async function resolvePmecClerkPrincipal(req: IncomingMessage): Promise<P
     return {
       clerkUserId,
       personId: rows[0]!.person_id,
+      organizationId: rows[0]!.organization_id,
+      legacyEmployeeId: rows[0]!.legacy_employee_id,
       roles: [...new Set(rows.map((row) => row.role))],
       permissions: [...new Set(rows.map((row) => row.permission))],
     };

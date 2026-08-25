@@ -150,6 +150,134 @@ The deployment-specific runtime-log view is now accessible and identifies the fa
 
 The runtime log identified a CommonJS `require()` failure for the ESM-only `jose` module inside the legacy session SDK. The SDK now loads `jose` lazily through a cached dynamic import, preserving the same session-signing and verification logic while allowing Vercel’s generated CommonJS function bundle to initialize. TypeScript and the complete deterministic suite pass after this correction; a new Git deployment must still prove `/api/health` at runtime.
 
+The corrected commit has been pushed and triggered a new Vercel production deployment. The browser reset while that deployment was building; no domain, environment, or deployment setting was changed.
+
+The corrected deployment URL is reachable but remains in Vercel’s build stage, so its API health endpoint cannot yet be validated.
+
+The corrected deployment now returns a successful `/api/health` response. Accessing Vercel’s Environment Variables settings redirected the sandbox browser to Vercel login, so production-variable entry is paused pending restoration of the authenticated browser session.
+
+The authenticated Vercel environment settings are now available. Vercel supports importing a `.env` file directly into the Production environment, allowing a purpose-built handoff file containing only PMEC’s required live Clerk and Neon values to be entered without printing secrets in chat or source control.
+
+The authenticated Clerk CLI has retrieved the live production Clerk keys into a private local handoff file, and the PMEC Neon access-control URL has been combined into a second private, ignored import file. No value has been printed or committed. Vercel’s import control is open and awaiting secure file selection.
+
+The Vercel import dialog exposes a file input, but the browser uploader could not bind to the dialog and reset the browser session. The retrieved production configuration remains in private local handoff files while an alternate secure entry method is used.
+
+An alternate clipboard-assisted entry method was prepared without exposing configuration values, but the Vercel browser session again reset to its login state before the paste could occur.
+
+The authenticated Vercel session subsequently recovered and returned to the Production environment form. The scope remains set to Production; at that point the dashboard reported no saved project environment variables.
+
+The authenticated form remains available. The automated clipboard shortcut is translated to a platform shortcut that does not paste the private import file; only a stray literal key entered in the empty key field, and no configuration value was exposed or saved.
+
+A browser clipboard-read attempt timed out without transferring data. Vercel still reports no saved project environment variables, and the displayed key field contains only the non-sensitive stray character; no secret was entered or persisted.
+
+The browser cannot reach the sandbox’s loopback network, so the local-only secure handoff bridge timed out. Its response was never received by Vercel; no value was transferred or saved.
+
+Because an uncommitted Clerk secret appeared in a browser inspection, the production instance’s key-rotation workflow was initiated. A replacement key was created with a dedicated Vercel-production name, while the pre-existing key remains active until Vercel has been redeployed and verified with the replacement.
+
+The Clerk verification code was completed by the account holder. The new dedicated Vercel-production secret key was created and copied into the protected browser clipboard; its value was not displayed or committed. The exposed predecessor remains active solely to support the documented zero-downtime verification sequence.
+
+The Vercel page requests clipboard-read permission, but the automated read did not resolve within the browser-operation timeout. No rotated key value was transferred or saved in Vercel through that path.
+
+The Vercel Production form has been reopened with `CLERK_SECRET_KEY` selected as a Secret-type variable. The replacement value is still pending a secure in-browser transfer, and no variable has been saved.
+
+The new key was moved through a short-lived in-browser handoff with its shape and length validated only; the value itself was not returned, printed, or committed. It is ready to be inserted into Vercel’s pending Secret-type Production variable and immediately cleared from the handoff.
+
+The replacement key was inserted into Vercel as `CLERK_SECRET_KEY` with Secret protection. The temporary browser handoff was cleared immediately after insertion; the Vercel form has not yet been saved.
+
+A second Vercel Production variable row has been prepared for `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`. The protected replacement secret remains present in the unsaved form.
+
+The unsaved Vercel form containing the rendered replacement was explicitly discarded. Vercel again reports no saved project environment variables.
+
+The rendered replacement key remains listed in Clerk but has never been placed in Vercel. Its deletion is pending a refreshed dashboard interaction; the original key remains active solely to avoid service interruption until a final clean replacement is deployed and verified.
+
+Clerk’s confirmation dialog is now open for the exposed replacement key. Although Clerk records a recent use timestamp, the key was never saved to Vercel or deployed by PMEC; it will be deleted before the final clean key is generated.
+
+The exposed, unused replacement key has been deleted from Clerk. Only the original production key remains active while the final clean Vercel-specific replacement is created and safely deployed.
+
+Creation of the final clean Vercel-specific production key has been requested. Its value will not be rendered through browser inspection; after Clerk’s account verification, it will be moved directly into Vercel through the controlled non-rendering handoff.
+
+Clerk created the final named Vercel-production key. A non-rendering copy control is available, and the next step is to transfer that value directly to Vercel without a page inspection that could display it.
+
+The final clean key was validated only by shape and moved to a transient in-browser handoff. Vercel’s empty Production environment form is open and ready for the non-rendering insertion; no value has been saved.
+
+The final clean key was inserted in Vercel as the protected `CLERK_SECRET_KEY` and its transient handoff was cleared. A second row has been added for the Clerk publishable key; the Vercel form remains unsaved.
+
+The Vercel Production form now prepares `CLERK_SECRET_KEY`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`, and `NEON_DATABASE_URL`. The Neon value was retrieved through the connected PMEC Neon project and inserted through a private clipboard transfer; no value has been printed or saved yet.
+
+Vercel received the verified three-variable Production configuration. The request was submitted only after confirming all three names, values present, and expected key/connection formats without exposing any value; the dashboard is now being checked for persisted variable names and the required redeployment.
+
+Vercel correctly rejected the mixed form because `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` cannot use Secret visibility. The final configuration will be stored safely in two stages: protected Secret variables for `CLERK_SECRET_KEY` and `NEON_DATABASE_URL`, followed by a Config-variable entry for the public publishable key.
+
+The final clean Clerk secret was preserved only in a transient browser handoff before closing the invalid mixed-visibility form. The form is being discarded so no invalid or exposed variable is saved; the handoff will be cleared once the corrected Secret-only submission is complete.
+
+The invalid form was discarded, and a new Vercel Production environment form is open for the corrected Secret-only submission. No project variable is currently saved.
+
+The corrected form now contains only `CLERK_SECRET_KEY` and `NEON_DATABASE_URL`, each with a present value and the expected non-sensitive format check. The final Clerk handoff has been cleared; the verified Secret-only submission is ready to save.
+
+The Secret-only form was submitted, but Vercel has not yet transitioned back to the variable list. The form remains open, so its non-sensitive validation state is being diagnosed before any retry.
+
+Vercel reported that no variables were created, which indicates the earlier programmatic field updates did not reach its managed form state. A browser-clipboard retry timed out on permission handling and did not submit data; the next step is a controlled React-compatible input event using the values already present in the unsaved form.
+
+The values were committed through native React-compatible input and change events, then the corrected Secret-only form was resubmitted. Vercel’s persisted list is now being checked by variable name only.
+
+Vercel continued to report no created variables after the first compatible commit. A second non-rendering commit refreshed the framework’s internal value trackers for both protected rows; the current form still contains the expected names and value lengths and is ready for one final save retry.
+
+The tracker-based save retry also returned Vercel’s non-sensitive “No environment variables were created” response. No protected values were saved or exposed. The remaining safe diagnostic is to invoke the form’s own managed change handlers rather than only manipulating DOM inputs.
+
+The form exposes its managed change handlers for both variable names and values. Those handlers have now been invoked directly with the existing protected field instances; the final Secret-only submission can be retried without exposing any value.
+
+Vercel again returned “No environment variables were created” after its managed handlers were invoked. The browser form cannot safely accept programmatic secret insertion in this session, so the secure fallback is to use the authenticated Vercel CLI with the already linked PMEC project rather than repeating the browser action.
+
+The final Clerk key was never saved to Vercel or used by the deployment, but browser output rendered it during the failed form attempt. Clerk’s deletion confirmation is open and will remove this unused key before a clean replacement is generated through a non-rendering path.
+
+The deletion request for the unused exposed Clerk key has been submitted. The final Production credential will not be regenerated until its removal is confirmed and a non-rendering Vercel configuration path is available.
+
+Clerk requires a fresh email verification code before it will complete deletion of the exposed unused key. The verification dialog is open; no replacement key will be created until this revocation succeeds.
+
+After the user completed Clerk verification, the exposed unused key was removed. The PMEC Neon access-control schema was also verified; the runtime authorization query requires read access only to `pmec.auth_identities`, `pmec.people`, `pmec.memberships`, and `pmec.role_permissions`. A fresh least-privilege Neon role will replace the exposed owner-level connection credential.
+
+The Neon containment work is complete. A new `pmec_runtime_20260825` role has read-only access to the authorization tables required by the payroll check, with no insert, update, or delete rights. The former owner-level connection was invalidated successfully, and the replacement runtime connection has been retained only as a private transient handoff.
+
+Vercel’s project variable list confirms that `CLERK_SECRET_KEY` and `NEON_DATABASE_URL` were persisted despite the form’s misleading “No environment variables were created” toast. Those entries now hold invalidated credentials and must be replaced before any redeployment. The authenticated dashboard’s non-rendering API route is available at `/api/v9/projects/pmec-command-center/env`, so the clean replacement will be applied by direct authenticated request rather than through the browser form.
+
+The authenticated Vercel API returned non-sensitive IDs for the two stale Secret variables, and the official edit contract supports `PATCH /v9/projects/{idOrName}/env/{id}`. Clerk now lists only its untouched default key, so a clean Vercel-specific replacement can be created and transferred directly to the authenticated Vercel API without reopening the variable form.
+
+The browser reset to a blank page while opening Clerk’s replacement-key dialog. No key was created and no credential changed; the authenticated Clerk page will be reopened before continuing the clean direct-API handoff.
+
+The authenticated Clerk page was restored and the new-key dialog is open. The replacement will be named for Vercel’s direct API handoff and will not be rendered in a browser page or form after creation.
+
+The clean Vercel-specific key creation request has been submitted. The next step is to complete any Clerk verification requirement, then move the generated key straight into the authenticated Vercel API request without returning it in a browser result.
+
+The browser tool rendered the newly created key despite the planned direct handoff, so it is not safe to use. Its deletion confirmation is open and will revoke it immediately; no further browser-based key generation will be attempted in this task.
+
+The second rendered key’s revocation request has been submitted. Clerk may require an email verification code before completing the deletion; the app remains intentionally undeployed with no PMEC subdomains attached.
+
+The additional rendered key has been revoked; Clerk again lists only the untouched default key. Browser-visible key creation is now prohibited for this rollout. A future replacement must be created and handed to Vercel through a non-rendering API-level process, otherwise the public-domain rollout remains paused.
+
+The most recent key is confirmed revoked, leaving only the pre-existing default Clerk key. An authenticated Dashboard API path for Clerk key management is being evaluated by metadata and header contract only; no dashboard session token or key value has been exported.
+
+Vercel’s same-origin direct API successfully created the plain Production `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`. Its two existing sensitive variable records remain in place, with `visibility: secret`, but the first replacement `PATCH` returned HTTP 400. The metadata confirms the records’ stable IDs and target, so the next safe step is to refine the API payload against the dashboard’s own edit request rather than using the rendered form.
+
+Vercel’s validation response confirms that a Sensitive Environment Variable’s key cannot be changed. The existing records already have the required names, so the corrected direct request will update their values only, retaining the existing key, type, visibility, and target.
+
+The corrected value-only updates returned HTTP 200 for both Production Secret records. Metadata confirms all three required variable names are present: `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` is plain, while `CLERK_SECRET_KEY` and `NEON_DATABASE_URL` remain protected Sensitive/Secret records. Vercel appropriately does not return protected values in the metadata response; the successful update responses are the verification. A new Production deployment can now consume the clean configuration.
+
+The latest Production deployment is the corrected jose runtime import from `main` (`3f87184`). Its deployment actions will be used to trigger a configuration-only redeploy; no new source commit is needed.
+
+After a transient browser reset, the authenticated Vercel deployment page was restored. The latest ready Production deployment remains `422J4hzNht3XghTffD12VG9xBWwc` for commit `3f87184` and is queued for a configuration-only redeploy.
+
+The latest deployment’s action menu exposes the expected Redeploy action. The browser’s menu-item wrapper did not persist the selection, so the dashboard’s native Redeploy handler will be invoked instead; this remains a source-preserving configuration-only redeploy.
+
+The Vercel deployment-create API accepted the authenticated request path but rejected the dashboard URL identifier as `deployment_not_found`. The deployment’s canonical API identifier will be retrieved from metadata before retrying; no new deployment was created.
+
+Vercel metadata resolved the canonical deployment ID, and a forced Production redeploy was successfully created. The new deployment is `dpl_5uudWzSmCX4JNyN97HCrFiQdrnf5` at `pmec-command-center-8euhkym2z-aaron-croes-projects.vercel.app`, initially in `INITIALIZING`; it is the first build configured to consume the clean Clerk key, restricted Neon runtime credential, and public Clerk key.
+
+The new deployment progressed to `BUILDING`. A stale dashboard confirmation dialog was dismissed to prevent a duplicate redeploy; only the authenticated API-created deployment remains active.
+
+The deployment remains in `BUILDING` after two status checks and has not reported an error. The build will continue to be monitored before any live API or domain action is taken.
+
+The new Production deployment reached `READY`. Its `/api/health` endpoint returns `ok: true`, and an unauthenticated request to `pmecPayroll.access` returns a clean `401 UNAUTHORIZED` Clerk sign-in requirement rather than payroll data or a server error. This verifies the deployed payroll route fails closed for unsigned callers.
+
 The existing Expo web export is static, while PMEC payroll authorization and operational data APIs are currently served by the Express/tRPC runtime. The three public hostnames must remain unattached until the API has a production-compatible deployment and `EXPO_PUBLIC_API_BASE_URL` points to its HTTPS endpoint. This prevents the new subdomains from exposing a non-functional interface or weakening the existing server-side authorization boundary.
 
 Vercel’s MCP registration quote expired twice before order submission despite renewed confirmation. The next safe path is Vercel’s authenticated Domains dashboard, where the user can complete the registration directly and its purchase workflow can retain control of the payment and registration state.
@@ -159,6 +287,10 @@ The previous Vercel project browser view became stale during the handoff, so the
 After the user completed the registration manually, the shared automation browser no longer retained its Vercel session. The user-confirmed purchase therefore remains the source of truth until a read-only Vercel account query or a renewed browser session confirms the managed-domain entry.
 
 The Vercel browser session continues to reset to a blank page after automation handoffs. Direct browser routes can still be reopened when needed, but the remaining DNS configuration should be treated as a controlled user-dashboard action unless a stable interactive session is available.
+
+## Approved Neon delivery migration
+
+The approved migration retains legacy MySQL as a separate reference system and creates a Vercel-reachable Neon source of truth for PMEC Command Center delivery operations. The `pmec.delivery_assignments`, `pmec.delivery_time_logs`, `pmec.delivery_notifications`, and `pmec.delivery_notification_preferences` tables now exist with organization scoping, integrity checks, and read-path indexes. The least-privilege `pmec_runtime_20260825` role was verified to hold only the required delivery read/write privileges, while the existing payroll authorization lookup remains read-only and server-enforced.
 
 ## References
 

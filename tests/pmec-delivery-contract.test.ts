@@ -1,8 +1,12 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { getTableColumns } from "drizzle-orm";
 
 import { pmecAssignments, pmecNotificationPreferences, pmecNotifications, pmecTimeLogs } from "../drizzle/schema";
 import { roleCan } from "../lib/pmec-access";
+
+const deliveryRouter = readFileSync(resolve(process.cwd(), "server/routers.ts"), "utf8");
 
 describe("PMEC shared delivery contract", () => {
   it("stores assignment identity, employee routing, and delivery progress", () => {
@@ -27,5 +31,11 @@ describe("PMEC shared delivery contract", () => {
     expect(roleCan("hr", "people")).toBe(true);
     expect(roleCan("hr", "hoursApprove")).toBe(false);
     expect(roleCan("hr", "hrPlanning")).toBe(true);
+  });
+
+  it("keeps server-side assignment writes PM-only while HR receives only organization time-log read access", () => {
+    expect(deliveryRouter).toContain('const assignmentManagerPermissions = ["assignment.manage_assigned"]');
+    expect(deliveryRouter).toContain('const organizationTimeReadPermissions = ["time_log.approve_assigned", "time_log.read_organization"]');
+    expect(deliveryRouter).not.toContain("people.read_organization");
   });
 });
