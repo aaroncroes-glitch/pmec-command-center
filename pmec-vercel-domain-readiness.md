@@ -292,6 +292,10 @@ The Vercel browser session continues to reset to a blank page after automation h
 
 The approved migration retains legacy MySQL as a separate reference system and creates a Vercel-reachable Neon source of truth for PMEC Command Center delivery operations. The `pmec.delivery_assignments`, `pmec.delivery_time_logs`, `pmec.delivery_notifications`, and `pmec.delivery_notification_preferences` tables now exist with organization scoping, integrity checks, and read-path indexes. The least-privilege `pmec_runtime_20260825` role was verified to hold only the required delivery read/write privileges, while the existing payroll authorization lookup remains read-only and server-enforced.
 
+The validated Neon delivery rollout was committed as `fcbca5b` and pushed to the private PMEC repository. Vercel promoted that commit as the latest Production deployment after the monitored build. No public PMEC subdomain, new Clerk key, or production environment variable was changed during this source rollout.
+
+The latest Production health endpoint returns an `ok` response. Unauthenticated requests to both `pmecPayroll.access` and `pmecDelivery.assignments` return the expected Clerk `401 UNAUTHORIZED` response and no protected payroll or delivery data. The potentially exposed default Clerk production secret is still rotation-pending: the Clerk CLI now exposes a suitable non-rendering instance-rotation endpoint, but this sandbox currently has no authenticated Vercel CLI or direct API token available to replace the resulting value safely. No new replacement key has been created while that zero-downtime handoff remains unavailable.
+
 ## References
 
 [1] [Clerk: Deploying to production](https://clerk.com/docs/guides/development/deployment/production)
