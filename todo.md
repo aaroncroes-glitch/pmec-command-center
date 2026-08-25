@@ -163,3 +163,4 @@
 - [x] Ensure the local Employee showcase completes its first-run setup before routing to the Employee workspace.
 - [ ] Diagnose and safely remediate the Clerk Production password sign-in `internal_clerk_error` without weakening PMEC authorization.
 - [x] Attach `portal.pmec.group` to the authorized PMEC Vercel deployment and complete the corresponding Clerk Production domain validation.
+- [ ] Manually complete password sign-in for the isolated Employee, Project Manager, and HR demo identities on the verified production Clerk domain, then confirm each server-enforced role boundary.
