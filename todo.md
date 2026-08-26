@@ -174,3 +174,4 @@
 - [ ] Complete private end-to-end Clerk sign-in checks for the isolated Employee, Project Manager, and HR demo roles.
 - [x] Add a desktop-only QR launch card that opens the Employee mobile workspace at `portal.pmec.group`.
 - [ ] Complete the three-role Production Clerk sign-in acceptance with private credential entry after the account owner is ready.
+- [x] Add a branded, printable digital mobile-onboarding QR handout that opens the secure Employee mobile entry without displaying credentials.
