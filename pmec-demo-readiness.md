@@ -48,6 +48,8 @@ Vercel accepted `pm.pmec.group` and `hr.pmec.group` as Production domains for th
 
 The Project Manager host now renders the desktop Control Center with a visible **HOST LOCKED** Project Manager state and PM delivery controls. The HR host still showed a transient blank render on its first browser load; its public HTTPS response is healthy and requires a further post-provisioning route check.
 
+The HR Control Center subsequently rendered successfully with a visible **HOST LOCKED** Human Resources state, HR-only navigation, and the signed-out payroll boundary. The Employee QR launch-card commit `3a79ea3` reached **Ready** in Vercel Production on 26 August 2026.
+
 ### Secure demo-session handoff
 
 The remaining session acceptance must be completed only by entering the isolated demo credentials privately in Clerk; passwords, tokens, and protected payloads must not be copied into chat, browser automation, source control, or logs. Test Employee from the mobile entry at `https://portal.pmec.group/ess/login`, Project Manager from `https://pm.pmec.group`, and HR from `https://hr.pmec.group`. Sign out fully between roles. Confirm that Employee sees only own-scope work and cannot reach payroll, Project Manager can manage delivery but not payroll/HR leave decisions, and HR can review people/leave/read-only delivery hours and payroll only when its server-verified membership authorizes it.
