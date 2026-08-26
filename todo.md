@@ -169,3 +169,4 @@
 - [ ] Attach, configure, and validate `pm.pmec.group` and `hr.pmec.group` on the PMEC Production deployment.
 - [x] Restart the hung PMEC development services and verify the local preview and API recover before resuming Production acceptance testing.
 - [x] Audit and verify that Employee is mobile-first while Project Manager and HR are distinct desktop/iPad-only PMEC experiences.
+- [x] Add a desktop advisory to the Employee workspace explaining that the experience is optimized for mobile devices.
