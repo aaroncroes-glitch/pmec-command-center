@@ -53,3 +53,9 @@ The HR Control Center subsequently rendered successfully with a visible **HOST L
 ### Secure demo-session handoff
 
 The remaining session acceptance must be completed only by entering the isolated demo credentials privately in Clerk; passwords, tokens, and protected payloads must not be copied into chat, browser automation, source control, or logs. Test Employee from the mobile entry at `https://portal.pmec.group/ess/login`, Project Manager from `https://pm.pmec.group`, and HR from `https://hr.pmec.group`. Sign out fully between roles. Confirm that Employee sees only own-scope work and cannot reach payroll, Project Manager can manage delivery but not payroll/HR leave decisions, and HR can review people/leave/read-only delivery hours and payroll only when its server-verified membership authorizes it.
+
+### Employee onboarding handout — 26 August 2026
+
+The credential-free mobile onboarding handout is published at the public `/mobile-onboarding` route and uses the verified Employee entry QR destination. Its Git production build from commit `1fd2b04` reached **Ready** in Vercel Production on 26 August 2026.
+
+Credential-free probes confirm that the public portal and the Ready deployment serve the same current web bundle for `/mobile-onboarding`. A final public route reload rendered the full handout successfully, including the scannable QR guidance, mobile-entry address, three-step onboarding sequence, and credential-free security note.
