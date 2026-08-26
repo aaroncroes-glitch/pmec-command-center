@@ -166,7 +166,11 @@
 - [ ] Manually complete password sign-in for the isolated Employee, Project Manager, and HR demo identities on the verified production Clerk domain, then confirm each server-enforced role boundary.
 - [ ] Validate the three isolated Production demo passwords end-to-end without exposing credentials, tokens, or protected data.
 - [ ] Execute server-enforced allow/deny acceptance checks for Employee, Project Manager, and HR demo sessions.
-- [ ] Attach, configure, and validate `pm.pmec.group` and `hr.pmec.group` on the PMEC Production deployment.
+- [x] Attach, configure, and validate `pm.pmec.group` and `hr.pmec.group` on the PMEC Production deployment.
 - [x] Restart the hung PMEC development services and verify the local preview and API recover before resuming Production acceptance testing.
 - [x] Audit and verify that Employee is mobile-first while Project Manager and HR are distinct desktop/iPad-only PMEC experiences.
 - [x] Add a desktop advisory to the Employee workspace explaining that the experience is optimized for mobile devices.
+- [x] Attach and validate `pm.pmec.group` for the Project Manager workspace and `hr.pmec.group` for the HR workspace.
+- [ ] Complete private end-to-end Clerk sign-in checks for the isolated Employee, Project Manager, and HR demo roles.
+- [x] Add a desktop-only QR launch card that opens the Employee mobile workspace at `portal.pmec.group`.
+- [ ] Complete the three-role Production Clerk sign-in acceptance with private credential entry after the account owner is ready.

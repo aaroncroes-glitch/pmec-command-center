@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from "expo-router";
-import { Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Image, Platform, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
@@ -23,8 +23,14 @@ export default function TabLayout() {
     <View style={styles.shell}>
       {isDesktopEmployeeView ? (
         <View style={[styles.desktopAdvisory, { backgroundColor: palette.surfaceStrong, borderBottomColor: palette.border }]}>
-          <Text style={[styles.desktopAdvisoryEyebrow, { color: palette.accent }]}>PMEC / EMPLOYEE WORKSPACE</Text>
-          <Text style={[styles.desktopAdvisoryCopy, { color: palette.foreground }]}>Optimized for mobile devices. For workforce planning, delivery controls, and HR operations, use the dedicated iPad or desktop workspaces.</Text>
+          <View style={styles.desktopAdvisoryBody}>
+            <Text style={[styles.desktopAdvisoryEyebrow, { color: palette.accent }]}>PMEC / EMPLOYEE WORKSPACE</Text>
+            <Text style={[styles.desktopAdvisoryCopy, { color: palette.foreground }]}>Optimized for mobile devices. Scan to open the secure Employee workspace on your phone. For workforce planning, delivery controls, and HR operations, use the dedicated iPad or desktop workspaces.</Text>
+          </View>
+          <View style={styles.desktopQrWrap}>
+            <Image accessibilityLabel="QR code to open the PMEC Employee mobile workspace" source={require("../../assets/images/employee-mobile-launch-qr.png")} style={styles.desktopQr} />
+            <Text style={[styles.desktopQrCaption, { color: palette.muted }]}>SCAN TO OPEN MOBILE</Text>
+          </View>
         </View>
       ) : null}
       <Tabs
@@ -60,7 +66,11 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   shell: { flex: 1 },
   label: { fontSize: 10, fontWeight: "800", letterSpacing: 0.2, marginTop: 2 },
-  desktopAdvisory: { borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 22, paddingVertical: 10 },
+  desktopAdvisory: { alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: 16, paddingHorizontal: 22, paddingVertical: 10 },
+  desktopAdvisoryBody: { flex: 1 },
   desktopAdvisoryEyebrow: { fontSize: 9, fontWeight: "900", letterSpacing: 0.85 },
   desktopAdvisoryCopy: { fontSize: 11, fontWeight: "600", lineHeight: 16, marginTop: 3, maxWidth: 760 },
+  desktopQrWrap: { alignItems: "center", width: 88 },
+  desktopQr: { height: 78, width: 78 },
+  desktopQrCaption: { fontSize: 7, fontWeight: "900", letterSpacing: 0.55, marginTop: 4, textAlign: "center" },
 });

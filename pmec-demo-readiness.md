@@ -41,3 +41,13 @@ The final credential-free probe returned HTTP 200 for the public employee portal
 The Employee experience is **mobile-first**: `portal.pmec.group` routes administrative Control Center requests back to the Employee workspace, where the interface labels the scope as Employee and restricts the presentation to personal assignments, time, leave, notifications, and payslip features. The Project Manager and HR Control Center is **desktop/iPad-only**: the shared administrative route blocks widths below 760 pixels with an explicit wider-view message and specifies iPad landscape or desktop use.
 
 The planned dedicated hosts are role locked in the client entry model: `pm.pmec.group` locks Project Manager, while `hr.pmec.group` locks Human Resources. Project Manager capabilities cover delivery, assignment, capacity, and hour approval; HR covers people, leave, workforce planning, organization-wide hour visibility, and verified payroll review. The server separately rejects unauthorized delivery and payroll requests. Focused host-routing and role-authorization acceptance suites passed (9 tests). `pm.pmec.group` and `hr.pmec.group` have not yet been attached to public DNS/Vercel, so their live role-specific endpoints remain pending.
+
+### PM and HR public-host attachment — 26 August 2026
+
+Vercel accepted `pm.pmec.group` and `hr.pmec.group` as Production domains for the PMEC project. Credential-free HTTPS probes for both hostnames return HTTP 200. Browser rendering was briefly blank during the initial certificate/provisioning window; the role-specific client entry remains subject to final public route validation after the next PMEC deployment.
+
+The Project Manager host now renders the desktop Control Center with a visible **HOST LOCKED** Project Manager state and PM delivery controls. The HR host still showed a transient blank render on its first browser load; its public HTTPS response is healthy and requires a further post-provisioning route check.
+
+### Secure demo-session handoff
+
+The remaining session acceptance must be completed only by entering the isolated demo credentials privately in Clerk; passwords, tokens, and protected payloads must not be copied into chat, browser automation, source control, or logs. Test Employee from the mobile entry at `https://portal.pmec.group/ess/login`, Project Manager from `https://pm.pmec.group`, and HR from `https://hr.pmec.group`. Sign out fully between roles. Confirm that Employee sees only own-scope work and cannot reach payroll, Project Manager can manage delivery but not payroll/HR leave decisions, and HR can review people/leave/read-only delivery hours and payroll only when its server-verified membership authorizes it.
