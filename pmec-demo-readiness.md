@@ -65,3 +65,5 @@ The locally rendered handout’s one-page PDF download action was invoked withou
 ### Clerk-independent client showcase — 27 August 2026
 
 The public `/demo` route is now PMEC **Showcase Access**. It offers a no-password launcher for isolated Employee, Project Manager, and HR presentation views using only device-local sample data. It does not create a Clerk session, issue a bearer token, call the delivery API, or expose payroll data. The Employee route opens the local workspace; Project Manager and HR open role-scoped local Control Center views. Focused showcase, onboarding-handout, and server role-boundary tests passed.
+
+The associated personalized manager-contact handout and one-page PDF export were released in Ready Production deployment `efb53c9`. Credential-free checks confirm the stable portal now serves both the no-password showcase launcher and the PDF export control.
