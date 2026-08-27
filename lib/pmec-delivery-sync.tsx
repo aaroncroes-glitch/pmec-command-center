@@ -1,5 +1,6 @@
 import { createContext, type PropsWithChildren, useCallback, useContext, useMemo } from "react";
 import { usePathname } from "expo-router";
+import { useAuth } from "@clerk/expo";
 
 import { useEss } from "@/lib/ess-workspace";
 import { usePmecAccess } from "@/lib/pmec-access";
@@ -21,6 +22,7 @@ function deliveryErrorState(error: unknown): DeliverySyncState {
 }
 
 export function PmecDeliverySyncProvider({ children }: PropsWithChildren) {
+  const { isSignedIn } = useAuth();
   const { employee, isAuthenticated } = useEss();
   const pathname = usePathname();
   const { can, ready: accessReady } = usePmecAccess();
@@ -28,8 +30,8 @@ export function PmecDeliverySyncProvider({ children }: PropsWithChildren) {
   const employeeName = `${employee.firstName} ${employee.lastName}`;
   const utils = trpc.useUtils();
   const controlSurface = pathname.startsWith("/control-center") || pathname.startsWith("/job-orders") || pathname.startsWith("/admin");
-  const managerAssignmentsEnabled = controlSurface && accessReady && can("assign");
-  const managerTimeLogsEnabled = controlSurface && accessReady && can("hoursRead");
+  const managerAssignmentsEnabled = controlSurface && accessReady && can("assign") && isSignedIn === true;
+  const managerTimeLogsEnabled = controlSurface && accessReady && can("hoursRead") && isSignedIn === true;
   const employeeDeliveryEnabled = !controlSurface && isAuthenticated;
   const allAssignments = trpc.pmecDelivery.assignments.useQuery(undefined, { enabled: managerAssignmentsEnabled, refetchInterval: 12_000 });
   const employeeAssignments = trpc.pmecDelivery.assignments.useQuery({ employeeId }, { enabled: employeeDeliveryEnabled, refetchInterval: 12_000 });

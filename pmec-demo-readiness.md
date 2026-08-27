@@ -91,3 +91,15 @@ The PM Control Center delivery view now supports an in-place search across proje
 The PM search and budget-alert release `9a29e5e` is building in the Vercel Production pipeline; its public verification will be recorded only after the deployment reaches Ready.
 
 Release `9a29e5e` reached Ready Production. The release URL verified the new Project Tracker search field, three-result count, lifecycle and discipline filters, dedicated budget-status filters, and visual budget-watch alerts for the 81% and 89% local-project burn cases. The public PM tracker remains local demonstration content and does not grant unsigned users server-side project authority.
+
+### PM showcase interaction audit — 27 August 2026
+
+The local PM Control Center and Project Tracker load successfully with the PM local demonstration role, a three-project portfolio, direct Project Tracker entry, existing budget watch cards, and PM-only host/device guards. Staffing assignment, milestone calendar, and local cost-document selection are being audited as local-device interactions; no source document or demonstration data will be transmitted to production services.
+
+The project-detail staffing panel now exposes all 34 local workforce records (28 employees and 6 contractors), distinguishes unavailable people, and immediately updates the selected work package assignment in local state. The audit identified that the prior local assignment flow also attempted an unsigned delivery-sync request; it now retains local showcase changes without any delivery API call, while authenticated live sync keeps its server-enforced route.
+
+The audited PM detail flow successfully reassigned a selected work package to an available local workforce member and opened the new month-navigable milestone calendar. The repaired showcase now performs these presentation actions without the prior unsigned delivery-fetch overlay.
+
+The milestone scheduler now accepts an entered label and a selected calendar date before enabling the local save action. The cost-document workflow opens a supported file selector plus description, amount, and document-type fields, and clearly states that selected file references and metadata remain local to the showcase device.
+
+TypeScript, targeted Project Manager interaction/authorization suites, and a low-memory web export passed. The broader non-database regression suite passed 69 tests with one intentional skip. Two separate Neon integration tests remain dependent on the retired `neondb_owner` credential and therefore fail under the restricted runtime connection; this does not affect the local PM showcase, which intentionally makes no unsigned delivery requests.

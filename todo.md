@@ -184,3 +184,8 @@
 - [x] Restore Project Manager project-detail navigation with phases, budget tracker, progress/status bar, and assignment controls on the PM desktop workspace.
 - [x] Add PM-only project search and operational filtering in the Project Manager Control Center and Project Tracker.
 - [x] Add visual budget-variance alerts for projects approaching or exceeding their authorized budget limit.
+- [x] Audit the PM Project Tracker and Control Center for inactive, missing, or poorly formatted client-showcase interactions.
+- [x] Add a discoverable workforce directory and project staffing assignment flow for all local demonstration employees and contractors.
+- [x] Make milestone creation and target-date scheduling actionable in the PM project detail view.
+- [x] Add local showcase cost-document upload, metadata, and attachment-list interactions to PM project detail.
+- [x] Validate all PM showcase controls, workflow feedback, and PM-only route boundaries before client use.
