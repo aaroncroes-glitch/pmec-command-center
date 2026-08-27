@@ -79,3 +79,7 @@ The workspace-selector routing correction was released in Ready Production deplo
 ### PM project-detail restoration — 27 August 2026
 
 The Project Manager Control Center now exposes a direct PM-only Project Tracker path from its delivery workspace. Selecting a project opens its detail panel with lifecycle phases, overall progress, budget utilization, contingency and remaining-authorized values, milestones, work breakdown, package status, and cost records. The same detail panel supports a direct `projectId` route from PM Control Center project cards. The route redirects Employee and HR host access back to their permitted workspace; all demonstration project data remains device-local unless a separately verified PM production session is available.
+
+The Project Manager project-detail restoration was released in Ready Production deployment `e0e4199`.
+
+The public PM route `pm.pmec.group/job-orders?projectId=jo-coastal-substation` was verified on a desktop viewport. It opens the selected project panel directly and renders lifecycle status, 40% overall progress, 81% budget utilization, budget/contingency/remaining-authorized values, milestone progress, work packages, and cost-document context. These remain demonstration data and do not grant an unsigned visitor production delivery authority.
