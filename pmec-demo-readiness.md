@@ -75,3 +75,7 @@ The public `pm.pmec.group/control-center` route renders the host-locked Project 
 The public `hr.pmec.group/control-center` route likewise renders the host-locked HR Control Center on a desktop viewport, with people, leave, and capacity navigation. Payroll stays explicitly sign-in-gated, and the displayed HR delivery context remains local demonstration data until a verified server-authorized session exists.
 
 The workspace-selector routing correction was released in Ready Production deployment `79128b9`. Employee selection remains on the mobile-first local showcase; Project Manager and HR selections now send visitors to `pm.pmec.group/control-center` and `hr.pmec.group/control-center`, respectively.
+
+### PM project-detail restoration — 27 August 2026
+
+The Project Manager Control Center now exposes a direct PM-only Project Tracker path from its delivery workspace. Selecting a project opens its detail panel with lifecycle phases, overall progress, budget utilization, contingency and remaining-authorized values, milestones, work breakdown, package status, and cost records. The same detail panel supports a direct `projectId` route from PM Control Center project cards. The route redirects Employee and HR host access back to their permitted workspace; all demonstration project data remains device-local unless a separately verified PM production session is available.

@@ -1,9 +1,12 @@
 // @ts-nocheck
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
+import { Redirect, useLocalSearchParams } from "expo-router";
 import Animated, { FadeIn, SlideInRight } from "react-native-reanimated";
 
 import { DISCIPLINES, DISCIPLINE_LABELS, JOB_ORDER_PHASE_LABELS, JOB_ORDER_PHASES, WORK_PACKAGE_STATUSES, WORK_PACKAGE_STATUS_LABELS, completedTaskCount, contingencyAmount, formatMoney, groupCurrencyTotals, groupWorkPackages, impliedLaborMultiplier, isOverBudget, jobOrderProgress, jobOrderSpent, nextJobOrderPhase, remainingAuthorized, spentPctOfBudget, totalAuthorized, type CostDocumentType, type EngineeringDiscipline, type JobOrder, type JobOrderPriority, type WorkPackageTask } from "@/lib/pmec-job-orders";
+import { usePmecAccess } from "@/lib/pmec-access";
+import { getPmecHostWorkspace } from "@/lib/pmec-host-routing";
 import { usePmecJobOrders } from "@/lib/pmec-job-order-workspace";
 import { useLumen } from "@/lib/lumen-workspace";
 
@@ -13,6 +16,9 @@ const phaseKinds = new Set(["PLANNING", "DESIGN", "PROCUREMENT", "EXECUTION", "Q
 
 export default function JobOrdersPage() {
   const { width } = useWindowDimensions();
+  const { projectId } = useLocalSearchParams<{ projectId?: string | string[] }>();
+  const access = usePmecAccess();
+  const hostWorkspace = getPmecHostWorkspace();
   const { palette } = useLumen();
   const styles = useMemo(() => makeStyles(palette), [palette]);
   const { jobOrders } = usePmecJobOrders();
@@ -22,7 +28,11 @@ export default function JobOrdersPage() {
   const [creating, setCreating] = useState(false);
   const visible = jobOrders.filter((job) => (tab === "ACTIVE" ? phaseKinds.has(job.phase) : tab === "COMPLETED" ? job.phase === "COMPLETED" || job.phase === "CANCELLED" : true) && (discipline === "ALL" || job.discipline === discipline));
   const portfolio = useMemo(() => ({ budget: groupCurrencyTotals(visible, (job) => job.budget), spent: groupCurrencyTotals(visible, jobOrderSpent), active: jobOrders.filter((job) => phaseKinds.has(job.phase)).length, complete: visible.reduce((sum, job) => sum + completedTaskCount(job), 0), tasks: visible.reduce((sum, job) => sum + job.tasks.length, 0) }), [jobOrders, visible]);
+  const selectedProjectId = Array.isArray(projectId) ? projectId[0] : projectId;
+  useEffect(() => { if (selectedProjectId) { const matchingJob = jobOrders.find((job) => job.id === selectedProjectId); if (matchingJob) setSelected(matchingJob); } }, [jobOrders, selectedProjectId]);
 
+  if (hostWorkspace === "portal") return <Redirect href="/(tabs)" />;
+  if (hostWorkspace === "hr" || !access.can("delivery")) return <Redirect href="/control-center" />;
   if (width < 760) return <View style={styles.gate}><Text style={styles.gateBrand}>PMEC / JOB ORDERS</Text><Text style={styles.gateTitle}>A wider view{`\n`}is required.</Text><Text style={styles.gateCopy}>The project delivery tracker is intentionally designed for iPad landscape and desktop decision-making.</Text></View>;
   return <View style={styles.page}><View style={styles.rail}><Text style={styles.brand}>PMEC</Text><Text style={styles.brandSub}>PROJECT DELIVERY</Text><View style={styles.railLine} /><Text style={styles.railLabel}>JOB ORDERS</Text><Text style={styles.railCopy}>PROJECT MANAGER DEMO</Text><View style={styles.railFoot}><Text style={styles.railFootTitle}>LUMEN SYSTEMS</Text><Text style={styles.railFootCopy}>Local PMEC demonstration{`\n`}No external sync</Text></View></View><View style={styles.main}><View style={styles.header}><View><Text style={styles.eyebrow}>PMEC / PROJECT DELIVERY</Text><Text style={styles.title}>Job Order{`\n`}Tracker.</Text><Text style={styles.subtitle}>Active engineering delivery — work breakdown, budget, and schedule across every discipline.</Text></View><Pressable onPress={() => setCreating(true)} style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}><Text style={styles.newButtonText}>NEW JOB ORDER</Text><Text style={styles.newButtonArrow}>+</Text></Pressable></View><View style={styles.kpiGrid}><Kpi styles={styles} label="AUTHORIZED BUDGET" value={formatGrouped(portfolio.budget)} detail="Grouped by job-order currency" /><Kpi styles={styles} label="DERIVED SPEND" value={formatGrouped(portfolio.spent)} detail="Labor + materials + subcontract" /><Kpi styles={styles} label="ACTIVE JOB ORDERS" value={String(portfolio.active)} detail="Across all PMEC regions" /><Kpi styles={styles} label="WORK PACKAGES" value={`${portfolio.complete}/${portfolio.tasks}`} detail="Completed in this view" /></View><View style={styles.filterBar}><View style={styles.tabs}>{(["ACTIVE", "COMPLETED", "ALL"] as PortfolioTab[]).map((item) => <Pressable key={item} onPress={() => setTab(item)} style={[styles.tab, tab === item && styles.tabActive]}><Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item}</Text></Pressable>)}</View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>{(["ALL", ...DISCIPLINES] as const).map((item) => <Pressable key={item} onPress={() => setDiscipline(item)} style={[styles.chip, discipline === item && styles.chipActive]}><Text style={[styles.chipText, discipline === item && styles.chipTextActive]}>{item === "ALL" ? "ALL DISCIPLINES" : DISCIPLINE_LABELS[item].toUpperCase()}</Text></Pressable>)}</ScrollView></View><ScrollView contentContainerStyle={styles.cardGrid} showsVerticalScrollIndicator={false}>{visible.length ? visible.map((job) => <JobOrderCard key={job.id} job={job} styles={styles} onPress={() => setSelected(job)} />) : <View style={styles.empty}><Text style={styles.emptyTitle}>No job orders in this view.</Text><Text style={styles.emptyCopy}>Change the portfolio filter or create a new job order to continue.</Text></View>}</ScrollView></View><JobOrderPanel jobId={selected?.id ?? null} onClose={() => setSelected(null)} styles={styles} /><CreateJobOrderPanel visible={creating} onClose={() => setCreating(false)} styles={styles} /></View>;
 }
