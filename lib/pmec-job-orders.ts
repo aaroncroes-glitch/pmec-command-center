@@ -9,6 +9,7 @@ export type JobOrderPhase = "PLANNING" | "DESIGN" | "PROCUREMENT" | "EXECUTION" 
 export type EngineeringDiscipline = typeof DISCIPLINES[number];
 export type WorkPackageStatus = typeof WORK_PACKAGE_STATUSES[number];
 export type JobOrderPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+export type BudgetAlertStatus = "ON_TRACK" | "WATCH" | "AT_RISK" | "OVER_BUDGET";
 export type CostDocumentType = "SUBCONTRACTOR_INVOICE" | "PURCHASE_RECEIPT" | "CHANGE_ORDER" | "OTHER";
 export type PmecRegion = "EGYPT" | "ARUBA" | "VENEZUELA" | "PANAMA" | "OTHER";
 
@@ -47,9 +48,14 @@ export function jobOrderProgress(job: JobOrder) { return job.tasks.length ? Math
 export function jobOrderSpent(job: JobOrder) { return job.tasks.reduce((sum, item) => sum + taskTotalCost(item), 0); }
 export function contingencyAmount(job: JobOrder) { return Math.round(job.budget * job.contingencyPct / 100); }
 export function totalAuthorized(job: JobOrder) { return job.budget + contingencyAmount(job); }
-export function spentPctOfBudget(job: JobOrder) { return job.budget ? Math.min(Math.round(jobOrderSpent(job) / job.budget * 100), 100) : 0; }
+export function actualSpentPctOfBudget(job: JobOrder) { return job.budget ? Math.round(jobOrderSpent(job) / job.budget * 100) : 0; }
+export function spentPctOfBudget(job: JobOrder) { return Math.min(actualSpentPctOfBudget(job), 100); }
 export function remainingAuthorized(job: JobOrder) { return Math.max(0, totalAuthorized(job) - jobOrderSpent(job)); }
 export function isOverBudget(job: JobOrder) { return jobOrderSpent(job) > job.budget; }
+export const BUDGET_ALERT_LABELS: Record<BudgetAlertStatus, string> = { ON_TRACK: "On track", WATCH: "Budget watch", AT_RISK: "Budget at risk", OVER_BUDGET: "Over budget" };
+export function budgetAlertStatus(job: JobOrder): BudgetAlertStatus { const burn = actualSpentPctOfBudget(job); return burn > 100 ? "OVER_BUDGET" : burn >= 90 ? "AT_RISK" : burn >= 75 ? "WATCH" : "ON_TRACK"; }
+export function budgetVariance(job: JobOrder) { return jobOrderSpent(job) - job.budget; }
+export function matchesProjectSearch(job: JobOrder, query: string) { const normalized = query.trim().toLocaleLowerCase(); if (!normalized) return true; return [job.title, job.clientName, job.projectManagerName, job.region, job.discipline, job.phase, ...job.tags].join(" ").toLocaleLowerCase().includes(normalized); }
 export function completedTaskCount(job: JobOrder) { return job.tasks.filter((item) => item.status === "COMPLETED").length; }
 export function impliedLaborMultiplier(job: JobOrder) { const laborSpent = job.tasks.reduce((sum, item) => sum + item.laborCost, 0); return laborSpent && job.budget ? Math.round(job.budget / laborSpent * 100) / 100 : null; }
 export function formatMoney(currency: string, value: number) { return `${currency} ${Math.round(value).toLocaleString("en-US")}`; }

@@ -182,3 +182,5 @@
 - [x] Replace Clerk-dependent client demo entry with a polished local-only PMEC Showcase Access launcher that keeps production APIs unavailable.
 - [x] Make Employee mobile access and Project Manager/HR desktop Control Center entry routes visibly separate from the PMEC showcase.
 - [x] Restore Project Manager project-detail navigation with phases, budget tracker, progress/status bar, and assignment controls on the PM desktop workspace.
+- [x] Add PM-only project search and operational filtering in the Project Manager Control Center and Project Tracker.
+- [x] Add visual budget-variance alerts for projects approaching or exceeding their authorized budget limit.

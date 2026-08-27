@@ -83,3 +83,7 @@ The Project Manager Control Center now exposes a direct PM-only Project Tracker 
 The Project Manager project-detail restoration was released in Ready Production deployment `e0e4199`.
 
 The public PM route `pm.pmec.group/job-orders?projectId=jo-coastal-substation` was verified on a desktop viewport. It opens the selected project panel directly and renders lifecycle status, 40% overall progress, 81% budget utilization, budget/contingency/remaining-authorized values, milestone progress, work packages, and cost-document context. These remain demonstration data and do not grant an unsigned visitor production delivery authority.
+
+### PM project search and budget variance — 27 August 2026
+
+The PM Control Center delivery view now supports an in-place search across project, client, manager, region, and tag. Search validation narrowed the three local projects to the Coastal Substation project using its client context. The dedicated Project Tracker adds lifecycle, discipline, and budget-status filters. Budget alerts use PM-only local project data: watch begins at 75% burn, at-risk at 90%, and over-budget above 100% of authorized project budget; server-side production authority remains unchanged.

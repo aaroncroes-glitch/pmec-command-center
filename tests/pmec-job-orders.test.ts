@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, jobOrderProgress, jobOrderSpent, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
+import { budgetAlertStatus, budgetVariance, completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, jobOrderProgress, jobOrderSpent, matchesProjectSearch, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
 
 describe("PMEC job-order module", () => {
   it("ships the required multi-region, multi-currency project-manager portfolio", () => {
@@ -24,5 +24,18 @@ describe("PMEC job-order module", () => {
     expect(grouped).toContainEqual({ currency: "AWG", total: 185000 });
     expect(grouped).toContainEqual({ currency: "EGP", total: 4200000 });
     expect(grouped).toContainEqual({ currency: "USD", total: 310000 });
+  });
+
+  it("classifies budget variance at operational thresholds and matches projects by delivery context", () => {
+    const base = initialPmeJobOrders[0];
+    const atRisk = { ...base, tasks: base.tasks.map((task, index) => index === 0 ? { ...task, laborCost: task.laborCost + 20000 } : task) };
+    const overBudget = { ...base, tasks: base.tasks.map((task, index) => index === 0 ? { ...task, laborCost: task.laborCost + 50000 } : task) };
+    expect(budgetAlertStatus(initialPmeJobOrders[0])).toBe("WATCH");
+    expect(budgetAlertStatus(initialPmeJobOrders[1])).toBe("ON_TRACK");
+    expect(budgetAlertStatus(atRisk)).toBe("AT_RISK");
+    expect(budgetAlertStatus(overBudget)).toBe("OVER_BUDGET");
+    expect(budgetVariance(initialPmeJobOrders[0])).toBeLessThan(0);
+    expect(matchesProjectSearch(initialPmeJobOrders[0], "WEB Aruba")).toBe(true);
+    expect(matchesProjectSearch(initialPmeJobOrders[1], "substation")).toBe(false);
   });
 });
