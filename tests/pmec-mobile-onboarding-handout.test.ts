@@ -12,6 +12,10 @@ describe("PMEC mobile onboarding handout", () => {
     expect(handout).toContain('https://portal.pmec.group/ess/login');
     expect(handout).toContain('employee-mobile-launch-qr.png');
     expect(handout).toContain("YOUR SIGN-IN DETAILS ARE PROVIDED SEPARATELY");
+    expect(handout).toContain("YOUR PMEC CONTACT");
+    expect(handout).toContain("DOWNLOAD ONE-PAGE PDF");
+    expect(handout).toContain("Asset.fromModule(QR_SOURCE)");
+    expect(handout).toContain('downloadLink.download = "PMEC-employee-onboarding.pdf"');
     expect(handout).toContain('width < 640');
     expect(handout).toContain("window.print()");
   });

@@ -175,3 +175,8 @@
 - [x] Add a desktop-only QR launch card that opens the Employee mobile workspace at `portal.pmec.group`.
 - [ ] Complete the three-role Production Clerk sign-in acceptance with private credential entry after the account owner is ready.
 - [x] Add a branded, printable digital mobile-onboarding QR handout that opens the secure Employee mobile entry without displaying credentials.
+- [x] Add editable manager-specific contact details to the Employee onboarding handout for HR preparation before distribution.
+- [x] Add a one-page PDF export action for HR to download and print the completed Employee onboarding handout.
+- [ ] Resume private Employee, Project Manager, and HR Clerk session acceptance checks once the account owner is ready to enter credentials securely.
+- [ ] Provision or securely reset isolated PMEC Development Demo credentials in Clerk without sending passwords through chat, logs, or source control.
+- [x] Replace Clerk-dependent client demo entry with a polished local-only PMEC Showcase Access launcher that keeps production APIs unavailable.

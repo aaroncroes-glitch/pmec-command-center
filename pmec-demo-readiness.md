@@ -59,3 +59,9 @@ The remaining session acceptance must be completed only by entering the isolated
 The credential-free mobile onboarding handout is published at the public `/mobile-onboarding` route and uses the verified Employee entry QR destination. Its Git production build from commit `1fd2b04` reached **Ready** in Vercel Production on 26 August 2026.
 
 Credential-free probes confirm that the public portal and the Ready deployment serve the same current web bundle for `/mobile-onboarding`. A final public route reload rendered the full handout successfully, including the scannable QR guidance, mobile-entry address, three-step onboarding sequence, and credential-free security note.
+
+The locally rendered handout’s one-page PDF download action was invoked without account data. After resolving the bundled QR asset through Expo Asset, the export completed without a browser runtime error; final downloaded-file confirmation remains pending.
+
+### Clerk-independent client showcase — 27 August 2026
+
+The public `/demo` route is now PMEC **Showcase Access**. It offers a no-password launcher for isolated Employee, Project Manager, and HR presentation views using only device-local sample data. It does not create a Clerk session, issue a bearer token, call the delivery API, or expose payroll data. The Employee route opens the local workspace; Project Manager and HR open role-scoped local Control Center views. Focused showcase, onboarding-handout, and server role-boundary tests passed.
