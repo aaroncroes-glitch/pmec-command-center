@@ -16,7 +16,7 @@ describe("PMEC PM showcase project interactions", () => {
     expect(sync).toContain('&& isSignedIn === true');
   });
 
-  it("uses an interactive calendar for milestones and device-local file selection for cost documents", () => {
+  it("uses an interactive calendar and local cost-document selection with drag-and-drop and picker fallback", () => {
     const tracker = readFileSync(resolve(process.cwd(), "app/job-orders/index.tsx"), "utf8");
 
     expect(tracker).toContain("MilestoneScheduleForm");
@@ -27,5 +27,10 @@ describe("PMEC PM showcase project interactions", () => {
     expect(tracker).toContain("No document is transmitted to PMEC servers.");
     expect(tracker).toContain("fileName: asset.name");
     expect(tracker).toContain("LOCAL FILE");
+    expect(tracker).toContain("DROP DOCUMENT HERE");
+    expect(tracker).toContain("onDrop:");
+    expect(tracker).toContain("acceptDroppedFile");
+    expect(tracker).toContain("BROWSE FILES");
+    expect(tracker).toContain("FILE READY · LOCAL ONLY");
   });
 });

@@ -189,3 +189,4 @@
 - [x] Make milestone creation and target-date scheduling actionable in the PM project detail view.
 - [x] Add local showcase cost-document upload, metadata, and attachment-list interactions to PM project detail.
 - [x] Validate all PM showcase controls, workflow feedback, and PM-only route boundaries before client use.
+- [x] Add desktop drag-and-drop cost-document selection with picker fallback and local-only storage to the PM showcase.
