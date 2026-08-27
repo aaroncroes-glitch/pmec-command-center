@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { COST_DOCUMENT_APPROVAL_LABELS, COST_DOCUMENT_APPROVAL_STATUSES, COST_DOCUMENT_CATEGORY_TAGS, budgetAlertStatus, budgetVariance, completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, jobOrderProgress, jobOrderSpent, matchesProjectSearch, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
@@ -50,5 +51,12 @@ describe("PMEC job-order module", () => {
     expect(approvedDocument.tags).toContain("Receipt");
     expect(pendingDocument.approvalStatus).toBe("PENDING");
     expect(pendingDocument.tags).toContain("Invoice");
+  });
+
+  it("defines cost-document approval-history entries for local decision auditing", () => {
+    const model = readFileSync("lib/pmec-job-orders.ts", "utf8");
+
+    expect(model).toContain("CostDocumentApprovalHistoryEntry");
+    expect(model).toContain("approvalHistory?: CostDocumentApprovalHistoryEntry[]");
   });
 });

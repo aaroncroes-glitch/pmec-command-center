@@ -37,10 +37,16 @@ describe("PMEC PM showcase project interactions", () => {
     expect(tracker).toContain("COST_DOCUMENT_CATEGORY_TAGS");
     expect(tracker).toContain("Change approval for");
     expect(tracker).toContain("costDocumentCategoryTags(document.documentType)");
-    expect(tracker).toContain("updateCostDocument(job.id");
+    expect(tracker).toContain("recordCostDocumentDecision(job.id");
     expect(tracker).toContain("REVIEW NOTE");
     expect(tracker).toContain("Explain the approval decision...");
     expect(tracker).toContain("Review note:");
-    expect(tracker).toContain("reviewNote: savedNote || undefined");
+    expect(tracker).toContain("APPROVAL HISTORY");
+    expect(tracker).toContain("approvalHistory");
+    expect(tracker).toContain("ManagerDecisionSummary");
+    expect(tracker).toContain("DECISION QUEUE");
+    expect(tracker).toContain("OPEN PROJECT");
+    expect(tracker).toContain("documentValueByCurrency");
+    expect(tracker).toContain("formattedDocumentValue");
   });
 });

@@ -193,3 +193,5 @@
 - [x] Add a Project Manager approval-status dropdown for local showcase cost documents.
 - [x] Add clear local showcase cost-document category tags for invoices, receipts, contracts, and related records.
 - [x] Add a Project Manager review-notes field when changing local showcase cost-document approval status.
+- [x] Add a chronological local approval-history log for PM cost-document status changes and review notes.
+- [x] Add a PM decision-summary view for pending and approved local cost documents.
