@@ -190,3 +190,5 @@
 - [x] Add local showcase cost-document upload, metadata, and attachment-list interactions to PM project detail.
 - [x] Validate all PM showcase controls, workflow feedback, and PM-only route boundaries before client use.
 - [x] Add desktop drag-and-drop cost-document selection with picker fallback and local-only storage to the PM showcase.
+- [x] Add a Project Manager approval-status dropdown for local showcase cost documents.
+- [x] Add clear local showcase cost-document category tags for invoices, receipts, contracts, and related records.

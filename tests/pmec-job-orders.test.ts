@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { budgetAlertStatus, budgetVariance, completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, jobOrderProgress, jobOrderSpent, matchesProjectSearch, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
+import { COST_DOCUMENT_APPROVAL_LABELS, COST_DOCUMENT_APPROVAL_STATUSES, COST_DOCUMENT_CATEGORY_TAGS, budgetAlertStatus, budgetVariance, completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, jobOrderProgress, jobOrderSpent, matchesProjectSearch, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
 
 describe("PMEC job-order module", () => {
   it("ships the required multi-region, multi-currency project-manager portfolio", () => {
@@ -37,5 +37,18 @@ describe("PMEC job-order module", () => {
     expect(budgetVariance(initialPmeJobOrders[0])).toBeLessThan(0);
     expect(matchesProjectSearch(initialPmeJobOrders[0], "WEB Aruba")).toBe(true);
     expect(matchesProjectSearch(initialPmeJobOrders[1], "substation")).toBe(false);
+  });
+
+  it("ships pending and approved cost-document states with clear category tags", () => {
+    const approvedDocument = initialPmeJobOrders[0].costDocuments[0];
+    const pendingDocument = initialPmeJobOrders[2].costDocuments[0];
+
+    expect(COST_DOCUMENT_APPROVAL_STATUSES).toEqual(["PENDING", "APPROVED"]);
+    expect(COST_DOCUMENT_APPROVAL_LABELS.APPROVED).toBe("Approved");
+    expect(COST_DOCUMENT_CATEGORY_TAGS).toContain("Contract");
+    expect(approvedDocument.approvalStatus).toBe("APPROVED");
+    expect(approvedDocument.tags).toContain("Receipt");
+    expect(pendingDocument.approvalStatus).toBe("PENDING");
+    expect(pendingDocument.tags).toContain("Invoice");
   });
 });
