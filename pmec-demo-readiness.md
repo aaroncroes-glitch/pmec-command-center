@@ -117,3 +117,5 @@ Project Managers can now set each local showcase cost document to **Pending appr
 ### PM cost-document review notes — 27 August 2026
 
 Changing a local showcase cost-document approval state now opens a short **Review note** field before the manager selects Pending approval or Approved. The entered rationale is saved together with the approval decision and shown beneath the document tags. The local PM validation entered a supplier-scope rationale, saved it with Approved, and confirmed the note rendered after the approval menu closed. Review notes remain browser-local demonstration data and never create a production approval record.
+
+The review-note release `3ac7b9d` reached Ready in Vercel Production on 27 August 2026. Public PM bundle verification confirms the review-note flow is included with the existing local-only document approval and category-tag controls.
