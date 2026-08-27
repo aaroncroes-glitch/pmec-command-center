@@ -87,3 +87,7 @@ The public PM route `pm.pmec.group/job-orders?projectId=jo-coastal-substation` w
 ### PM project search and budget variance — 27 August 2026
 
 The PM Control Center delivery view now supports an in-place search across project, client, manager, region, and tag. Search validation narrowed the three local projects to the Coastal Substation project using its client context. The dedicated Project Tracker adds lifecycle, discipline, and budget-status filters. Budget alerts use PM-only local project data: watch begins at 75% burn, at-risk at 90%, and over-budget above 100% of authorized project budget; server-side production authority remains unchanged.
+
+The PM search and budget-alert release `9a29e5e` is building in the Vercel Production pipeline; its public verification will be recorded only after the deployment reaches Ready.
+
+Release `9a29e5e` reached Ready Production. The release URL verified the new Project Tracker search field, three-result count, lifecycle and discipline filters, dedicated budget-status filters, and visual budget-watch alerts for the 81% and 89% local-project burn cases. The public PM tracker remains local demonstration content and does not grant unsigned users server-side project authority.
