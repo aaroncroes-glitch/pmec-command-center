@@ -67,3 +67,9 @@ The locally rendered handout’s one-page PDF download action was invoked withou
 The public `/demo` route is now PMEC **Showcase Access**. It offers a no-password launcher for isolated Employee, Project Manager, and HR presentation views using only device-local sample data. It does not create a Clerk session, issue a bearer token, call the delivery API, or expose payroll data. The Employee route opens the local workspace; Project Manager and HR open role-scoped local Control Center views. Focused showcase, onboarding-handout, and server role-boundary tests passed.
 
 The associated personalized manager-contact handout and one-page PDF export were released in Ready Production deployment `efb53c9`. Credential-free checks confirm the stable portal now serves both the no-password showcase launcher and the PDF export control.
+
+### Role-specific public entry verification — 27 August 2026
+
+The public `pm.pmec.group/control-center` route renders the host-locked Project Manager Control Center on a desktop viewport, including delivery, hours, and capacity navigation. It remains visibly signed out and labels delivery information as a local demonstration until a verified production session is available. The Employee workspace remains a separate mobile-first route; the workspace selector now sends Project Manager and HR choices to their dedicated public domains.
+
+The public `hr.pmec.group/control-center` route likewise renders the host-locked HR Control Center on a desktop viewport, with people, leave, and capacity navigation. Payroll stays explicitly sign-in-gated, and the displayed HR delivery context remains local demonstration data until a verified server-authorized session exists.

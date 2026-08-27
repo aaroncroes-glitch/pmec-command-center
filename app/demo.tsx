@@ -6,21 +6,20 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { ScreenContainer } from "@/components/screen-container";
 import { useEss } from "@/lib/ess-workspace";
 import { useLumen } from "@/lib/lumen-workspace";
-import { usePmecAccess, type PmecControlRole } from "@/lib/pmec-access";
+import type { PmecControlRole } from "@/lib/pmec-access";
 
 type DemoRole = "employee" | PmecControlRole;
-type DemoWorkspace = { role: DemoRole; label: string; name: string; destination: string; device: string };
+type DemoWorkspace = { role: DemoRole; label: string; name: string; destination: string; device: string; destinationUrl?: string };
 
 const demoWorkspaces: DemoWorkspace[] = [
   { role: "employee", label: "EMPLOYEE", name: "Employee workspace", destination: "Assigned work, hours, leave, and notifications", device: "MOBILE-FIRST WORKSPACE" },
-  { role: "pm", label: "PROJECT MANAGER", name: "Project Manager control center", destination: "Delivery, assignments, hours, and capacity", device: "DESKTOP / IPAD WORKSPACE" },
-  { role: "hr", label: "HUMAN RESOURCES", name: "HR control center", destination: "People, leave, workforce planning, and payroll preview", device: "DESKTOP / IPAD WORKSPACE" },
+  { role: "pm", label: "PROJECT MANAGER", name: "Project Manager control center", destination: "Delivery, assignments, hours, and capacity", device: "DESKTOP / IPAD WORKSPACE · pm.pmec.group", destinationUrl: "https://pm.pmec.group/control-center" },
+  { role: "hr", label: "HUMAN RESOURCES", name: "HR control center", destination: "People, leave, workforce planning, and payroll preview", device: "DESKTOP / IPAD WORKSPACE · hr.pmec.group", destinationUrl: "https://hr.pmec.group/control-center" },
 ];
 
 export default function PmecDemoScreen() {
   const router = useRouter();
   const { completeOnboarding, employee, signIn } = useEss();
-  const { setRole } = usePmecAccess();
   const { palette } = useLumen();
   const styles = useMemo(() => makeStyles(palette), [palette]);
   const [selectedRole, setSelectedRole] = useState<DemoRole>("employee");
@@ -33,11 +32,15 @@ export default function PmecDemoScreen() {
       router.replace("/(tabs)");
       return;
     }
-    setRole(selected.role);
+    if (typeof window !== "undefined" && selected.destinationUrl) {
+      window.location.assign(selected.destinationUrl);
+      return;
+    }
     router.replace("/control-center");
   };
 
-  return <ScreenContainer containerClassName={styles.container} edges={["top", "bottom", "left", "right"]}><View style={styles.root}><Animated.View entering={FadeInDown.duration(260)}><Text style={styles.kicker}>PMEC / SHOWCASE ACCESS</Text><Text style={styles.title}>EXPLORE{`\n`}EVERY ROLE.</Text><Text style={styles.intro}>Select a role to open a guided PMEC demonstration with isolated sample data. No password or Clerk session is required for this presentation route.</Text></Animated.View><View style={styles.cards}>{demoWorkspaces.map((workspace) => { const active = selectedRole === workspace.role; return <Pressable key={workspace.role} accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => setSelectedRole(workspace.role)} style={({ pressed }) => [styles.card, active && styles.cardActive, pressed && styles.pressed]}><View style={styles.cardTop}><Text style={styles.cardLabel}>{workspace.label}</Text>{active ? <Text style={styles.selected}>SELECTED</Text> : null}</View><Text style={styles.cardTitle}>{workspace.name}</Text><Text style={styles.cardCopy}>{workspace.destination}</Text><Text style={styles.cardDevice}>{workspace.device}</Text></Pressable>; })}</View><View style={styles.launchPanel}><View><Text style={styles.launchLabel}>SHOWCASE MODE · NO PASSWORD REQUIRED</Text><Text style={styles.launchTitle}>{selected.name}</Text><Text style={styles.launchCopy}>Open a local presentation state for the selected role. This does not sign in to Clerk and cannot read or change production delivery or payroll data.</Text></View><Pressable accessibilityRole="button" onPress={enter} style={({ pressed }) => [styles.enterButton, pressed && styles.pressed]}><Text style={styles.enterText}>OPEN {selected.label} SHOWCASE</Text><Text style={styles.enterArrow}>→</Text></Pressable></View><Text style={styles.security}>LOCAL SHOWCASE ONLY · DEVICE-LOCAL SAMPLE DATA · NO PRODUCTION API ACCESS</Text></View></ScreenContainer>;
+  const isEmployee = selected.role === "employee";
+  return <ScreenContainer containerClassName={styles.container} edges={["top", "bottom", "left", "right"]}><View style={styles.root}><Animated.View entering={FadeInDown.duration(260)}><Text style={styles.kicker}>PMEC / WORKSPACE SELECTOR</Text><Text style={styles.title}>CHOOSE{`\n`}YOUR VIEW.</Text><Text style={styles.intro}>Employee access opens the mobile-first workspace. Project Manager and HR selections open their separate desktop/iPad Control Centers.</Text></Animated.View><View style={styles.cards}>{demoWorkspaces.map((workspace) => { const active = selectedRole === workspace.role; return <Pressable key={workspace.role} accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => setSelectedRole(workspace.role)} style={({ pressed }) => [styles.card, active && styles.cardActive, pressed && styles.pressed]}><View style={styles.cardTop}><Text style={styles.cardLabel}>{workspace.label}</Text>{active ? <Text style={styles.selected}>SELECTED</Text> : null}</View><Text style={styles.cardTitle}>{workspace.name}</Text><Text style={styles.cardCopy}>{workspace.destination}</Text><Text style={styles.cardDevice}>{workspace.device}</Text></Pressable>; })}</View><View style={styles.launchPanel}><View><Text style={styles.launchLabel}>{isEmployee ? "MOBILE SHOWCASE · NO PASSWORD REQUIRED" : "DESKTOP CONTROL CENTER · NO PASSWORD REQUIRED"}</Text><Text style={styles.launchTitle}>{selected.name}</Text><Text style={styles.launchCopy}>{isEmployee ? "Open the local Employee presentation state on this device. It does not sign in to Clerk or access production delivery or payroll data." : `Continue to ${selected.destinationUrl?.replace("https://", "")} for this separate, wider PMEC workspace. On phones, the Control Center intentionally asks for a larger screen.`}</Text></View><Pressable accessibilityRole="button" onPress={enter} style={({ pressed }) => [styles.enterButton, pressed && styles.pressed]}><Text style={styles.enterText}>{isEmployee ? "OPEN EMPLOYEE MOBILE SHOWCASE" : `OPEN ${selected.label} DESKTOP`}</Text><Text style={styles.enterArrow}>→</Text></Pressable></View><Text style={styles.security}>SHOWCASE DATA ONLY · DEVICE-LOCAL SAMPLE DATA · NO PRODUCTION API ACCESS</Text></View></ScreenContainer>;
 }
 
 const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) => StyleSheet.create({

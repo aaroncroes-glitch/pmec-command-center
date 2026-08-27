@@ -180,3 +180,4 @@
 - [ ] Resume private Employee, Project Manager, and HR Clerk session acceptance checks once the account owner is ready to enter credentials securely.
 - [ ] Provision or securely reset isolated PMEC Development Demo credentials in Clerk without sending passwords through chat, logs, or source control.
 - [x] Replace Clerk-dependent client demo entry with a polished local-only PMEC Showcase Access launcher that keeps production APIs unavailable.
+- [x] Make Employee mobile access and Project Manager/HR desktop Control Center entry routes visibly separate from the PMEC showcase.
