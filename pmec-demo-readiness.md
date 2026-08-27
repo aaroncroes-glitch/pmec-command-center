@@ -113,3 +113,7 @@ The drag-and-drop release was published from commit `9f3c81e`. Credential-free p
 ### PM cost-document approval and category tags — 27 August 2026
 
 Project Managers can now set each local showcase cost document to **Pending approval** or **Approved** from an in-place status dropdown and filter the record list by that state. The status change was exercised locally and immediately updated the visible record. Document rows show semantic category tags, including Invoice, Receipt, Contract, Change order, Compliance, and Vendor quote. New local document entries support multi-select tags and an initial approval state. Previously stored browser-local showcase records are migrated to Pending approval with tags derived from their document type. These controls remain device-local and do not create an approval record or upload a document to PMEC services.
+
+### PM cost-document review notes — 27 August 2026
+
+Changing a local showcase cost-document approval state now opens a short **Review note** field before the manager selects Pending approval or Approved. The entered rationale is saved together with the approval decision and shown beneath the document tags. The local PM validation entered a supplier-scope rationale, saved it with Approved, and confirmed the note rendered after the approval menu closed. Review notes remain browser-local demonstration data and never create a production approval record.

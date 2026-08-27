@@ -192,3 +192,4 @@
 - [x] Add desktop drag-and-drop cost-document selection with picker fallback and local-only storage to the PM showcase.
 - [x] Add a Project Manager approval-status dropdown for local showcase cost documents.
 - [x] Add clear local showcase cost-document category tags for invoices, receipts, contracts, and related records.
+- [x] Add a Project Manager review-notes field when changing local showcase cost-document approval status.
