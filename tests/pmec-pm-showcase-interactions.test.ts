@@ -48,5 +48,9 @@ describe("PMEC PM showcase project interactions", () => {
     expect(tracker).toContain("OPEN PROJECT");
     expect(tracker).toContain("documentValueByCurrency");
     expect(tracker).toContain("formattedDocumentValue");
+    expect(tracker).toContain("APPROVAL ATTENTION");
+    expect(tracker).toContain("REVIEW OVERDUE");
+    expect(tracker).toContain("pendingApprovalAgeHours");
+    expect(tracker).toContain("isCostDocumentApprovalOverdue");
   });
 });

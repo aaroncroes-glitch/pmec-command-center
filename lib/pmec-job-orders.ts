@@ -16,6 +16,15 @@ export type CostDocumentApprovalStatus = typeof COST_DOCUMENT_APPROVAL_STATUSES[
 export const COST_DOCUMENT_APPROVAL_LABELS: Record<CostDocumentApprovalStatus, string> = { PENDING: "Pending approval", APPROVED: "Approved" };
 export const COST_DOCUMENT_CATEGORY_TAGS = ["Invoice", "Receipt", "Contract", "Change order", "Compliance", "Vendor quote"] as const;
 export function costDocumentCategoryTags(documentType: CostDocumentType): string[] { return documentType === "SUBCONTRACTOR_INVOICE" ? ["Invoice"] : documentType === "PURCHASE_RECEIPT" ? ["Receipt"] : documentType === "CONTRACT" ? ["Contract"] : documentType === "CHANGE_ORDER" ? ["Change order"] : []; }
+export const COST_DOCUMENT_PENDING_WARNING_HOURS = 48;
+export function pendingApprovalAgeHours(document: CostDocument, now = new Date()) {
+  if ((document.approvalStatus ?? "PENDING") !== "PENDING") return 0;
+  const latestPendingDecision = [...(document.approvalHistory ?? [])].sort((a, b) => b.changedAt.localeCompare(a.changedAt)).find((entry) => entry.status === "PENDING");
+  const pendingSince = Date.parse(latestPendingDecision?.changedAt ?? document.uploadedAt);
+  return Number.isFinite(pendingSince) ? Math.max(0, Math.floor((now.getTime() - pendingSince) / (60 * 60 * 1000))) : 0;
+}
+export function isCostDocumentApprovalOverdue(document: CostDocument, now = new Date()) { return pendingApprovalAgeHours(document, now) > COST_DOCUMENT_PENDING_WARNING_HOURS; }
+export function pendingApprovalAgeLabel(hours: number) { return hours >= 48 ? `${Math.floor(hours / 24)}D ${hours % 24}H` : `${hours}H`; }
 export type CostDocumentApprovalHistoryEntry = { id: string; status: CostDocumentApprovalStatus; reviewNote?: string; changedAt: string; changedBy: string };
 export type PmecRegion = "EGYPT" | "ARUBA" | "VENEZUELA" | "PANAMA" | "OTHER";
 

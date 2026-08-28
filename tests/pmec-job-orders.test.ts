@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { COST_DOCUMENT_APPROVAL_LABELS, COST_DOCUMENT_APPROVAL_STATUSES, COST_DOCUMENT_CATEGORY_TAGS, budgetAlertStatus, budgetVariance, completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, jobOrderProgress, jobOrderSpent, matchesProjectSearch, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
+import { COST_DOCUMENT_APPROVAL_LABELS, COST_DOCUMENT_APPROVAL_STATUSES, COST_DOCUMENT_CATEGORY_TAGS, COST_DOCUMENT_PENDING_WARNING_HOURS, budgetAlertStatus, budgetVariance, completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, isCostDocumentApprovalOverdue, jobOrderProgress, jobOrderSpent, matchesProjectSearch, pendingApprovalAgeHours, pendingApprovalAgeLabel, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
 
 describe("PMEC job-order module", () => {
   it("ships the required multi-region, multi-currency project-manager portfolio", () => {
@@ -58,5 +58,16 @@ describe("PMEC job-order module", () => {
 
     expect(model).toContain("CostDocumentApprovalHistoryEntry");
     expect(model).toContain("approvalHistory?: CostDocumentApprovalHistoryEntry[]");
+  });
+
+  it("flags only pending cost documents that have exceeded the 48-hour review window", () => {
+    const pendingDocument = initialPmeJobOrders[2].costDocuments[0];
+    const referenceTime = new Date("2026-08-26T10:00:00.000Z");
+
+    expect(COST_DOCUMENT_PENDING_WARNING_HOURS).toBe(48);
+    expect(pendingApprovalAgeHours(pendingDocument, referenceTime)).toBe(49);
+    expect(pendingApprovalAgeLabel(49)).toBe("2D 1H");
+    expect(isCostDocumentApprovalOverdue(pendingDocument, referenceTime)).toBe(true);
+    expect(isCostDocumentApprovalOverdue(initialPmeJobOrders[0].costDocuments[0], referenceTime)).toBe(false);
   });
 });
