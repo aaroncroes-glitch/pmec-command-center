@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { COST_DOCUMENT_APPROVAL_LABELS, COST_DOCUMENT_APPROVAL_STATUSES, COST_DOCUMENT_CATEGORY_TAGS, COST_DOCUMENT_PENDING_WARNING_HOURS, budgetAlertStatus, budgetVariance, completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, isCostDocumentApprovalOverdue, jobOrderProgress, jobOrderSpent, matchesProjectSearch, pendingApprovalAgeHours, pendingApprovalAgeLabel, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
+import { COST_DOCUMENT_APPROVAL_LABELS, COST_DOCUMENT_APPROVAL_STATUSES, COST_DOCUMENT_CATEGORY_TAGS, COST_DOCUMENT_PENDING_WARNING_HOURS, applyBulkCostDocumentApproval, budgetAlertStatus, budgetVariance, completedTaskCount, contingencyAmount, groupCurrencyTotals, initialPmeJobOrders, isCostDocumentApprovalOverdue, jobOrderProgress, jobOrderSpent, matchesProjectSearch, pendingApprovalAgeHours, pendingApprovalAgeLabel, remainingAuthorized, totalAuthorized } from "../lib/pmec-job-orders";
 
 describe("PMEC job-order module", () => {
   it("ships the required multi-region, multi-currency project-manager portfolio", () => {
@@ -69,5 +69,28 @@ describe("PMEC job-order module", () => {
     expect(pendingApprovalAgeLabel(49)).toBe("2D 1H");
     expect(isCostDocumentApprovalOverdue(pendingDocument, referenceTime)).toBe(true);
     expect(isCostDocumentApprovalOverdue(initialPmeJobOrders[0].costDocuments[0], referenceTime)).toBe(false);
+  });
+
+  it("seeds multiple overdue pending records for the local bulk-approval showcase", () => {
+    const pending = initialPmeJobOrders.flatMap((job) => job.costDocuments).filter((document) => document.approvalStatus === "PENDING");
+    const referenceTime = new Date("2026-08-28T12:00:00.000Z");
+
+    expect(pending).toHaveLength(2);
+    expect(pending.every((document) => isCostDocumentApprovalOverdue(document, referenceTime))).toBe(true);
+  });
+
+  it("records one shared-rationale approval history event per selected pending document", () => {
+    const targets = initialPmeJobOrders.flatMap((job) => job.costDocuments.filter((document) => document.approvalStatus === "PENDING").map((document) => ({ jobOrderId: job.id, documentId: document.id })));
+    const updated = applyBulkCostDocumentApproval(initialPmeJobOrders, targets, {
+      changedAt: "2026-08-28T15:00:00.000Z",
+      changedBy: "PMEC Project Manager",
+      reviewNote: "Batch review completed against approved vendor scope.",
+    });
+    const selected = updated.flatMap((job) => job.costDocuments).filter((document) => targets.some((target) => target.documentId === document.id));
+
+    expect(selected).toHaveLength(2);
+    expect(selected.every((document) => document.approvalStatus === "APPROVED")).toBe(true);
+    expect(selected.every((document) => document.reviewNote === "Batch review completed against approved vendor scope.")).toBe(true);
+    expect(selected.every((document) => document.approvalHistory?.at(-1)?.changedBy === "PMEC Project Manager")).toBe(true);
   });
 });

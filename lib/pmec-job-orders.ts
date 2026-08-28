@@ -34,6 +34,37 @@ export type JobOrderMilestone = { id: string; label: string; targetDate: string;
 export type CostDocument = { id: string; url: string; description: string; documentType: CostDocumentType; approvalStatus?: CostDocumentApprovalStatus; reviewNote?: string; approvalHistory?: CostDocumentApprovalHistoryEntry[]; tags?: string[]; amount?: number; uploadedAt: string; uploadedBy: string; fileName?: string; mimeType?: string; sizeBytes?: number };
 export type JobOrder = { id: string; title: string; description: string; clientName: string; discipline: EngineeringDiscipline; phase: JobOrderPhase; priority: JobOrderPriority; currency: string; budget: number; contingencyPct: number; quotationId?: string; netLaborMultiplier?: number; subcontractorName?: string; projectManagerName: string; region: PmecRegion; startDate: string; targetEndDate: string; actualEndDate?: string; clientApprovalDate?: string; clientApprovedBy?: string; tasks: WorkPackageTask[]; milestones: JobOrderMilestone[]; costDocuments: CostDocument[]; createdAt: string; updatedAt: string; tags: string[] };
 export type NewJobOrder = Pick<JobOrder, "title" | "description" | "clientName" | "discipline" | "priority" | "currency" | "budget" | "contingencyPct" | "projectManagerName" | "region" | "startDate" | "targetEndDate" | "subcontractorName" | "quotationId" | "tags">;
+export type CostDocumentBulkApprovalTarget = { jobOrderId: string; documentId: string };
+export type CostDocumentBulkApprovalDecision = { changedAt: string; changedBy: string; reviewNote?: string };
+
+export function applyBulkCostDocumentApproval(jobOrders: JobOrder[], targets: CostDocumentBulkApprovalTarget[], decision: CostDocumentBulkApprovalDecision): JobOrder[] {
+  const targetKeys = new Set(targets.map((target) => `${target.jobOrderId}:${target.documentId}`));
+  if (!targetKeys.size) return jobOrders;
+  const reviewNote = decision.reviewNote?.trim() || undefined;
+  return jobOrders.map((jobOrder) => {
+    let affected = false;
+    const costDocuments = jobOrder.costDocuments.map((document) => {
+      if (!targetKeys.has(`${jobOrder.id}:${document.id}`) || (document.approvalStatus ?? "PENDING") !== "PENDING") return document;
+      affected = true;
+      const history = document.approvalHistory?.length ? document.approvalHistory : [{
+        id: `history-${document.id}-initial`, status: document.approvalStatus ?? "PENDING", reviewNote: document.reviewNote, changedAt: document.uploadedAt, changedBy: document.uploadedBy,
+      }];
+      return {
+        ...document,
+        approvalStatus: "APPROVED" as const,
+        reviewNote,
+        approvalHistory: [...history, {
+          id: `history-${document.id}-${decision.changedAt}`,
+          status: "APPROVED" as const,
+          reviewNote,
+          changedAt: decision.changedAt,
+          changedBy: decision.changedBy,
+        }],
+      };
+    });
+    return affected ? { ...jobOrder, costDocuments, updatedAt: decision.changedAt } : jobOrder;
+  });
+}
 
 const stamp = "2026-08-24T09:00:00.000Z";
 const task = (data: Omit<WorkPackageTask, "materialCost"> & { materialCost?: number }): WorkPackageTask => ({ ...data, materialCost: data.materials.length ? data.materials.reduce((sum, item) => sum + lineItemTotal(item), 0) : data.materialCost ?? 0 });
@@ -48,7 +79,7 @@ export const initialPmeJobOrders: JobOrder[] = [
   {
     id: "jo-water-treatment", title: "Municipal Water Treatment Plant Upgrade — Phase II", description: "Detailed design for capacity expansion of the secondary treatment train, including instrumentation and updated process control networks.", clientName: "Greater Cairo Water & Sanitation Authority", discipline: "PROCESS_INSTRUMENTATION", phase: "DESIGN", priority: "CRITICAL", currency: "EGP", budget: 4200000, contingencyPct: 15, quotationId: "Q-2025-142", netLaborMultiplier: 3.2, projectManagerName: "Nour El-Sayed", region: "EGYPT", startDate: "2026-01-15", targetEndDate: "2026-12-20", tags: ["water-treatment", "municipal", "phase-2"], createdAt: stamp, updatedAt: stamp,
     milestones: [{ id: "m1", label: "Contract kickoff", targetDate: "2026-01-15", achieved: true, achievedDate: "2026-01-15" }, { id: "m2", label: "30% design review", targetDate: "2026-05-01", achieved: false }, { id: "m3", label: "HAZOP complete", targetDate: "2026-07-15", achieved: false }, { id: "m4", label: "Issued for construction", targetDate: "2026-11-30", achieved: false }],
-    tasks: [task({ id: "water-1", title: "Hydraulic modeling of expanded train", description: "Model the proposed secondary treatment expansion and confirm pump sizing.", discipline: "PROCESS_INSTRUMENTATION", status: "COMPLETED", progress: 100, assignedTo: "Nour El-Sayed", laborCost: 145000, materials: [], startDate: "2026-01-15", dueDate: "2026-02-28", completedDate: "2026-02-25", notes: "Head margin confirmed for initial scope.", wbsPhase: "01 — Process design" }), task({ id: "water-2", title: "Instrumentation & control philosophy", description: "Define instrumentation list, control narrative, and SCADA integration approach.", discipline: "PROCESS_INSTRUMENTATION", status: "IN_PROGRESS", progress: 45, assignedTo: "Karim Fathy", laborCost: 120000, materials: [], startDate: "2026-03-01", dueDate: "2026-05-20", notes: "Draft control narrative circulated for QA review.", wbsPhase: "02 — Instrumentation & controls" }), task({ id: "water-3", title: "P&ID development — issue for review", description: "Develop piping and instrumentation diagrams for expanded train.", discipline: "PROCESS_INSTRUMENTATION", status: "NOT_STARTED", progress: 0, assignedTo: "TBD", laborCost: 260000, materials: [], startDate: "2026-05-21", dueDate: "2026-07-01", wbsPhase: "02 — Instrumentation & controls" }), task({ id: "water-4", title: "HAZOP workshop & action close-out", description: "Facilitate HAZOP workshop with client and safety representatives.", discipline: "QUALITY_SAFETY", status: "NOT_STARTED", progress: 0, assignedTo: "Quality / safety lead", laborCost: 80000, materials: [{ name: "Workshop facilitation & venue", quantity: 1, unit: "lot", unitCost: 120000 }], startDate: "2026-07-05", dueDate: "2026-07-15", wbsPhase: "03 — Safety review" })], costDocuments: [],
+    tasks: [task({ id: "water-1", title: "Hydraulic modeling of expanded train", description: "Model the proposed secondary treatment expansion and confirm pump sizing.", discipline: "PROCESS_INSTRUMENTATION", status: "COMPLETED", progress: 100, assignedTo: "Nour El-Sayed", laborCost: 145000, materials: [], startDate: "2026-01-15", dueDate: "2026-02-28", completedDate: "2026-02-25", notes: "Head margin confirmed for initial scope.", wbsPhase: "01 — Process design" }), task({ id: "water-2", title: "Instrumentation & control philosophy", description: "Define instrumentation list, control narrative, and SCADA integration approach.", discipline: "PROCESS_INSTRUMENTATION", status: "IN_PROGRESS", progress: 45, assignedTo: "Karim Fathy", laborCost: 120000, materials: [], startDate: "2026-03-01", dueDate: "2026-05-20", notes: "Draft control narrative circulated for QA review.", wbsPhase: "02 — Instrumentation & controls" }), task({ id: "water-3", title: "P&ID development — issue for review", description: "Develop piping and instrumentation diagrams for expanded train.", discipline: "PROCESS_INSTRUMENTATION", status: "NOT_STARTED", progress: 0, assignedTo: "TBD", laborCost: 260000, materials: [], startDate: "2026-05-21", dueDate: "2026-07-01", wbsPhase: "02 — Instrumentation & controls" }), task({ id: "water-4", title: "HAZOP workshop & action close-out", description: "Facilitate HAZOP workshop with client and safety representatives.", discipline: "QUALITY_SAFETY", status: "NOT_STARTED", progress: 0, assignedTo: "Quality / safety lead", laborCost: 80000, materials: [{ name: "Workshop facilitation & venue", quantity: 1, unit: "lot", unitCost: 120000 }], startDate: "2026-07-05", dueDate: "2026-07-15", wbsPhase: "03 — Safety review" })], costDocuments: [{ id: "doc-3", url: "local://cost-documents/water-automation-vendor-quote", description: "Automation vendor quote — PLC panel package", documentType: "OTHER", approvalStatus: "PENDING", tags: ["Vendor quote", "Compliance"], amount: 155000, uploadedAt: "2026-08-22T11:30:00.000Z", uploadedBy: "Nour El-Sayed" }],
   },
   {
     id: "jo-hospital-wing", title: "Hospital Wing Structural Assessment & Seismic Retrofit", description: "Structural assessment and seismic retrofit of an active hospital wing, including column jacketing, shear walls, and final recertification.", clientName: "Hospital Punta Pacífica Group", discipline: "CIVIL_STRUCTURAL", phase: "QA_INSPECTION", priority: "HIGH", currency: "USD", budget: 310000, contingencyPct: 10, quotationId: "Q-2025-076", netLaborMultiplier: 3.1, subcontractorName: "Estructuras del Istmo S.A.", projectManagerName: "Luis Herrera", region: "PANAMA", startDate: "2025-09-01", targetEndDate: "2026-05-15", clientApprovalDate: "2025-08-15", clientApprovedBy: "Dr. Elena Vasquez", tags: ["structural", "hospital", "critical-facility"], createdAt: stamp, updatedAt: stamp,

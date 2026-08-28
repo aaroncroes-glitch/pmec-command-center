@@ -2,10 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import {
+  applyBulkCostDocumentApproval,
   costDocumentCategoryTags,
   initialPmeJobOrders,
   lineItemTotal,
   type CostDocument,
+  type CostDocumentBulkApprovalTarget,
   type CostDocumentApprovalStatus,
   type JobOrder,
   type JobOrderMilestone,
@@ -33,6 +35,7 @@ type PmecJobOrderWorkspace = {
   addCostDocument: (jobOrderId: string, input: Omit<CostDocument, "id" | "uploadedAt" | "approvalHistory">) => void;
   updateCostDocument: (jobOrderId: string, documentId: string, updates: Partial<CostDocument>) => void;
   recordCostDocumentDecision: (jobOrderId: string, documentId: string, decision: ApprovalDecision) => void;
+  bulkApproveCostDocuments: (targets: CostDocumentBulkApprovalTarget[], decision: Omit<ApprovalDecision, "status">) => void;
   advancePhase: (jobOrderId: string, phase: JobOrderPhase) => void;
   removeJobOrder: (jobOrderId: string) => void;
   resetDemo: () => void;
@@ -213,6 +216,10 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
     }));
   }, [mutate]);
 
+  const bulkApproveCostDocuments = useCallback((targets: CostDocumentBulkApprovalTarget[], decision: Omit<ApprovalDecision, "status">) => {
+    setJobOrders((current) => applyBulkCostDocumentApproval(current, targets, { ...decision, changedAt: stamp() }));
+  }, []);
+
   const advancePhase = useCallback((jobOrderId: string, phase: JobOrderPhase) => {
     mutate(jobOrderId, (jobOrder) => ({
       ...jobOrder,
@@ -241,6 +248,7 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
     addCostDocument,
     updateCostDocument,
     recordCostDocumentDecision,
+    bulkApproveCostDocuments,
     advancePhase,
     removeJobOrder,
     resetDemo,
@@ -255,6 +263,7 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
     addCostDocument,
     updateCostDocument,
     recordCostDocumentDecision,
+    bulkApproveCostDocuments,
     advancePhase,
     removeJobOrder,
     resetDemo,

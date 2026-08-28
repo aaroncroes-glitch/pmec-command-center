@@ -18,6 +18,8 @@ describe("PMEC PM showcase project interactions", () => {
 
   it("uses an interactive calendar and local cost-document selection with drag-and-drop and picker fallback", () => {
     const tracker = readFileSync(resolve(process.cwd(), "app/job-orders/index.tsx"), "utf8");
+    const workspace = readFileSync(resolve(process.cwd(), "lib/pmec-job-order-workspace.tsx"), "utf8");
+    const jobOrderModel = readFileSync(resolve(process.cwd(), "lib/pmec-job-orders.ts"), "utf8");
 
     expect(tracker).toContain("MilestoneScheduleForm");
     expect(tracker).toContain("SCHEDULE MILESTONE");
@@ -52,5 +54,13 @@ describe("PMEC PM showcase project interactions", () => {
     expect(tracker).toContain("REVIEW OVERDUE");
     expect(tracker).toContain("pendingApprovalAgeHours");
     expect(tracker).toContain("isCostDocumentApprovalOverdue");
+    expect(tracker).toContain("BULK APPROVAL");
+    expect(tracker).toContain("SELECT ALL PENDING");
+    expect(tracker).toContain("APPROVE SELECTED");
+    expect(tracker).toContain("Bulk approval review note");
+    expect(tracker).toContain("bulkApproveCostDocuments(selectedPendingRecords");
+    expect(workspace).toContain("bulkApproveCostDocuments");
+    expect(workspace).toContain("applyBulkCostDocumentApproval");
+    expect(jobOrderModel).toContain('approvalStatus: "APPROVED" as const');
   });
 });
