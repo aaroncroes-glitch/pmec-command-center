@@ -141,3 +141,9 @@ The Project Manager Decision Queue supports browser-local selection of multiple 
 Fresh release validation opened the Decision Queue with two overdue pending records and selected both through **Select all pending**. The queue showed `2 selected` and each record changed to the selected state before any local approval decision was submitted.
 
 The selected records were bulk approved with one shared local rationale. The Decision Queue immediately changed from two pending and one approved record to zero pending and three approved records, with the approval-attention banner and overdue badges removed. This confirms the browser-local batch workflow and does not represent a production approval action.
+
+### Isolated desktop UI/UX design demos — 28 August 2026
+
+Two intentionally separate design-review routes are now available: `/pm-ui-demo` for the Project Manager concept and `/hr-ui-demo` for the Human Resources concept. Both use a dedicated warm-paper/graphite design system, static non-identifying presentation data, and an explicit `ISOLATED DEMO · NOT LIVE` boundary. They are desktop/iPad landscape prototypes: widths below 760 pixels receive a wider-view message instead of a condensed administrative workspace.
+
+The Project Manager concept prioritizes delivery decisions and one accountable project focus; the HR concept prioritizes near-term capacity, leave/staffing decisions, and one people focus. The routes do not import the live Control Center or project-workspace providers, are not linked from live role hosts or the client showcase launcher, and cannot read or mutate PMEC production delivery, payroll, or personnel data. They may be promoted, hidden, or removed independently after UI review.

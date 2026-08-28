@@ -197,3 +197,7 @@
 - [x] Add a PM decision-summary view for pending and approved local cost documents.
 - [x] Add visual Decision Queue aging-warning badges for local cost documents pending approval longer than 48 hours.
 - [x] Add local Project Manager bulk approval for selected pending and overdue cost documents with a shared review rationale.
+- [x] Audit PM and HR desktop workspaces for UI clutter and establish separate streamlined demonstration-page information architecture.
+- [x] Build an isolated Project Manager desktop/iPad UI/UX demo route that never changes the live PM workspace.
+- [x] Build an isolated HR desktop/iPad UI/UX demo route that never changes the live HR workspace.
+- [x] Add a simple demo-only access and removal/hide boundary so both design experiments can be promoted or retired independently.
