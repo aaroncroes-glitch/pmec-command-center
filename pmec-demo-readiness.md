@@ -133,3 +133,11 @@ The implementation was released from commit `d51703f` in Ready Vercel Production
 The local Project Manager Decision Queue now evaluates pending approval age from the latest pending decision event (or the locally recorded upload time when no decision history exists). Records pending for **more than 48 hours** receive an explicit `REVIEW OVERDUE` badge with an elapsed day/hour value; the summary opens with an `APPROVAL ATTENTION` banner whenever one or more records need review. Approved records never receive this badge. These timing indicators use browser-local demonstration data only and do not issue reminders, create production approvals, or call protected delivery services.
 
 The Decision Queue aging-warning implementation was released in the Ready Vercel Production deployment for commit `4f72258`. A fresh direct deployment load includes the seeded pending cost-document decision and exposes the Decision Queue for review.
+
+### PM Decision Queue bulk approval — 28 August 2026
+
+The Project Manager Decision Queue supports browser-local selection of multiple pending documents and records one shared-rationale **Approved** decision across the chosen items. A fresh production release seeds two overdue pending documents, allowing the showcase to demonstrate multi-record selection, a shared rationale, individual approval-history entries, immediate queue-count reduction, and removal of aging warnings. The batch action does not call delivery, payroll, or document APIs and cannot create a production approval record.
+
+Fresh release validation opened the Decision Queue with two overdue pending records and selected both through **Select all pending**. The queue showed `2 selected` and each record changed to the selected state before any local approval decision was submitted.
+
+The selected records were bulk approved with one shared local rationale. The Decision Queue immediately changed from two pending and one approved record to zero pending and three approved records, with the approval-attention banner and overdue badges removed. This confirms the browser-local batch workflow and does not represent a production approval action.

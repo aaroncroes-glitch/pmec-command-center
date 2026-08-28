@@ -196,4 +196,4 @@
 - [x] Add a chronological local approval-history log for PM cost-document status changes and review notes.
 - [x] Add a PM decision-summary view for pending and approved local cost documents.
 - [x] Add visual Decision Queue aging-warning badges for local cost documents pending approval longer than 48 hours.
-- [ ] Add local Project Manager bulk approval for selected pending and overdue cost documents with a shared review rationale.
+- [x] Add local Project Manager bulk approval for selected pending and overdue cost documents with a shared review rationale.
