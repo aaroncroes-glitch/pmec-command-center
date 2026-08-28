@@ -131,3 +131,5 @@ The implementation was released from commit `d51703f` in Ready Vercel Production
 ### PM Decision Queue approval-aging warnings — 28 August 2026
 
 The local Project Manager Decision Queue now evaluates pending approval age from the latest pending decision event (or the locally recorded upload time when no decision history exists). Records pending for **more than 48 hours** receive an explicit `REVIEW OVERDUE` badge with an elapsed day/hour value; the summary opens with an `APPROVAL ATTENTION` banner whenever one or more records need review. Approved records never receive this badge. These timing indicators use browser-local demonstration data only and do not issue reminders, create production approvals, or call protected delivery services.
+
+The Decision Queue aging-warning implementation was released in the Ready Vercel Production deployment for commit `4f72258`. A fresh direct deployment load includes the seeded pending cost-document decision and exposes the Decision Queue for review.
