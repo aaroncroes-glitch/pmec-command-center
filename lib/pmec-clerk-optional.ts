@@ -28,8 +28,10 @@ export function useOptionalUser() {
   return clerkEnabled ? useUser() : { isLoaded: true, isSignedIn: false, user: null };
 }
 
+// Screens hide sign-in when Clerk is off (see `clerkEnabled`). Should one be missed, a
+// warning beats what throwing here did: a full-page crash on click in dev and previews.
 const unavailable = () => {
-  throw new Error("Clerk is not configured in this build.");
+  console.warn("Sign-in is not configured in this build.");
 };
 
 export function useOptionalClerk() {

@@ -15,7 +15,7 @@ import { HrPayroll } from "@/components/pmec-hr-payroll";
 import { PmecIdentityAdmin } from "@/components/pmec-identity-admin";
 import { trpc } from "@/lib/trpc";
 import { getPmecHostWorkspace } from "@/lib/pmec-host-routing";
-import { useOptionalAuth, useOptionalClerk, useOptionalUser } from "@/lib/pmec-clerk-optional";
+import { clerkEnabled, useOptionalAuth, useOptionalClerk, useOptionalUser } from "@/lib/pmec-clerk-optional";
 
 type Tab = "overview" | "comparison" | "delivery" | "people" | "hours" | "leave" | "planning" | "payroll" | "capacity" | "identity";
 const tabs: { id: Tab; label: string; permission?: "delivery" | "people" | "hoursRead" | "leaveReview" | "hrPlanning" | "payroll" | "capacity" }[] = [
@@ -43,6 +43,8 @@ function ClerkAccountControl({ styles }: { styles: ReturnType<typeof makeStyles>
   const { user } = useOptionalUser();
   const { openSignIn, signOut } = useOptionalClerk();
 
+  // Builds without a Clerk key (local dev, PR previews) have no sign-in to open.
+  if (!clerkEnabled) return <View accessibilityRole="text" style={styles.accountChip}><Text style={styles.accountChipText}>LOCAL DEMO</Text></View>;
   if (isSignedIn) return <Pressable onPress={() => signOut()} style={styles.accountChip}><Text style={styles.accountChipText}>{(user?.firstName ?? "ACCOUNT").toUpperCase()} · SIGN OUT</Text></Pressable>;
   return <Pressable onPress={() => openSignIn()} style={[styles.accountChip, styles.accountChipPrimary]}><Text style={[styles.accountChipText, styles.accountChipPrimaryText]}>SIGN IN</Text></Pressable>;
 }
