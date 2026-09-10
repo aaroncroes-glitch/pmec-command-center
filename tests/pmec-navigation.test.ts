@@ -89,6 +89,15 @@ describe("navigation cannot dead-end", () => {
     expect(read("app/attendance.tsx")).toContain('performSafeBack(router, "/")');
   });
 
+  it("never offers the other role's view on a host-locked site", () => {
+    // setRole is ignored on pm. and hr.pmec.group, so the button only dropped you on the
+    // Control Room. Those sites now say where the other view lives instead.
+    const cc = read("app/control-center/index.tsx");
+    expect(cc).toContain("lockedRole={access.hostLocked ? access.role : null}");
+    expect(cc).toContain('{lockedRole === "pm" ? <Text');
+    expect(cc).toContain('{lockedRole === "hr" ? <Text');
+  });
+
   it("links the project tracker back to the Control Center", () => {
     expect(read("app/job-orders/index.tsx")).toContain('fallback="/control-center"');
   });
