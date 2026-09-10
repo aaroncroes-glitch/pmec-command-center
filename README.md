@@ -17,6 +17,8 @@ This repository is the source of truth for the production PMEC application. It i
 
 Run `pnpm check` for TypeScript validation and `pnpm test` for the deterministic test suite. Local development uses `.env.local`; that file is ignored by Git and must never be committed.
 
+`pnpm test:nav` checks navigation end to end. It opens the web build in headless Chrome, presses every tab, card, link and back button, and confirms where each one lands, including after a refresh and from a direct link. Start the web server first with `pnpm dev:metro`, and set `EXPO_PORT` if it is not on 8081. It uses the installed Google Chrome; set `CHROME_PATH` to use another Chrome or Chromium binary. A full run takes about four minutes.
+
 ## Production boundary
 
 The existing web client can be exported with `pnpm export:web`, but the current PMEC authorization and data API run in the Express/tRPC server under `server/`. Before any public PMEC hostname is pointed to Vercel, that server must be deployed as a Vercel-compatible serverless API or to a separate production API service, with the web build configured to use its HTTPS URL through `EXPO_PUBLIC_API_BASE_URL`.
