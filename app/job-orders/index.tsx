@@ -172,6 +172,8 @@ const decisionAgingStyles = StyleSheet.create({
   badgeText: { color: "#8D2E27", fontSize: 8, fontWeight: "900", letterSpacing: 0.4 },
 });
 const decisionBulkStyles = StyleSheet.create({
+  // Same value as the palette's AA-checked muted token; this sheet is built without the palette.
+  hint: { color: "#69635D", fontSize: 13, lineHeight: 18, marginTop: 8 },
   shell: { backgroundColor: "#1A1A1A", gap: 10, marginTop: 14, padding: 13 },
   heading: { color: "#FFFDF8", fontSize: 9, fontWeight: "900", letterSpacing: 0.7 },
   copy: { color: "#D7CEC3", fontSize: 10, lineHeight: 15 },
@@ -315,8 +317,8 @@ export default function JobOrdersPage() {
           style={{ marginTop: 28 }}
         />
         <View style={styles.railFoot}>
-          <Text style={styles.railFootTitle}>LUMEN SYSTEMS</Text>
-          <Text style={styles.railFootCopy}>Local PMEC demonstration{`\n`}No external sync</Text>
+          <Text style={styles.railFootTitle}>PROJECT DATA</Text>
+          <Text style={styles.railFootCopy}>Demo data, saved in this browser only</Text>
         </View>
       </View>
       <View style={styles.main}>
@@ -1110,6 +1112,13 @@ function ManagerDecisionSummary({
                     <Text style={decisionBulkStyles.approveText}>APPROVE SELECTED</Text>
                   </Pressable>
                 </View>
+                {!selectedPendingRecords.length || !bulkNote.trim() ? (
+                  <Text accessibilityLiveRegion="polite" style={decisionBulkStyles.hint}>
+                    {!selectedPendingRecords.length
+                      ? "Select documents, then write a shared reason to approve them."
+                      : "Write a shared reason to approve the selected documents."}
+                  </Text>
+                ) : null}
               </View>
             ) : null}
             <View style={costDocumentStyles.filterRow}>
@@ -1874,6 +1883,15 @@ function AddWorkPackage({
           next connected-data phase. The new package immediately enters the local WBS and portfolio
           calculations.
         </Text>
+        {!title.trim() || !assignee.trim() ? (
+          <Text accessibilityLiveRegion="polite" style={styles.actionHint}>
+            {!title.trim() && !assignee.trim()
+              ? "Add a title and who it is assigned to."
+              : !assignee.trim()
+                ? "Add who this package is assigned to."
+                : "Add a title for this package."}
+          </Text>
+        ) : null}
         <View style={styles.editorActions}>
           <Pressable
             disabled={!title.trim() || !assignee.trim()}
@@ -1897,6 +1915,7 @@ function toMoney(values: { currency: string; total: number }[]) {
 
 const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
   StyleSheet.create({
+    actionHint: { color: palette.muted, fontSize: 13, lineHeight: 18, marginTop: 12 },
     page: { backgroundColor: palette.background, flex: 1, flexDirection: "row" },
     rail: { backgroundColor: palette.foreground, padding: 24, width: 220 },
     brand: { color: palette.inverseText, fontSize: 30, fontWeight: "900", letterSpacing: -1.2 },
@@ -2636,6 +2655,15 @@ function MilestoneScheduleForm({
             );
           })}
         </View>
+        {!label.trim() || !targetDate ? (
+          <Text accessibilityLiveRegion="polite" style={styles.actionHint}>
+            {!label.trim() && !targetDate
+              ? "Name the milestone and pick a target date."
+              : !targetDate
+                ? "Pick a target date to add this milestone."
+                : "Name the milestone to add it."}
+          </Text>
+        ) : null}
         <View style={styles.editorActions}>
           <Pressable
             disabled={!label.trim() || !targetDate}
@@ -2886,6 +2914,11 @@ function CostDocumentUploadForm({
             </Pressable>
           ))}
         </View>
+        {!asset ? (
+          <Text accessibilityLiveRegion="polite" style={styles.actionHint}>
+            Attach a file to add it to cost records.
+          </Text>
+        ) : null}
         <View style={styles.editorActions}>
           <Pressable
             disabled={!asset}

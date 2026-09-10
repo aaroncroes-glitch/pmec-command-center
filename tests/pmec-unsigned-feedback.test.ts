@@ -16,7 +16,7 @@ describe("PMEC unsigned-request feedback", () => {
   it("shows clear signed-out guidance and never labels local delivery data as synchronized", () => {
     const controlCenter = readFileSync(resolve(process.cwd(), "app/control-center/index.tsx"), "utf8");
     const assignedWork = readFileSync(resolve(process.cwd(), "app/assigned-work.tsx"), "utf8");
-    expect(controlCenter).toContain("PAYROLL ACCESS: SIGN IN WITH CLERK");
+    expect(controlCenter).toContain("PAYROLL: SIGN IN TO VIEW");
     expect(assignedWork).toContain("PMEC account access is required.");
     expect(assignedWork).toContain("No local demonstration work is shown as synchronized work.");
   });
