@@ -222,6 +222,7 @@ function DayCell({
       accessibilityLabel={label}
       selected={selected}
       pressed={selected}
+      insetFocusRing
       onPress={onSelect}
       style={[styles.cell, (day.weekend || !day.inMonth) && styles.cellMuted, selected && styles.cellSelected]}
     >
