@@ -59,6 +59,7 @@ import { usePmecJobOrders } from "@/lib/pmec-job-order-workspace";
 import { type PmecWorkforcePerson, usePmecControl } from "@/lib/pmec-control-workspace";
 import * as DocumentPicker from "expo-document-picker";
 import { useLumen } from "@/lib/lumen-workspace";
+import { Chip, StatTile } from "@/components/pmec";
 
 type PortfolioTab = "ACTIVE" | "COMPLETED" | "ALL";
 type BudgetFilter = "ALL" | Exclude<BudgetAlertStatus, "ON_TRACK">;
@@ -269,6 +270,13 @@ export default function JobOrdersPage() {
     }),
     [jobOrders, visible],
   );
+  const pendingDecisionCount = useMemo(
+    () =>
+      jobOrders
+        .flatMap((job) => job.costDocuments)
+        .filter((document) => (document.approvalStatus ?? "PENDING") === "PENDING").length,
+    [jobOrders],
+  );
   const selectedProjectId = Array.isArray(projectId) ? projectId[0] : projectId;
   useEffect(() => {
     if (selectedProjectId) {
@@ -322,40 +330,27 @@ export default function JobOrdersPage() {
           </Pressable>
         </View>
         <View style={styles.kpiGrid}>
-          <Kpi
-            styles={styles}
-            label="AUTHORIZED BUDGET"
-            value={formatGrouped(portfolio.budget)}
-            detail="Filtered project currencies"
+          <StatTile
+            label="Authorized budget"
+            figure={{ kind: "money", values: toMoney(portfolio.budget) }}
+            caption="Filtered project currencies"
           />
-          <Kpi
-            styles={styles}
-            label="DERIVED SPEND"
-            value={formatGrouped(portfolio.spent)}
-            detail="Labor + materials + subcontract"
+          <StatTile
+            label="Derived spend"
+            figure={{ kind: "money", values: toMoney(portfolio.spent) }}
+            caption="Labor + materials + subcontract"
           />
-          <Kpi
-            styles={styles}
-            label="ACTIVE PROJECTS"
-            value={String(portfolio.active)}
-            detail="Across all PMEC regions"
+          <StatTile
+            label="Active projects"
+            figure={{ kind: "count", value: portfolio.active }}
+            caption="Across all PMEC regions"
           />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open manager decision summary"
+          <StatTile
+            label="Decision queue"
+            figure={{ kind: "count", value: pendingDecisionCount }}
+            caption="Pending cost-document decisions"
             onPress={() => setDecisionSummary(true)}
-            style={({ pressed }) => [styles.kpi, pressed && styles.pressed]}
-          >
-            <Text style={styles.kpiLabel}>DECISION QUEUE</Text>
-            <Text style={styles.kpiValue}>
-              {
-                jobOrders
-                  .flatMap((job) => job.costDocuments)
-                  .filter((document) => (document.approvalStatus ?? "PENDING") === "PENDING").length
-              }
-            </Text>
-            <Text style={styles.kpiDetail}>Pending cost-document decisions</Text>
-          </Pressable>
+          />
         </View>
         <View style={styles.filterBar}>
           <View style={projectSearchStyles.row}>
@@ -373,13 +368,7 @@ export default function JobOrdersPage() {
           </View>
           <View style={styles.tabs}>
             {(["ACTIVE", "COMPLETED", "ALL"] as PortfolioTab[]).map((item) => (
-              <Pressable
-                key={item}
-                onPress={() => setTab(item)}
-                style={[styles.tab, tab === item && styles.tabActive]}
-              >
-                <Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item}</Text>
-              </Pressable>
+              <Chip key={item} label={item} selected={tab === item} onPress={() => setTab(item)} />
             ))}
           </View>
           <ScrollView
@@ -388,15 +377,12 @@ export default function JobOrdersPage() {
             contentContainerStyle={styles.chips}
           >
             {(["ALL", ...DISCIPLINES] as const).map((item) => (
-              <Pressable
+              <Chip
                 key={item}
+                label={item === "ALL" ? "All disciplines" : DISCIPLINE_LABELS[item]}
+                selected={discipline === item}
                 onPress={() => setDiscipline(item)}
-                style={[styles.chip, discipline === item && styles.chipActive]}
-              >
-                <Text style={[styles.chipText, discipline === item && styles.chipTextActive]}>
-                  {item === "ALL" ? "ALL DISCIPLINES" : DISCIPLINE_LABELS[item].toUpperCase()}
-                </Text>
-              </Pressable>
+              />
             ))}
           </ScrollView>
           <ScrollView
@@ -405,15 +391,12 @@ export default function JobOrdersPage() {
             contentContainerStyle={styles.chips}
           >
             {budgetFilterOptions.map((item) => (
-              <Pressable
+              <Chip
                 key={item}
+                label={item === "ALL" ? "All budgets" : BUDGET_ALERT_LABELS[item]}
+                selected={budgetFilter === item}
                 onPress={() => setBudgetFilter(item)}
-                style={[styles.chip, budgetFilter === item && styles.chipActive]}
-              >
-                <Text style={[styles.chipText, budgetFilter === item && styles.chipTextActive]}>
-                  {item === "ALL" ? "ALL BUDGETS" : BUDGET_ALERT_LABELS[item].toUpperCase()}
-                </Text>
-              </Pressable>
+              />
             ))}
           </ScrollView>
         </View>
@@ -454,27 +437,6 @@ export default function JobOrdersPage() {
   );
 }
 
-function Kpi({
-  styles,
-  label,
-  value,
-  detail,
-}: {
-  styles: ReturnType<typeof makeStyles>;
-  label: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <View style={styles.kpi}>
-      <Text style={styles.kpiLabel}>{label}</Text>
-      <Text style={styles.kpiValue} numberOfLines={1}>
-        {value}
-      </Text>
-      <Text style={styles.kpiDetail}>{detail}</Text>
-    </View>
-  );
-}
 function JobOrderCard({
   job,
   styles,
@@ -1920,10 +1882,9 @@ function AddWorkPackage({
     </View>
   );
 }
-function formatGrouped(values: { currency: string; total: number }[]) {
-  return values.length
-    ? values.map((item) => formatMoney(item.currency, item.total)).join(" · ")
-    : "—";
+/** Adapts the grouped currency totals to the StatTile money shape. */
+function toMoney(values: { currency: string; total: number }[]) {
+  return values.map((item) => ({ currency: item.currency, amount: item.total }));
 }
 
 const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>

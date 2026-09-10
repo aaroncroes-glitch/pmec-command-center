@@ -67,7 +67,10 @@ describe("PMEC PM showcase project interactions", () => {
     expect(tracker).toContain("APPROVAL HISTORY");
     expect(tracker).toContain("approvalHistory");
     expect(tracker).toContain("ManagerDecisionSummary");
-    expect(tracker).toContain("DECISION QUEUE");
+    // Sentence case in source, uppercased by the label style. The rendered text is
+    // unchanged, and screen readers no longer receive an all-caps literal, which some
+    // announce letter by letter.
+    expect(tracker).toContain("Decision queue");
     expect(tracker).toContain("OPEN PROJECT");
     expect(tracker).toContain("documentValueByCurrency");
     expect(tracker).toContain("formattedDocumentValue");

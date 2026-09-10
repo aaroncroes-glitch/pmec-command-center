@@ -20,7 +20,7 @@ export const lumenPalettes: Record<ThemeMode, LumenPalette> = {
     surface: "#EEE8E0",
     surfaceStrong: "#E7E0D8",
     foreground: "#191919",
-    muted: "#756F68",
+    muted: "#69635D",
     border: "#D4CDC3",
     accent: "#FF5A1F",
     accentSoft: "#FFE2D5",
