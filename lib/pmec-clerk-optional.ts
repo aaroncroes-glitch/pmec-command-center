@@ -1,0 +1,37 @@
+import Constants from "expo-constants";
+import { useAuth, useClerk, useUser } from "@clerk/expo";
+
+import { hasUsableClerkPublishableKey } from "@/lib/pmec-clerk-config";
+
+// Whether a ClerkProvider is mounted is decided once, in app/_layout.tsx, from the
+// same publishable key this reads. It cannot change while the app is running, so
+// branching on it keeps hook order stable across renders.
+export const clerkEnabled = hasUsableClerkPublishableKey(
+  hasUsableClerkPublishableKey(Constants.expoConfig?.extra?.clerkPublishableKey)
+    ? Constants.expoConfig?.extra?.clerkPublishableKey
+    : process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+);
+
+const signedOut = { isLoaded: true, isSignedIn: false, getToken: async () => null } as const;
+
+/**
+ * Clerk's hooks throw when no ClerkProvider is above them. Without a publishable
+ * key the app deliberately runs provider-less (local showcase, first clone, CI),
+ * so these report a signed-out principal instead of crashing the tree. Failing
+ * closed means every `isSignedIn === true` authorization gate stays shut.
+ */
+export function useOptionalAuth() {
+  return clerkEnabled ? useAuth() : signedOut;
+}
+
+export function useOptionalUser() {
+  return clerkEnabled ? useUser() : { isLoaded: true, isSignedIn: false, user: null };
+}
+
+const unavailable = () => {
+  throw new Error("Clerk is not configured in this build.");
+};
+
+export function useOptionalClerk() {
+  return clerkEnabled ? useClerk() : { openSignIn: unavailable, signOut: async () => {} };
+}

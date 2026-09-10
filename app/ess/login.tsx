@@ -8,10 +8,10 @@ import { haptic } from "@/lib/haptics";
 import { useEss } from "@/lib/ess-workspace";
 import { useLumen } from "@/lib/lumen-workspace";
 import { trpc } from "@/lib/trpc";
-import { useAuth, useClerk } from "@clerk/expo";
+import { useOptionalAuth, useOptionalClerk } from "@/lib/pmec-clerk-optional";
 
 export default function EssLoginScreen() {
-  const router = useRouter(); const { employee, signIn } = useEss(); const { palette } = useLumen(); const styles = useMemo(() => makeStyles(palette), [palette]); const { isLoaded: clerkLoaded, isSignedIn } = useAuth(); const { openSignIn, signOut } = useClerk(); const clerkAccess = trpc.pmecAccess.me.useQuery(undefined, { enabled: clerkLoaded && isSignedIn, retry: false }); const [employeeNumber, setEmployeeNumber] = useState(""); const [pin, setPin] = useState(""); const [error, setError] = useState("");
+  const router = useRouter(); const { employee, signIn } = useEss(); const { palette } = useLumen(); const styles = useMemo(() => makeStyles(palette), [palette]); const { isLoaded: clerkLoaded, isSignedIn } = useOptionalAuth(); const { openSignIn, signOut } = useOptionalClerk(); const clerkAccess = trpc.pmecAccess.me.useQuery(undefined, { enabled: clerkLoaded && isSignedIn, retry: false }); const [employeeNumber, setEmployeeNumber] = useState(""); const [pin, setPin] = useState(""); const [error, setError] = useState("");
   const hasEmployeeAccess = clerkAccess.data?.permissions.includes("assignment.read_own") === true;
   useEffect(() => { if (!clerkLoaded || !isSignedIn || clerkAccess.isLoading) return; if (hasEmployeeAccess) { signIn(employee.employeeNumber, employee.pin); router.replace("/(tabs)"); return; } if (clerkAccess.error || clerkAccess.data) setError("This Clerk account is not an employee demo account. Use the PM or HR showcase link instead."); }, [clerkAccess.data, clerkAccess.error, clerkAccess.isLoading, clerkLoaded, employee.employeeNumber, employee.pin, hasEmployeeAccess, isSignedIn, router, signIn]);
   const login = () => { if (signIn(employeeNumber, pin)) { haptic.success(); router.replace("/(tabs)"); } else { haptic.light(); setError("That employee number and PIN do not match."); } };

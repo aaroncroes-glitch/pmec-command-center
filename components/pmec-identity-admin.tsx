@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useAuth } from "@clerk/expo";
+import { useOptionalAuth } from "@/lib/pmec-clerk-optional";
 
 import { trpc } from "@/lib/trpc";
 import { useLumen } from "@/lib/lumen-workspace";
@@ -22,7 +22,7 @@ function errorMessage(error: unknown) {
 export function PmecIdentityAdmin() {
   const { palette } = useLumen();
   const styles = useMemo(() => makeStyles(palette), [palette]);
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useOptionalAuth();
   const overview = trpc.pmecIdentityAdmin.overview.useQuery(undefined, { enabled: isLoaded && isSignedIn, retry: false });
   const mapUser = trpc.pmecIdentityAdmin.mapProductionUser.useMutation({ onSuccess: () => overview.refetch() });
   const [selectedClerkUserId, setSelectedClerkUserId] = useState("");

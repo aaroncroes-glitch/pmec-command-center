@@ -15,7 +15,7 @@ import { HrPayroll } from "@/components/pmec-hr-payroll";
 import { PmecIdentityAdmin } from "@/components/pmec-identity-admin";
 import { trpc } from "@/lib/trpc";
 import { getPmecHostWorkspace } from "@/lib/pmec-host-routing";
-import { useAuth, useClerk, useUser } from "@clerk/expo";
+import { useOptionalAuth, useOptionalClerk, useOptionalUser } from "@/lib/pmec-clerk-optional";
 
 type Tab = "overview" | "comparison" | "delivery" | "people" | "hours" | "leave" | "planning" | "payroll" | "capacity" | "identity";
 const tabs: { id: Tab; label: string; permission?: "delivery" | "people" | "hoursRead" | "leaveReview" | "hrPlanning" | "payroll" | "capacity" }[] = [
@@ -25,7 +25,7 @@ const moveMonthKey = (monthKey: string, offset: number) => { const [year, month]
 
 export default function PmecControlCenter() {
   const { width } = useWindowDimensions(); const { palette } = useLumen(); const styles = useMemo(() => makeStyles(palette), [palette]); const planningStyles = useMemo(() => makePlanningStyles(palette), [palette]); const comparisonStyles = useMemo(() => makeComparisonStyles(palette), [palette]); const router = useRouter();
-  const access = usePmecAccess(); const control = usePmecControl(); const { jobOrders } = usePmecJobOrders(); const { isLoaded: clerkLoaded, isSignedIn } = useAuth(); const hostWorkspace = getPmecHostWorkspace();
+  const access = usePmecAccess(); const control = usePmecControl(); const { jobOrders } = usePmecJobOrders(); const { isLoaded: clerkLoaded, isSignedIn } = useOptionalAuth(); const hostWorkspace = getPmecHostWorkspace();
   const [tab, setTab] = useState<Tab>("overview"); const [assignmentTarget, setAssignmentTarget] = useState<{ job: JobOrder; task: WorkPackageTask } | null>(null); const [hoursOpen, setHoursOpen] = useState(false); const [person, setPerson] = useState<PmecWorkforcePerson | null>(null);
   const payrollAccess = trpc.pmecPayroll.access.useQuery(undefined, { enabled: clerkLoaded && isSignedIn, retry: false }); const verifiedAccess = trpc.pmecAccess.me.useQuery(undefined, { enabled: clerkLoaded && isSignedIn, retry: false }); const hasVerifiedPayrollAccess = payrollAccess.data?.allowed === true; const hasIdentityAdministration = verifiedAccess.data?.permissions.includes("membership.manage") === true; const payrollAccessText = !isSignedIn ? "PAYROLL ACCESS: SIGN IN WITH CLERK" : payrollAccess.isFetching ? "PAYROLL ACCESS: VERIFYING…" : hasVerifiedPayrollAccess ? "PAYROLL ACCESS: VERIFIED HR" : "PAYROLL ACCESS: CLERK HR MEMBERSHIP REQUIRED";
   const visibleTabs = tabs.filter((item) => item.id === "payroll" ? access.can("payroll") && hasVerifiedPayrollAccess : item.id === "identity" ? hasIdentityAdministration : !item.permission || access.can(item.permission)); const pendingLeave = control.leaveRequests.filter((item) => item.status === "pending").length; const pendingHours = control.timeLogs.filter((item) => item.status === "Submitted").reduce((total, item) => total + item.hours, 0); const capacityWatch = control.workforce.filter((item) => item.allocation >= 85).length;
@@ -39,9 +39,9 @@ export default function PmecControlCenter() {
 }
 
 function ClerkAccountControl({ styles }: { styles: ReturnType<typeof makeStyles> }) {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
-  const { openSignIn, signOut } = useClerk();
+  const { isSignedIn } = useOptionalAuth();
+  const { user } = useOptionalUser();
+  const { openSignIn, signOut } = useOptionalClerk();
 
   if (isSignedIn) return <Pressable onPress={() => signOut()} style={styles.accountChip}><Text style={styles.accountChipText}>{(user?.firstName ?? "ACCOUNT").toUpperCase()} · SIGN OUT</Text></Pressable>;
   return <Pressable onPress={() => openSignIn()} style={[styles.accountChip, styles.accountChipPrimary]}><Text style={[styles.accountChipText, styles.accountChipPrimaryText]}>SIGN IN</Text></Pressable>;
