@@ -59,7 +59,7 @@ import { usePmecJobOrders } from "@/lib/pmec-job-order-workspace";
 import { type PmecWorkforcePerson, usePmecControl } from "@/lib/pmec-control-workspace";
 import * as DocumentPicker from "expo-document-picker";
 import { useLumen } from "@/lib/lumen-workspace";
-import { Chip, StatTile } from "@/components/pmec";
+import { BackButton, Chip, StatTile } from "@/components/pmec";
 
 type PortfolioTab = "ACTIVE" | "COMPLETED" | "ALL";
 type BudgetFilter = "ALL" | Exclude<BudgetAlertStatus, "ON_TRACK">;
@@ -306,6 +306,14 @@ export default function JobOrdersPage() {
         <View style={styles.railLine} />
         <Text style={styles.railLabel}>PROJECTS</Text>
         <Text style={styles.railCopy}>PROJECT MANAGER DEMO</Text>
+        <BackButton
+          variant="text"
+          tone="inverse"
+          text="← Control Center"
+          label="Back to Control Center"
+          fallback="/control-center"
+          style={{ marginTop: 28 }}
+        />
         <View style={styles.railFoot}>
           <Text style={styles.railFootTitle}>LUMEN SYSTEMS</Text>
           <Text style={styles.railFootCopy}>Local PMEC demonstration{`\n`}No external sync</Text>

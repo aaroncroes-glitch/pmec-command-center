@@ -1,3 +1,4 @@
+import { BackButton } from "@/components/pmec";
 import { Link } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -11,7 +12,7 @@ export function PmecLegalPage({ title, eyebrow, updated, sections }: { title: st
   const styles = makeStyles(palette);
   return (
     <ScreenContainer containerClassName={styles.page} edges={["top", "left", "right", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}><BackButton fallback="/" label="Back to Home" style={{ marginBottom: 20 }} />
         <View style={styles.brandRow}><Text style={styles.brand}>PMEC</Text><Text style={styles.brandSub}>COMMAND CENTER</Text></View>
         <View style={styles.hero}><Text style={styles.eyebrow}>{eyebrow}</Text><Text style={styles.title}>{title}</Text><Text style={styles.updated}>LAST UPDATED · {updated}</Text></View>
         <View style={styles.divider} />
