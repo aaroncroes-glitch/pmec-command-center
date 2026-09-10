@@ -144,6 +144,9 @@ const makeStyles = (palette: Palette) =>
       outlineOffset: 2,
       outlineStyle: "solid",
       outlineWidth: FOCUS_RING,
+      // Paint above neighbours, so a ring in a tight grid such as the calendar is not
+      // half covered by the next cell.
+      zIndex: 1,
     } as ViewStyle,
     pressed: {
       opacity: 0.68,
