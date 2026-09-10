@@ -1,6 +1,6 @@
+import { BackButton } from "@/components/pmec";
 import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useEss } from "@/lib/ess-workspace";
@@ -11,8 +11,7 @@ const leaveTypes = ["Vacation", "Sick", "Personal"] as const;
 const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default function LeaveScreen() {
-  const router = useRouter();
-  const { addLeaveRequest, employee, leaveRequests, publicHolidays, reviewLeaveRequest } = useEss();
+    const { addLeaveRequest, employee, leaveRequests, publicHolidays, reviewLeaveRequest } = useEss();
   const { palette } = useLumen();
   const styles = useMemo(() => makeStyles(palette), [palette]);
   const today = toDateKey(new Date());
@@ -53,7 +52,7 @@ export default function LeaveScreen() {
 
   return <ScreenContainer containerClassName={styles.container} edges={["top", "left", "right"]}>
     <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.top}><Pressable accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><Text style={styles.backText}>←</Text></Pressable><Text style={styles.topLabel}>TIME AWAY</Text></View>
+      <View style={styles.top}><BackButton fallback="/" label="Back to Home" /><Text style={styles.topLabel}>TIME AWAY</Text></View>
       <View style={styles.hero}><Text style={styles.kicker}>YOUR BALANCE</Text><Text style={styles.balance}>{employee.vacationBalance.toFixed(1)}<Text style={styles.days}> DAYS</Text></Text><Text style={styles.subtitle}>Your total annual leave balance, including carry-over.</Text><View style={styles.balanceBreakdown}><View><Text style={styles.breakdownValue}>{employee.currentYearAllowance.toFixed(1)}</Text><Text style={styles.breakdownLabel}>THIS YEAR</Text></View><View style={styles.breakdownDivider} /><View><Text style={styles.breakdownValue}>{employee.carryOverDays.toFixed(1)}</Text><Text style={styles.breakdownLabel}>CARRIED OVER</Text></View></View></View>
       <View style={styles.legend}><View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: palette.accent }]} /><Text style={styles.legendText}>PENDING</Text></View><View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: palette.success }]} /><Text style={styles.legendText}>APPROVED</Text></View><View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: "#B4483E" }]} /><Text style={styles.legendText}>REJECTED</Text></View></View>
       <View style={styles.section}><Text style={styles.sectionTitle}>REQUESTS</Text>{leaveRequests.map((request) => { const daysRequested = workingDayCount(request.startDate, request.endDate, publicHolidays.map((holiday) => holiday.date)); const tone = statusTone(request.status); return <View key={request.id} style={styles.request}><View style={[styles.requestMark, { backgroundColor: tone.color }]} /><View style={styles.requestCopy}><Text style={styles.requestName}>{request.type.toUpperCase()}</Text><Text style={styles.requestDate}>{formatCompactDate(request.startDate)} — {formatCompactDate(request.endDate)} · {daysRequested} WORK {daysRequested === 1 ? "DAY" : "DAYS"}</Text><Text style={styles.requestReason}>{request.reason}</Text>{request.managerNote ? <View style={styles.managerNote}><Text style={styles.managerNoteLabel}>MANAGER NOTE</Text><Text style={styles.managerNoteText}>{request.managerNote}</Text></View> : null}{request.status === "pending" ? <Pressable onPress={() => setReviewId(request.id)} style={styles.reviewButton}><Text style={styles.reviewButtonText}>MANAGER REVIEW</Text></Pressable> : null}</View><View style={[styles.statusBadge, { backgroundColor: tone.background }]}><View style={[styles.statusDot, { backgroundColor: tone.color }]} /><Text style={[styles.requestStatus, { color: tone.color }]}>{request.status.toUpperCase()}</Text></View></View>; })}</View>

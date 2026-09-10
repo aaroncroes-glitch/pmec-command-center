@@ -33,7 +33,7 @@ export default function TabLayout() {
           </View>
         </View>
       ) : null}
-      <Tabs
+      <Tabs backBehavior="firstRoute"
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: palette.accent,
@@ -45,7 +45,7 @@ export default function TabLayout() {
             backgroundColor: palette.background,
             borderTopColor: palette.border,
             borderTopWidth: StyleSheet.hairlineWidth,
-            height: 57 + bottomPadding,
+            height: 61 + bottomPadding,
             paddingBottom: bottomPadding,
             paddingTop: 7,
           },
@@ -65,7 +65,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   shell: { flex: 1 },
-  label: { fontSize: 10, fontWeight: "800", letterSpacing: 0.2, marginTop: 2 },
+  label: { fontSize: 10, fontWeight: "800", letterSpacing: 0.2, marginTop: 2, /* RN Web otherwise shrinks this box to 9px and slices the bottom off every letter */ flexShrink: 0, lineHeight: 13 },
   desktopAdvisory: { alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: 16, paddingHorizontal: 22, paddingVertical: 10 },
   desktopAdvisoryBody: { flex: 1 },
   desktopAdvisoryEyebrow: { fontSize: 9, fontWeight: "900", letterSpacing: 0.85 },

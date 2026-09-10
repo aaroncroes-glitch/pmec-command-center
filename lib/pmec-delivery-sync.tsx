@@ -1,6 +1,6 @@
 import { createContext, type PropsWithChildren, useCallback, useContext, useMemo } from "react";
 import { usePathname } from "expo-router";
-import { useAuth } from "@clerk/expo";
+import { useOptionalAuth } from "@/lib/pmec-clerk-optional";
 
 import { useEss } from "@/lib/ess-workspace";
 import { usePmecAccess } from "@/lib/pmec-access";
@@ -22,7 +22,7 @@ function deliveryErrorState(error: unknown): DeliverySyncState {
 }
 
 export function PmecDeliverySyncProvider({ children }: PropsWithChildren) {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn } = useOptionalAuth();
   const { employee, isAuthenticated } = useEss();
   const pathname = usePathname();
   const { can, ready: accessReady } = usePmecAccess();

@@ -1,5 +1,6 @@
-import { Redirect } from "expo-router";
+import ProfileScreen from "../profile";
 
+// Profile renders inside the tab, for the same reason as the Pay tab.
 export default function ProfileTab() {
-  return <Redirect href="/profile" />;
+  return <ProfileScreen />;
 }
