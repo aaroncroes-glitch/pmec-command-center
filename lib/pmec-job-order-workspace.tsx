@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCrossTabStore } from "@/lib/pmec-cross-tab";
+import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   applyBulkCostDocumentApproval,
@@ -81,9 +82,30 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
       .finally(() => setReady(true));
   }, []);
 
+  // What this window last wrote or took in, so two open windows cannot answer each other's
+  // writes forever: each arriving copy is a new object to React, identical content or not.
+  const lastRaw = useRef<string | null>(null);
   useEffect(() => {
-    if (ready) void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(jobOrders));
+    if (!ready) return;
+    const raw = JSON.stringify(jobOrders);
+    if (raw === lastRaw.current) return;
+    lastRaw.current = raw;
+    void AsyncStorage.setItem(STORAGE_KEY, raw);
   }, [jobOrders, ready]);
+
+  // Another window of the same showcase writing these projects lands here, so an assignment
+  // made in the control center reaches the employee view beside it.
+  const applyStored = useCallback((raw: string) => {
+    if (raw === lastRaw.current) return;
+    lastRaw.current = raw;
+    try {
+      const parsed = JSON.parse(raw) as JobOrder[];
+      if (Array.isArray(parsed)) setJobOrders(parsed.map(normalizeJobOrder));
+    } catch {
+      // Keep the projects already on screen.
+    }
+  }, []);
+  useCrossTabStore(STORAGE_KEY, applyStored);
 
   const mutate = useCallback(
     (jobOrderId: string, transform: (jobOrder: JobOrder) => JobOrder) => {

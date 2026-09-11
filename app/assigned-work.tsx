@@ -7,14 +7,15 @@ import Animated, { FadeInDown, SlideInUp } from "react-native-reanimated";
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useLumen } from "@/lib/lumen-workspace";
-import { type SharedAssignment, usePmecDeliverySync } from "@/lib/pmec-delivery-sync";
+import { type SharedAssignment } from "@/lib/pmec-delivery-sync";
+import { useDelivery } from "@/lib/pmec-employee-data";
 import { toDateKey } from "@/lib/lumen-utils";
 import { showcaseMode } from "@/lib/pmec-showcase";
 
 const statusCopy = { assigned: "Assigned", in_progress: "In progress", blocked: "Blocked", complete: "Complete" } as const;
 
 export default function AssignedWorkScreen() {
-  const gate = useEssGate(); const { palette } = useLumen(); const sync = usePmecDeliverySync(); const styles = useMemo(() => makeStyles(palette), [palette]);
+  const gate = useEssGate(); const { palette } = useLumen(); const sync = useDelivery(); const styles = useMemo(() => makeStyles(palette), [palette]);
   const [entry, setEntry] = useState<SharedAssignment | null>(null); const [entryHours, setEntryHours] = useState("8"); const [entryNote, setEntryNote] = useState(""); const [submitting, setSubmitting] = useState(false);
   if (gate) return gate;
   const openWork = sync.employeeAssignments.filter((item) => item.status !== "complete"); const approvedHours = sync.employeeTimeLogs.filter((log) => log.status === "approved").reduce((sum, log) => sum + log.minutes, 0) / 60; const submittedHours = sync.employeeTimeLogs.filter((log) => log.status === "submitted").reduce((sum, log) => sum + log.minutes, 0) / 60; const syncBlocked = sync.employeeSyncState === "unauthenticated" || sync.employeeSyncState === "forbidden" || sync.employeeSyncState === "error"; const syncCopy = showcaseMode ? "SHOWCASE DATA" : sync.employeeSyncState === "live" ? "SYNCED WITH PMEC CONTROL CENTER" : sync.employeeSyncState === "loading" ? "CONNECTING TO PMEC" : syncBlocked ? "PMEC SYNC NEEDS ACCOUNT ACCESS" : "PMEC SYNC STANDBY";

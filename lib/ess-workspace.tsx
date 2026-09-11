@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
+import { useCrossTabStore } from "@/lib/pmec-cross-tab";
 import { initialEssState } from "@/lib/ess-data";
 import type { ActivityItem, ClockInSelection, EssState, LeaveRequest, PersonalEvent, ProjectTaskStatus } from "@/lib/ess-types";
 import { toDateKey } from "@/lib/lumen-utils";
@@ -21,6 +22,9 @@ type EssWorkspace = EssState & {
   reviewLeaveRequest: (requestId: string, status: "approved" | "rejected", managerNote?: string) => void;
   addEvent: (event: Omit<PersonalEvent, "id">) => void;
   updatePin: (pin: string) => void;
+  markUpdateRead: (id: string) => void;
+  archiveUpdate: (id: string) => void;
+  restoreUpdate: (id: string) => void;
   resetEssDemo: () => void;
   todayAttendance?: EssState["attendance"][number];
 };
@@ -48,7 +52,13 @@ export function EssWorkspaceProvider({ children }: PropsWithChildren) {
     void restore();
   }, []);
 
-  useEffect(() => { if (ready) void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }, [ready, state]);
+  // What this window last wrote or took in, so two open windows cannot answer each other's
+  // writes forever: each arriving copy is a new object to React, identical content or not.
+  const lastRaw = useRef<string | null>(null);
+  useEffect(() => { if (!ready) return; const raw = JSON.stringify(state); if (raw === lastRaw.current) return; lastRaw.current = raw; void AsyncStorage.setItem(STORAGE_KEY, raw); }, [ready, state]);
+  // Another window of the same showcase writing this workspace lands here.
+  const applyStored = useCallback((raw: string) => { if (raw === lastRaw.current) return; lastRaw.current = raw; try { const parsed = JSON.parse(raw) as unknown; if (isEssState(parsed)) setState({ ...initialEssState, ...parsed }); } catch { /* keep the current state */ } }, []);
+  useCrossTabStore(STORAGE_KEY, applyStored);
 
   const completeOnboarding = useCallback(() => setState((current: EssState) => ({ ...current, onboarded: true })), []);
   const signIn = useCallback((employeeNumber: string, pin: string) => {
@@ -100,15 +110,21 @@ export function EssWorkspaceProvider({ children }: PropsWithChildren) {
   }), []);
   const addEvent = useCallback((event: Omit<PersonalEvent, "id">) => setState((current: EssState) => ({ ...current, events: [{ ...event, id: `event-${Date.now()}` }, ...current.events] })), []);
   const updatePin = useCallback((pin: string) => { if (/^\d{4}$/.test(pin)) setState((current: EssState) => ({ ...current, employee: { ...current.employee, pin } })); }, []);
+  // Which delivery updates this employee has read or put away. The updates themselves are
+  // worked out from the assignments and approved hours in the control workspace.
+  const setUpdates = (current: EssState, change: (updates: { read: string[]; archived: string[] }) => { read: string[]; archived: string[] }): EssState => ({ ...current, updates: change(current.updates ?? { read: [], archived: [] }) });
+  const markUpdateRead = useCallback((id: string) => setState((current: EssState) => setUpdates(current, (updates) => (updates.read.includes(id) ? updates : { ...updates, read: [...updates.read, id] }))), []);
+  const archiveUpdate = useCallback((id: string) => setState((current: EssState) => setUpdates(current, (updates) => ({ read: updates.read.includes(id) ? updates.read : [...updates.read, id], archived: updates.archived.includes(id) ? updates.archived : [...updates.archived, id] }))), []);
+  const restoreUpdate = useCallback((id: string) => setState((current: EssState) => setUpdates(current, (updates) => ({ ...updates, archived: updates.archived.filter((item) => item !== id) }))), []);
   const resetEssDemo = useCallback(() => { void AsyncStorage.removeItem(STORAGE_KEY); setState(initialEssState); }, []);
 
   const value = useMemo<EssWorkspace>(() => ({
     ...state,
     ready,
     isAuthenticated: Boolean(state.sessionEmployeeId),
-    completeOnboarding, signIn, signOut, clockIn, clockOut, updateProjectTask, addLeaveRequest, reviewLeaveRequest, addEvent, updatePin, resetEssDemo,
+    completeOnboarding, signIn, signOut, clockIn, clockOut, updateProjectTask, addLeaveRequest, reviewLeaveRequest, addEvent, updatePin, markUpdateRead, archiveUpdate, restoreUpdate, resetEssDemo,
     todayAttendance: state.attendance.find((record) => record.date === toDateKey(new Date())),
-  }), [state, ready, completeOnboarding, signIn, signOut, clockIn, clockOut, updateProjectTask, addLeaveRequest, reviewLeaveRequest, addEvent, updatePin, resetEssDemo]);
+  }), [state, ready, completeOnboarding, signIn, signOut, clockIn, clockOut, updateProjectTask, addLeaveRequest, reviewLeaveRequest, addEvent, updatePin, markUpdateRead, archiveUpdate, restoreUpdate, resetEssDemo]);
 
   return <EssContext.Provider value={value}>{children}</EssContext.Provider>;
 }

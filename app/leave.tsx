@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
 import { useEss } from "@/lib/ess-workspace";
+import { useEmployeeLeave } from "@/lib/pmec-employee-data";
 import { useLumen } from "@/lib/lumen-workspace";
 import { addDays, formatCompactDate, formatMonth, monthCells, shiftMonth, toDateKey, workingDayCount } from "@/lib/lumen-utils";
 
@@ -11,7 +12,8 @@ const leaveTypes = ["Vacation", "Sick", "Personal"] as const;
 const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default function LeaveScreen() {
-    const { addLeaveRequest, employee, leaveRequests, publicHolidays, reviewLeaveRequest } = useEss();
+    const { employee, publicHolidays } = useEss();
+  const { requests: leaveRequests, review: reviewLeave, submit: submitLeave } = useEmployeeLeave();
   const { palette } = useLumen();
   const styles = useMemo(() => makeStyles(palette), [palette]);
   const today = toDateKey(new Date());
@@ -44,10 +46,10 @@ export default function LeaveScreen() {
   };
   const submit = () => {
     if (!duration) return;
-    addLeaveRequest({ type, reason: reason.trim() || `${type} leave`, startDate, endDate });
+    submitLeave({ type, reason: reason.trim() || `${type} leave`, startDate, endDate });
     haptic.success(); setOpen(false);
   };
-  const reject = () => { if (!reviewId || !managerNote.trim()) return; reviewLeaveRequest(reviewId, "rejected", managerNote); haptic.success(); setManagerNote(""); setReviewId(null); };
+  const reject = () => { if (!reviewId || !managerNote.trim()) return; reviewLeave(reviewId, "rejected", managerNote); haptic.success(); setManagerNote(""); setReviewId(null); };
   const statusTone = (status: string) => status === "approved" ? { color: palette.success, background: `${palette.success}22` } : status === "rejected" ? { color: "#B4483E", background: "#F7DDD8" } : { color: palette.accent, background: palette.accentSoft };
 
   return <ScreenContainer containerClassName={styles.container} edges={["top", "left", "right"]}>

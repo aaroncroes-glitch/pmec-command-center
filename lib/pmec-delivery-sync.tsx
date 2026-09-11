@@ -1,23 +1,18 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, type PropsWithChildren, useCallback, useContext, useMemo } from "react";
 import { usePathname } from "expo-router";
 import { useOptionalAuth } from "@/lib/pmec-clerk-optional";
 
 import { useEss } from "@/lib/ess-workspace";
 import { usePmecAccess } from "@/lib/pmec-access";
 import { trpc } from "@/lib/trpc";
-import { showcaseMode } from "@/lib/pmec-showcase";
-import { showcaseDelivery } from "@/lib/pmec-showcase-delivery";
 
 export type SharedAssignment = { id: string; jobOrderId: string; jobOrderTitle: string; taskId: string; taskTitle: string; employeeId: string; employeeName: string; discipline: string; status: "assigned" | "in_progress" | "blocked" | "complete"; progress: number; assignedBy: string; dueDate: string | null };
 export type SharedTimeLog = { id: string; assignmentId: string; employeeId: string; employeeName: string; jobOrderId: string; taskId: string; workDate: string; minutes: number; note: string; status: "submitted" | "approved" | "rejected"; reviewerNote: string | null };
 export type SharedNotification = { id: string; employeeId: string; type: "assignment" | "time_approved"; title: string; body: string; route: string; readAt: Date | string | null; archivedAt: Date | string | null; createdAt: Date | string };
 export type NotificationPreferences = { assignmentsEnabled: boolean; timeApprovedEnabled: boolean };
 export type DeliverySyncState = "idle" | "loading" | "live" | "unauthenticated" | "forbidden" | "error";
-type SyncContext = { ready: boolean; employeeSyncState: DeliverySyncState; managerSyncState: DeliverySyncState; employeeId: string; employeeName: string; employeeAssignments: SharedAssignment[]; allAssignments: SharedAssignment[]; employeeTimeLogs: SharedTimeLog[]; allTimeLogs: SharedTimeLog[]; notifications: SharedNotification[]; archivedNotifications: SharedNotification[]; unreadNotifications: number; notificationPreferences: NotificationPreferences; assign: (input: Omit<SharedAssignment, "id"> & { id?: string }) => Promise<void>; updateAssignment: (id: string, update: Pick<SharedAssignment, "status" | "progress">) => Promise<void>; submitTime: (input: Omit<SharedTimeLog, "id" | "employeeId" | "employeeName" | "status" | "reviewerNote">) => Promise<void>; reviewTime: (id: string, status: "approved" | "rejected", reviewerNote?: string) => Promise<void>; markNotificationRead: (id: string) => Promise<void>; archiveNotification: (id: string) => Promise<void>; restoreNotification: (id: string) => Promise<void>; updateNotificationPreferences: (update: NotificationPreferences) => Promise<void>; refresh: () => Promise<void>; resetShowcase: () => void };
+type SyncContext = { ready: boolean; employeeSyncState: DeliverySyncState; managerSyncState: DeliverySyncState; employeeId: string; employeeName: string; employeeAssignments: SharedAssignment[]; allAssignments: SharedAssignment[]; employeeTimeLogs: SharedTimeLog[]; allTimeLogs: SharedTimeLog[]; notifications: SharedNotification[]; archivedNotifications: SharedNotification[]; unreadNotifications: number; notificationPreferences: NotificationPreferences; assign: (input: Omit<SharedAssignment, "id"> & { id?: string }) => Promise<void>; updateAssignment: (id: string, update: Pick<SharedAssignment, "status" | "progress">) => Promise<void>; submitTime: (input: Omit<SharedTimeLog, "id" | "employeeId" | "employeeName" | "status" | "reviewerNote">) => Promise<void>; reviewTime: (id: string, status: "approved" | "rejected", reviewerNote?: string) => Promise<void>; markNotificationRead: (id: string) => Promise<void>; archiveNotification: (id: string) => Promise<void>; restoreNotification: (id: string) => Promise<void>; updateNotificationPreferences: (update: NotificationPreferences) => Promise<void>; refresh: () => Promise<void> };
 const DeliveryContext = createContext<SyncContext | null>(null);
-// The showcase queue is saved, so a refresh mid-demo keeps what was just shown. Reset clears it.
-const SHOWCASE_KEY = "lumen.pmec.showcase-delivery.v1";
 
 function deliveryErrorState(error: unknown): DeliverySyncState {
   const code = typeof error === "object" && error && "data" in error && typeof error.data === "object" && error.data && "code" in error.data ? error.data.code : undefined;
@@ -37,14 +32,7 @@ export function PmecDeliverySyncProvider({ children }: PropsWithChildren) {
   const controlSurface = pathname.startsWith("/control-center") || pathname.startsWith("/job-orders") || pathname.startsWith("/admin");
   const managerAssignmentsEnabled = controlSurface && accessReady && can("assign") && isSignedIn === true;
   const managerTimeLogsEnabled = controlSurface && accessReady && can("hoursRead") && isSignedIn === true;
-  // Showcase: there is no account to fetch with, so the employee side runs on sample data
-  // held here, and every action changes it in place. Nothing is sent anywhere.
-  const showcase = showcaseMode && isSignedIn !== true;
-  const [demo, setDemo] = useState(() => showcaseDelivery(employeeId, employeeName));
-  const [demoRestored, setDemoRestored] = useState(false);
-  useEffect(() => { if (!showcase) return; void AsyncStorage.getItem(SHOWCASE_KEY).then((stored) => { if (stored) { try { setDemo(JSON.parse(stored)); } catch { /* keep the fresh sample data */ } } }).finally(() => setDemoRestored(true)); }, [showcase]);
-  useEffect(() => { if (showcase && demoRestored) void AsyncStorage.setItem(SHOWCASE_KEY, JSON.stringify(demo)); }, [demo, demoRestored, showcase]);
-  const employeeDeliveryEnabled = !showcase && !controlSurface && isAuthenticated;
+  const employeeDeliveryEnabled = !controlSurface && isAuthenticated;
   const allAssignments = trpc.pmecDelivery.assignments.useQuery(undefined, { enabled: managerAssignmentsEnabled, refetchInterval: 12_000 });
   const employeeAssignments = trpc.pmecDelivery.assignments.useQuery({ employeeId }, { enabled: employeeDeliveryEnabled, refetchInterval: 12_000 });
   const allTimeLogs = trpc.pmecDelivery.timeLogs.useQuery(undefined, { enabled: managerTimeLogsEnabled, refetchInterval: 12_000 });
@@ -65,21 +53,11 @@ export function PmecDeliverySyncProvider({ children }: PropsWithChildren) {
   const sharedNotifications = employeeDeliveryEnabled && notifications.isSuccess ? (notifications.data ?? []) as SharedNotification[] : []; const sharedArchivedNotifications = employeeDeliveryEnabled && archivedNotifications.isSuccess ? (archivedNotifications.data ?? []) as SharedNotification[] : []; const sharedPreferences = employeeDeliveryEnabled && preferences.isSuccess ? (preferences.data ?? { assignmentsEnabled: true, timeApprovedEnabled: true }) as NotificationPreferences : { assignmentsEnabled: true, timeApprovedEnabled: true };
   const managerAssignments = managerAssignmentsEnabled && allAssignments.isSuccess ? (allAssignments.data ?? []) as SharedAssignment[] : []; const managerTimeLogs = managerTimeLogsEnabled && allTimeLogs.isSuccess ? (allTimeLogs.data ?? []) as SharedTimeLog[] : []; const ownAssignments = employeeDeliveryEnabled && employeeAssignments.isSuccess ? (employeeAssignments.data ?? []) as SharedAssignment[] : []; const ownTimeLogs = employeeDeliveryEnabled && employeeTimeLogs.isSuccess ? (employeeTimeLogs.data ?? []) as SharedTimeLog[] : [];
   const employeeError = employeeAssignments.error ?? employeeTimeLogs.error ?? notifications.error ?? archivedNotifications.error ?? preferences.error;
-  const employeeSyncState: DeliverySyncState = showcase ? "live" : !employeeDeliveryEnabled ? "idle" : employeeAssignments.isLoading || employeeTimeLogs.isLoading || notifications.isLoading || archivedNotifications.isLoading || preferences.isLoading ? "loading" : employeeError ? deliveryErrorState(employeeError) : "live";
+  const employeeSyncState: DeliverySyncState = !employeeDeliveryEnabled ? "idle" : employeeAssignments.isLoading || employeeTimeLogs.isLoading || notifications.isLoading || archivedNotifications.isLoading || preferences.isLoading ? "loading" : employeeError ? deliveryErrorState(employeeError) : "live";
   const managerError = allAssignments.error ?? allTimeLogs.error;
   const managerSyncState: DeliverySyncState = !managerAssignmentsEnabled && !managerTimeLogsEnabled ? "idle" : allAssignments.isLoading || allTimeLogs.isLoading ? "loading" : managerError ? deliveryErrorState(managerError) : "live";
   const managerReady = (!managerAssignmentsEnabled || allAssignments.isSuccess) && (!managerTimeLogsEnabled || allTimeLogs.isSuccess);
-  const demoActions = useMemo(() => ({
-    updateAssignment: async (id: string, update: Pick<SharedAssignment, "status" | "progress">) => setDemo((current) => ({ ...current, assignments: current.assignments.map((item) => (item.id === id ? { ...item, ...update } : item)) })),
-    submitTime: async (input: Omit<SharedTimeLog, "id" | "employeeId" | "employeeName" | "status" | "reviewerNote">) => setDemo((current) => ({ ...current, timeLogs: [{ ...input, id: `showcase-time-${Date.now()}`, employeeId, employeeName, status: "submitted" as const, reviewerNote: null }, ...current.timeLogs] })),
-    markNotificationRead: async (id: string) => setDemo((current) => ({ ...current, notifications: current.notifications.map((item) => (item.id === id ? { ...item, readAt: new Date().toISOString() } : item)) })),
-    archiveNotification: async (id: string) => setDemo((current) => { const item = current.notifications.find((entry) => entry.id === id); return item ? { ...current, notifications: current.notifications.filter((entry) => entry.id !== id), archivedNotifications: [{ ...item, readAt: item.readAt ?? new Date().toISOString(), archivedAt: new Date().toISOString() }, ...current.archivedNotifications] } : current; }),
-    restoreNotification: async (id: string) => setDemo((current) => { const item = current.archivedNotifications.find((entry) => entry.id === id); return item ? { ...current, archivedNotifications: current.archivedNotifications.filter((entry) => entry.id !== id), notifications: [{ ...item, archivedAt: null }, ...current.notifications] } : current; }),
-    updateNotificationPreferences: async (update: NotificationPreferences) => setDemo((current) => ({ ...current, preferences: update })),
-    refresh: async () => undefined,
-  }), [employeeId, employeeName]);
-  const resetShowcase = useCallback(() => { void AsyncStorage.removeItem(SHOWCASE_KEY); setDemo(showcaseDelivery(employeeId, employeeName)); }, [employeeId, employeeName]);
-  const value = useMemo<SyncContext>(() => { const notificationsNow = showcase ? demo.notifications : sharedNotifications; return { ready: showcase || employeeSyncState === "live" || managerReady, employeeSyncState, managerSyncState, employeeId, employeeName, employeeAssignments: showcase ? demo.assignments : ownAssignments, allAssignments: managerAssignments, employeeTimeLogs: showcase ? demo.timeLogs : ownTimeLogs, allTimeLogs: managerTimeLogs, notifications: notificationsNow, archivedNotifications: showcase ? demo.archivedNotifications : sharedArchivedNotifications, unreadNotifications: notificationsNow.filter((item) => !item.readAt).length, notificationPreferences: showcase ? demo.preferences : sharedPreferences, assign, reviewTime, ...(showcase ? demoActions : { updateAssignment, submitTime, markNotificationRead, archiveNotification, restoreNotification, updateNotificationPreferences, refresh }), resetShowcase }; }, [archiveNotification, assign, demo, demoActions, employeeId, employeeName, employeeSyncState, managerAssignments, managerReady, managerSyncState, managerTimeLogs, markNotificationRead, ownAssignments, ownTimeLogs, refresh, resetShowcase, restoreNotification, reviewTime, sharedArchivedNotifications, sharedNotifications, sharedPreferences, showcase, submitTime, updateAssignment, updateNotificationPreferences]);
+  const value = useMemo<SyncContext>(() => ({ ready: employeeSyncState === "live" || managerReady, employeeSyncState, managerSyncState, employeeId, employeeName, employeeAssignments: ownAssignments, allAssignments: managerAssignments, employeeTimeLogs: ownTimeLogs, allTimeLogs: managerTimeLogs, notifications: sharedNotifications, archivedNotifications: sharedArchivedNotifications, unreadNotifications: sharedNotifications.filter((item) => !item.readAt).length, notificationPreferences: sharedPreferences, assign, updateAssignment, submitTime, reviewTime, markNotificationRead, archiveNotification, restoreNotification, updateNotificationPreferences, refresh }), [archiveNotification, assign, employeeId, employeeName, employeeSyncState, managerAssignments, managerReady, managerSyncState, managerTimeLogs, markNotificationRead, ownAssignments, ownTimeLogs, refresh, restoreNotification, reviewTime, sharedArchivedNotifications, sharedNotifications, sharedPreferences, submitTime, updateAssignment, updateNotificationPreferences]);
   return <DeliveryContext.Provider value={value}>{children}</DeliveryContext.Provider>;
 }
 

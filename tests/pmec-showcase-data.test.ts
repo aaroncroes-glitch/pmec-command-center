@@ -5,7 +5,7 @@ import { initialWorkspace } from "../lib/lumen-data";
 import { initialAssignments, initialLeave, initialLogs, workforce } from "../lib/pmec-control-seeds";
 import { demoDay } from "../lib/pmec-demo-dates";
 import { initialPmeJobOrders } from "../lib/pmec-job-orders";
-import { showcaseDelivery } from "../lib/pmec-showcase-delivery";
+import { buildEmployeeDelivery } from "../lib/pmec-showcase-delivery";
 
 // The showcase is shown to prospective clients on whatever day they visit, so these hold
 // relative to today rather than to fixed dates.
@@ -59,13 +59,25 @@ describe("one story across the three workspaces", () => {
     expect(initialLogs.filter((log) => log.status === "Approved").length).toBeGreaterThanOrEqual(30);
   });
 
-  it("gives the employee assigned work, hours, and two unread notifications", () => {
-    const delivery = showcaseDelivery("employee-76", "Percy Solagnier");
+  it("builds the employee's own queue out of the shared workspace", () => {
+    const delivery = buildEmployeeDelivery({ assignments: initialAssignments, timeLogs: initialLogs, jobOrders: initialPmeJobOrders, employeeId: "employee-76", employeeName: "Percy Solagnier" });
     expect(delivery.assignments.length).toBeGreaterThanOrEqual(4);
+    expect(delivery.assignments.every((assignment) => assignment.employeeId === "employee-76")).toBe(true);
     expect(delivery.assignments.some((assignment) => assignment.status === "in_progress")).toBe(true);
     expect(delivery.timeLogs.length).toBeGreaterThanOrEqual(6);
-    expect(delivery.notifications.filter((notification) => !notification.readAt)).toHaveLength(2);
-    expect(delivery.notifications.some((notification) => notification.type === "time_approved")).toBe(true);
+    expect(delivery.updates.some((update) => update.type === "assignment")).toBe(true);
+    expect(delivery.updates.some((update) => update.type === "time_approved")).toBe(true);
+    expect(delivery.updates.filter((update) => !update.readAt).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("turns hours approved during a showcase into their own unread update", () => {
+    const submitted = initialLogs.find((log) => log.employeeId === "employee-76" && log.status === "Submitted")!;
+    const timeLogs = initialLogs.map((log) => (log.id === submitted.id ? { ...log, status: "Approved" as const, approvedAt: new Date().toISOString() } : log));
+    const delivery = buildEmployeeDelivery({ assignments: initialAssignments, timeLogs, jobOrders: initialPmeJobOrders, employeeId: "employee-76", employeeName: "Percy Solagnier" });
+    const update = delivery.updates.find((item) => item.id === `notification-approved-${submitted.id}`);
+
+    expect(update?.readAt).toBeNull();
+    expect(update?.body).toContain(submitted.note);
   });
 
   it("shows HR the same leave the employee sees", () => {
