@@ -5,7 +5,8 @@ import { initialEssState } from "@/lib/ess-data";
 import type { ActivityItem, ClockInSelection, EssState, LeaveRequest, PersonalEvent, ProjectTaskStatus } from "@/lib/ess-types";
 import { toDateKey } from "@/lib/lumen-utils";
 
-const STORAGE_KEY = "lumen.ess.v1";
+// v2: the showcase data set. Earlier saves hold the thin original seeds and are not read.
+const STORAGE_KEY = "lumen.ess.v2";
 
 type EssWorkspace = EssState & {
   ready: boolean;
