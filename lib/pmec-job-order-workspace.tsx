@@ -16,7 +16,7 @@ import {
   type WorkPackageTask,
 } from "@/lib/pmec-job-orders";
 
-const STORAGE_KEY = "lumen.pmec.job-orders.v1";
+const STORAGE_KEY = "lumen.pmec.job-orders.v2";
 
 type ApprovalDecision = {
   status: CostDocumentApprovalStatus;
