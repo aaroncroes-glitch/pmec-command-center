@@ -9,6 +9,8 @@ export type LumenPalette = {
   border: string;
   accent: string;
   accentSoft: string;
+  /** Text on an accent fill. Ink in both modes: paper on the accent measures 2.82:1. */
+  onAccent: string;
   inverse: string;
   inverseText: string;
   success: string;
@@ -24,6 +26,7 @@ export const lumenPalettes: Record<ThemeMode, LumenPalette> = {
     border: "#D4CDC3",
     accent: "#FF5A1F",
     accentSoft: "#FFE2D5",
+    onAccent: "#191919",
     inverse: "#191919",
     inverseText: "#F6F3EE",
     success: "#287A5A",
@@ -37,6 +40,7 @@ export const lumenPalettes: Record<ThemeMode, LumenPalette> = {
     border: "#3B3B3B",
     accent: "#FF6B36",
     accentSoft: "#5B2D1D",
+    onAccent: "#171717",
     inverse: "#F4F0EA",
     inverseText: "#171717",
     success: "#7FD6AE",

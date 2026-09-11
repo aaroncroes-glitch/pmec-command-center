@@ -37,8 +37,27 @@ export type PmecPressableProps = {
   dense?: boolean;
   /** Visible height of a dense control, used to size the surrounding target. */
   denseHeight?: number;
+  /**
+   * Draws the focus ring inside the control. For controls packed edge to edge, such as
+   * calendar days, where a ring outside the box is covered by the next row.
+   */
+  insetFocusRing?: boolean;
   testID?: string;
 };
+
+/**
+ * Whether focus arrived from the keyboard. On the web a mouse click focuses the element
+ * too, and a ring that follows every click reads as a glitch, so the ring follows the
+ * browser's own `:focus-visible` decision. Native builds have no pointer focus to filter.
+ */
+function isKeyboardFocus(event: unknown) {
+  const target = (event as { target?: { matches?: (selector: string) => boolean } } | null)?.target;
+  try {
+    return typeof target?.matches === "function" ? target.matches(":focus-visible") : true;
+  } catch {
+    return true;
+  }
+}
 
 /**
  * The one pressable in the product.
@@ -66,6 +85,7 @@ export function PmecPressable({
   pressedStyle,
   dense = false,
   denseHeight = 28,
+  insetFocusRing = false,
   testID,
 }: PmecPressableProps) {
   const { palette } = useLumen();
@@ -92,7 +112,7 @@ export function PmecPressable({
         {...a11y}
         disabled={disabled}
         onPress={onPress}
-        onFocus={() => setFocused(true)}
+        onFocus={(event) => setFocused(isKeyboardFocus(event))}
         onBlur={() => setFocused(false)}
         testID={testID}
         style={({ pressed }) => [
@@ -106,7 +126,9 @@ export function PmecPressable({
           disabled && styles.disabled,
         ]}
       >
-        <View style={[style, focused && styles.focused]}>{children}</View>
+        <View style={[style, focused && styles.focused, focused && insetFocusRing && styles.focusedInset]}>
+          {children}
+        </View>
       </Pressable>
     );
   }
@@ -116,13 +138,14 @@ export function PmecPressable({
       {...a11y}
       disabled={disabled}
       onPress={onPress}
-      onFocus={() => setFocused(true)}
+      onFocus={(event) => setFocused(isKeyboardFocus(event))}
       onBlur={() => setFocused(false)}
       testID={testID}
       style={({ pressed }) => [
         styles.base,
         style,
         focused && styles.focused,
+        focused && insetFocusRing && styles.focusedInset,
         pressed && (pressedStyle ?? styles.pressed),
         disabled && styles.disabled,
       ]}
@@ -144,6 +167,12 @@ const makeStyles = (palette: Palette) =>
       outlineOffset: 2,
       outlineStyle: "solid",
       outlineWidth: FOCUS_RING,
+      // Paint above neighbours, so a ring in a tight grid such as the calendar is not
+      // half covered by the next cell.
+      zIndex: 1,
+    } as ViewStyle,
+    focusedInset: {
+      outlineOffset: -(FOCUS_RING + 2),
     } as ViewStyle,
     pressed: {
       opacity: 0.68,

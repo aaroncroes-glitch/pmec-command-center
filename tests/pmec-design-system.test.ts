@@ -89,6 +89,20 @@ describe("PMEC design tokens — WCAG 2.1 AA", () => {
       AA_NORMAL,
     );
   });
+
+  it("label text on an accent fill clears AA", () => {
+    // Paper on the accent is the same 2.82:1 pair turned around, so the primary button
+    // carries its label in ink, which is how PRODUCT.md resolves the accent.
+    for (const mode of ["light", "dark"] as const) {
+      const palette = lumenPalettes[mode];
+      expect(
+        contrastRatio(palette.onAccent, palette.accent),
+        `${mode} onAccent ${palette.onAccent} on accent ${palette.accent}`,
+      ).toBeGreaterThanOrEqual(AA_NORMAL);
+    }
+    const controls = readFileSync(resolve(process.cwd(), "components/pmec/controls.tsx"), "utf8");
+    expect(controls).toContain("primaryLabel: { color: palette.onAccent }");
+  });
 });
 
 /* ------------------------------------------------------------------ sizing */

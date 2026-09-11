@@ -203,7 +203,7 @@ const makeStyles = (palette: Palette) =>
       textTransform: "uppercase",
     },
     primaryButton: { backgroundColor: palette.accent },
-    primaryLabel: { color: palette.inverseText },
+    primaryLabel: { color: palette.onAccent },
     secondaryButton: {
       backgroundColor: "transparent",
       borderColor: palette.foreground,
