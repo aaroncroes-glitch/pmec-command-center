@@ -6,7 +6,8 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { ScreenContainer } from "@/components/screen-container";
 import { useEss } from "@/lib/ess-workspace";
 import { useLumen } from "@/lib/lumen-workspace";
-import type { PmecControlRole } from "@/lib/pmec-access";
+import { usePmecAccess, type PmecControlRole } from "@/lib/pmec-access";
+import { getPmecHostWorkspace } from "@/lib/pmec-host-routing";
 
 type DemoRole = "employee" | PmecControlRole;
 type DemoWorkspace = { role: DemoRole; label: string; name: string; destination: string; device: string; destinationUrl?: string };
@@ -20,6 +21,8 @@ const demoWorkspaces: DemoWorkspace[] = [
 export default function PmecDemoScreen() {
   const router = useRouter();
   const { completeOnboarding, employee, signIn } = useEss();
+  const { setRole } = usePmecAccess();
+  const onPortal = getPmecHostWorkspace() === "portal";
   const { palette } = useLumen();
   const styles = useMemo(() => makeStyles(palette), [palette]);
   const [selectedRole, setSelectedRole] = useState<DemoRole>("employee");
@@ -32,15 +35,18 @@ export default function PmecDemoScreen() {
       router.replace("/(tabs)");
       return;
     }
-    if (typeof window !== "undefined" && selected.destinationUrl) {
+    // Only the live portal hands off to the separate pm. and hr. sites. Anywhere else,
+    // previews included, the control center opens right here in the chosen role.
+    if (typeof window !== "undefined" && selected.destinationUrl && onPortal) {
       window.location.assign(selected.destinationUrl);
       return;
     }
+    setRole(selected.role);
     router.replace("/control-center");
   };
 
   const isEmployee = selected.role === "employee";
-  return <ScreenContainer containerClassName={styles.container} edges={["top", "bottom", "left", "right"]}><View style={styles.root}><Animated.View entering={FadeInDown.duration(260)}><Text style={styles.kicker}>PMEC / WORKSPACE SELECTOR</Text><Text style={styles.title}>CHOOSE{`\n`}YOUR VIEW.</Text><Text style={styles.intro}>Employee access opens the mobile-first workspace. Project Manager and HR selections open their separate desktop/iPad Control Centers.</Text></Animated.View><View style={styles.cards}>{demoWorkspaces.map((workspace) => { const active = selectedRole === workspace.role; return <Pressable key={workspace.role} accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => setSelectedRole(workspace.role)} style={({ pressed }) => [styles.card, active && styles.cardActive, pressed && styles.pressed]}><View style={styles.cardTop}><Text style={styles.cardLabel}>{workspace.label}</Text>{active ? <Text style={styles.selected}>SELECTED</Text> : null}</View><Text style={styles.cardTitle}>{workspace.name}</Text><Text style={styles.cardCopy}>{workspace.destination}</Text><Text style={styles.cardDevice}>{workspace.device}</Text></Pressable>; })}</View><View style={styles.launchPanel}><View><Text style={styles.launchLabel}>{isEmployee ? "MOBILE SHOWCASE · NO PASSWORD REQUIRED" : "DESKTOP CONTROL CENTER · NO PASSWORD REQUIRED"}</Text><Text style={styles.launchTitle}>{selected.name}</Text><Text style={styles.launchCopy}>{isEmployee ? "Open the local Employee presentation state on this device. It does not sign in to Clerk or access production delivery or payroll data." : `Continue to ${selected.destinationUrl?.replace("https://", "")} for this separate, wider PMEC workspace. On phones, the Control Center intentionally asks for a larger screen.`}</Text></View><Pressable accessibilityRole="button" onPress={enter} style={({ pressed }) => [styles.enterButton, pressed && styles.pressed]}><Text style={styles.enterText}>{isEmployee ? "OPEN EMPLOYEE MOBILE SHOWCASE" : `OPEN ${selected.label} DESKTOP`}</Text><Text style={styles.enterArrow}>→</Text></Pressable></View><Text style={styles.security}>SHOWCASE DATA ONLY · DEVICE-LOCAL SAMPLE DATA · NO PRODUCTION API ACCESS</Text></View></ScreenContainer>;
+  return <ScreenContainer containerClassName={styles.container} edges={["top", "bottom", "left", "right"]}><View style={styles.root}><Animated.View entering={FadeInDown.duration(260)}><Text style={styles.kicker}>PMEC / WORKSPACE SELECTOR</Text><Text style={styles.title}>CHOOSE{`\n`}YOUR VIEW.</Text><Text style={styles.intro}>Employee access opens the mobile-first workspace. Project Manager and HR selections open their separate desktop/iPad Control Centers.</Text></Animated.View><View style={styles.cards}>{demoWorkspaces.map((workspace) => { const active = selectedRole === workspace.role; return <Pressable key={workspace.role} accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => setSelectedRole(workspace.role)} style={({ pressed }) => [styles.card, active && styles.cardActive, pressed && styles.pressed]}><View style={styles.cardTop}><Text style={styles.cardLabel}>{workspace.label}</Text>{active ? <Text style={styles.selected}>SELECTED</Text> : null}</View><Text style={styles.cardTitle}>{workspace.name}</Text><Text style={styles.cardCopy}>{workspace.destination}</Text><Text style={styles.cardDevice}>{workspace.device}</Text></Pressable>; })}</View><View style={styles.launchPanel}><View><Text style={styles.launchLabel}>{isEmployee ? "MOBILE SHOWCASE · NO PASSWORD REQUIRED" : "DESKTOP CONTROL CENTER · NO PASSWORD REQUIRED"}</Text><Text style={styles.launchTitle}>{selected.name}</Text><Text style={styles.launchCopy}>{isEmployee ? "Open the employee workspace on this device. It runs on sample data and never touches live delivery or payroll records." : onPortal ? `Continue to ${selected.destinationUrl?.replace("https://", "")} for this separate, wider PMEC workspace. On phones, the Control Center intentionally asks for a larger screen.` : "Open the wider PMEC control center with sample data. On phones it asks for a larger screen."}</Text></View><Pressable accessibilityRole="button" onPress={enter} style={({ pressed }) => [styles.enterButton, pressed && styles.pressed]}><Text style={styles.enterText}>{isEmployee ? "OPEN EMPLOYEE MOBILE SHOWCASE" : `OPEN ${selected.label} DESKTOP`}</Text><Text style={styles.enterArrow}>→</Text></Pressable></View><Text style={styles.security}>SHOWCASE DATA ONLY · DEVICE-LOCAL SAMPLE DATA · NO PRODUCTION API ACCESS</Text></View></ScreenContainer>;
 }
 
 const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) => StyleSheet.create({

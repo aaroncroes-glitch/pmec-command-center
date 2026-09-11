@@ -19,9 +19,9 @@ describe("sign-in without Clerk", () => {
     );
   });
 
-  it("hides the Clerk button on the employee login", () => {
+  it("hides the Clerk button on the employee login without Clerk and in the showcase", () => {
     const login = read("app/ess/login.tsx");
-    expect(login).toMatch(/\{clerkEnabled \? <><Pressable accessibilityRole="button" disabled=\{!clerkLoaded/);
+    expect(login).toMatch(/\{clerkEnabled && !showcaseMode \? <><Pressable accessibilityRole="button" disabled=\{!clerkLoaded/);
     expect(login).toContain("LOCAL PROTOTYPE FALLBACK</Text><View style={styles.dividerLine} /></View></> : null}");
   });
 });
