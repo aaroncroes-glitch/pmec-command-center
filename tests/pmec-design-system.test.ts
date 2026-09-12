@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -102,6 +102,79 @@ describe("PMEC design tokens — WCAG 2.1 AA", () => {
     }
     const controls = readFileSync(resolve(process.cwd(), "components/pmec/controls.tsx"), "utf8");
     expect(controls).toContain("primaryLabel: { color: palette.onAccent }");
+  });
+});
+
+/* ------------------------------------------- text tones on tints and cards */
+
+function screenSources() {
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = resolve(dir, entry.name);
+      if (entry.isDirectory()) return walk(path);
+      return entry.name.endsWith(".tsx") ? [path] : [];
+    });
+  return [...walk(resolve(process.cwd(), "app")), ...walk(resolve(process.cwd(), "components"))];
+}
+
+describe("PMEC text tones — WCAG 2.1 AA", () => {
+  // A screen audit found 294 failing elements in light and 263 in dark, almost all of them
+  // a tone meant for fills being used as small text. Each tone below now has a text-safe
+  // variant, and these assertions are what stops the next screen reaching for the fill.
+  const surfaces = ["background", "surface", "surfaceStrong"] as const;
+
+  it("the accent as text clears AA on every page surface and on its own tint", () => {
+    for (const mode of ["light", "dark"] as const) {
+      const palette = lumenPalettes[mode];
+      for (const surface of [...surfaces, "accentSoft"] as const) {
+        expect(
+          contrastRatio(palette.accentText, palette[surface]),
+          `${mode} accentText ${palette.accentText} on ${surface} ${palette[surface]}`,
+        ).toBeGreaterThanOrEqual(AA_NORMAL);
+      }
+    }
+  });
+
+  it("the accent as text clears AA on an inverted card, which flips with the mode", () => {
+    for (const mode of ["light", "dark"] as const) {
+      const palette = lumenPalettes[mode];
+      expect(
+        contrastRatio(palette.accentOnInverse, palette.inverse),
+        `${mode} accentOnInverse ${palette.accentOnInverse} on inverse ${palette.inverse}`,
+      ).toBeGreaterThanOrEqual(AA_NORMAL);
+    }
+  });
+
+  it("the success, danger and warning tones clear AA as text", () => {
+    for (const mode of ["light", "dark"] as const) {
+      const palette = lumenPalettes[mode];
+      for (const surface of surfaces) {
+        for (const tone of ["successText", "dangerText", "warningText"] as const) {
+          expect(
+            contrastRatio(palette[tone], palette[surface]),
+            `${mode} ${tone} ${palette[tone]} on ${surface}`,
+          ).toBeGreaterThanOrEqual(AA_NORMAL);
+        }
+      }
+      expect(
+        contrastRatio(palette.dangerText, palette.dangerSoft),
+        `${mode} dangerText on its own tint`,
+      ).toBeGreaterThanOrEqual(AA_NORMAL);
+    }
+  });
+
+  it("no screen paints text in the raw accent", () => {
+    // palette.accent is 2.82:1 on paper and can never carry a label. It stays a fill.
+    const offenders = screenSources()
+      .filter((file) => {
+        const source = readFileSync(file, "utf8");
+        return /\bcolor:\s*palette\.accent\b/.test(source) || /TintColor:\s*palette\.accent\b/.test(source);
+      })
+      .map((file) => file.replace(`${process.cwd()}/`, ""));
+    expect(
+      offenders,
+      `use palette.accentText, or palette.accentOnInverse on an inverted card:\n${offenders.join("\n")}`,
+    ).toEqual([]);
   });
 });
 

@@ -24,7 +24,7 @@ export default function TabLayout() {
       {isDesktopEmployeeView ? (
         <View style={[styles.desktopAdvisory, { backgroundColor: palette.surfaceStrong, borderBottomColor: palette.border }]}>
           <View style={styles.desktopAdvisoryBody}>
-            <Text style={[styles.desktopAdvisoryEyebrow, { color: palette.accent }]}>PMEC / EMPLOYEE WORKSPACE</Text>
+            <Text style={[styles.desktopAdvisoryEyebrow, { color: palette.accentText }]}>PMEC / EMPLOYEE WORKSPACE</Text>
             <Text style={[styles.desktopAdvisoryCopy, { color: palette.foreground }]}>Optimized for mobile devices. Scan to open the secure Employee workspace on your phone. For workforce planning, delivery controls, and HR operations, use the dedicated iPad or desktop workspaces.</Text>
           </View>
           <View style={styles.desktopQrWrap}>
@@ -36,7 +36,7 @@ export default function TabLayout() {
       <Tabs backBehavior="firstRoute"
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: palette.accent,
+          tabBarActiveTintColor: palette.accentText,
           tabBarInactiveTintColor: palette.muted,
           tabBarButton: HapticTab,
           tabBarHideOnKeyboard: true,
