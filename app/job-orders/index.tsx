@@ -322,112 +322,118 @@ export default function JobOrdersPage() {
         </View>
       </View>
       <View style={styles.main}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>PMEC / PROJECT DELIVERY</Text>
-            <Text style={styles.title}>Project{`\n`}Tracker.</Text>
-            <Text style={styles.subtitle}>
-              Search projects and monitor delivery progress, budget variance, work breakdown, and
-              schedule across every discipline.
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => setCreating(true)}
-            style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.newButtonText}>NEW PROJECT</Text>
-            <Text style={styles.newButtonArrow}>+</Text>
-          </Pressable>
-        </View>
-        <View style={styles.kpiGrid}>
-          <StatTile
-            label="Authorized budget"
-            figure={{ kind: "money", values: toMoney(portfolio.budget) }}
-            caption="Filtered project currencies"
-          />
-          <StatTile
-            label="Derived spend"
-            figure={{ kind: "money", values: toMoney(portfolio.spent) }}
-            caption="Labor + materials + subcontract"
-          />
-          <StatTile
-            label="Active projects"
-            figure={{ kind: "count", value: portfolio.active }}
-            caption="Across all PMEC regions"
-          />
-          <StatTile
-            label="Decision queue"
-            figure={{ kind: "count", value: pendingDecisionCount }}
-            caption="Pending cost-document decisions"
-            onPress={() => setDecisionSummary(true)}
-          />
-        </View>
-        <View style={styles.filterBar}>
-          <View style={projectSearchStyles.row}>
-            <TextInput
-              accessibilityLabel="Search projects"
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search project, client, manager, region, or tag"
-              placeholderTextColor={palette.muted}
-              style={projectSearchStyles.input}
-            />
-            <Text style={projectSearchStyles.count}>
-              {visible.length} RESULT{visible.length === 1 ? "" : "S"}
-            </Text>
-          </View>
-          <View style={styles.tabs}>
-            {(["ACTIVE", "COMPLETED", "ALL"] as PortfolioTab[]).map((item) => (
-              <Chip key={item} label={item} selected={tab === item} onPress={() => setTab(item)} />
-            ))}
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chips}
-          >
-            {(["ALL", ...DISCIPLINES] as const).map((item) => (
-              <Chip
-                key={item}
-                label={item === "ALL" ? "All disciplines" : DISCIPLINE_LABELS[item]}
-                selected={discipline === item}
-                onPress={() => setDiscipline(item)}
-              />
-            ))}
-          </ScrollView>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chips}
-          >
-            {budgetFilterOptions.map((item) => (
-              <Chip
-                key={item}
-                label={item === "ALL" ? "All budgets" : BUDGET_ALERT_LABELS[item]}
-                selected={budgetFilter === item}
-                onPress={() => setBudgetFilter(item)}
-              />
-            ))}
-          </ScrollView>
-        </View>
-        <ScrollView contentContainerStyle={styles.cardGrid} showsVerticalScrollIndicator={false}>
-          {visible.length ? (
-            visible.map((job) => (
-              <JobOrderCard
-                key={job.id}
-                job={job}
-                styles={styles}
-                onPress={() => setSelected(job)}
-              />
-            ))
-          ) : (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>No projects match this view.</Text>
-              <Text style={styles.emptyCopy}>
-                Clear a filter or search by project, client, manager, region, or tag.
+        {/* The header, figures and filters scroll with the projects. Pinned, they took about 620px
+            of an 820px iPad screen and left the cards a narrow strip at the bottom. */}
+        <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.eyebrow}>PMEC / PROJECT DELIVERY</Text>
+              <Text style={styles.title}>Project{`\n`}Tracker.</Text>
+              <Text style={styles.subtitle}>
+                Search projects and monitor delivery progress, budget variance, work breakdown, and
+                schedule across every discipline.
               </Text>
             </View>
-          )}
+            <Pressable
+              onPress={() => setCreating(true)}
+              style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.newButtonText}>NEW PROJECT</Text>
+              <Text style={styles.newButtonArrow}>+</Text>
+            </Pressable>
+          </View>
+          <View style={styles.kpiGrid}>
+            <StatTile
+              label="Authorized budget"
+              figure={{ kind: "money", values: toMoney(portfolio.budget) }}
+              caption="Filtered project currencies"
+            />
+            <StatTile
+              label="Derived spend"
+              figure={{ kind: "money", values: toMoney(portfolio.spent) }}
+              caption="Labor + materials + subcontract"
+            />
+            <StatTile
+              label="Active projects"
+              figure={{ kind: "count", value: portfolio.active }}
+              caption="Across all PMEC regions"
+            />
+            <StatTile
+              label="Decision queue"
+              figure={{ kind: "count", value: pendingDecisionCount }}
+              caption="Pending cost-document decisions"
+              onPress={() => setDecisionSummary(true)}
+            />
+          </View>
+          <View style={styles.filterBar}>
+            <View style={projectSearchStyles.row}>
+              <TextInput
+                accessibilityLabel="Search projects"
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search project, client, manager, region, or tag"
+                placeholderTextColor={palette.muted}
+                style={projectSearchStyles.input}
+              />
+              <Text style={projectSearchStyles.count}>
+                {visible.length} RESULT{visible.length === 1 ? "" : "S"}
+              </Text>
+            </View>
+            <View style={styles.tabs}>
+              {(["ACTIVE", "COMPLETED", "ALL"] as PortfolioTab[]).map((item) => (
+                <Chip key={item} label={item} selected={tab === item} onPress={() => setTab(item)} />
+              ))}
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipRow}
+              contentContainerStyle={styles.chips}
+            >
+              {(["ALL", ...DISCIPLINES] as const).map((item) => (
+                <Chip
+                  key={item}
+                  label={item === "ALL" ? "All disciplines" : DISCIPLINE_LABELS[item]}
+                  selected={discipline === item}
+                  onPress={() => setDiscipline(item)}
+                />
+              ))}
+            </ScrollView>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipRow}
+              contentContainerStyle={styles.chips}
+            >
+              {budgetFilterOptions.map((item) => (
+                <Chip
+                  key={item}
+                  label={item === "ALL" ? "All budgets" : BUDGET_ALERT_LABELS[item]}
+                  selected={budgetFilter === item}
+                  onPress={() => setBudgetFilter(item)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+          <View style={styles.cardGrid}>
+            {visible.length ? (
+              visible.map((job) => (
+                <JobOrderCard
+                  key={job.id}
+                  job={job}
+                  styles={styles}
+                  onPress={() => setSelected(job)}
+                />
+              ))
+            ) : (
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>No projects match this view.</Text>
+                <Text style={styles.emptyCopy}>
+                  Clear a filter or search by project, client, manager, region, or tag.
+                </Text>
+              </View>
+            )}
+          </View>
         </ScrollView>
       </View>
       <JobOrderPanel
@@ -1944,6 +1950,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     },
     railFootCopy: { color: "#8E8982", fontSize: 10, lineHeight: 15, marginTop: 6 },
     main: { flex: 1 },
+    mainScroll: { flex: 1 },
     header: {
       alignItems: "flex-start",
       borderBottomColor: palette.border,
@@ -2008,7 +2015,10 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     tabActive: { backgroundColor: palette.foreground, borderColor: palette.foreground },
     tabText: { color: palette.muted, fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
     tabTextActive: { color: palette.inverseText },
-    chips: { gap: 7 },
+    // A dense chip reaches its 44px target with an invisible 8px ring. A horizontal row clips
+    // anything outside its box, so the row makes room for the ring and pulls itself back.
+    chipRow: { marginHorizontal: -8, marginVertical: -8 },
+    chips: { gap: 7, paddingHorizontal: 8, paddingVertical: 8 },
     chip: {
       borderColor: palette.border,
       borderRadius: 15,
