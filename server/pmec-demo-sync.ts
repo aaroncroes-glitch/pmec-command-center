@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from "express";
-import { neon } from "@neondatabase/serverless";
 
 /**
  * Shared demo workspaces for the showcase.
@@ -11,7 +10,8 @@ import { neon } from "@neondatabase/serverless";
  * It is deliberately narrow, because it is unauthenticated:
  *  - only the two showcase workspace keys are accepted, so it cannot become general storage;
  *  - payloads are capped;
- *  - it lives in its own table, pmec.demo_state, and never touches the delivery tables;
+ *  - it lives in Supabase, in a private pmec_demo schema reached only through three
+ *    functions (supabase/20260916_pmec_demo_sync.sql), never in the delivery tables;
  *  - a room code keeps two demos running at once from overwriting each other.
  * Real, signed-in data still goes through the tRPC router and its authorization.
  */
@@ -55,58 +55,47 @@ export function createMemoryDemoStore(): DemoSyncStore {
   };
 }
 
-export function createNeonDemoStore(connectionString: string): DemoSyncStore {
-  const sql = neon(connectionString);
-  // The table comes from neon/20260916_pmec_demo_sync.sql, applied by an owner role. The
-  // runtime role this connects as can read and upsert but cannot create tables, so nothing
-  // here attempts DDL.
-
-  const read = async (room: string, key: string) => {
-    const rows = (await sql`SELECT value, version FROM pmec.demo_state WHERE room = ${room} AND key = ${key}`) as {
-      value: unknown;
-      version: number;
-    }[];
-    return rows[0] ?? { value: null, version: 0 };
+/**
+ * Supabase store. The table sits in a schema the REST API does not expose, with RLS on and
+ * no policies; these RPC functions are the only way in, and they do the atomic upsert with
+ * the version check in the database. The key is the project's publishable key — no secret
+ * lives in this app.
+ */
+export function createSupabaseDemoStore(url: string, key: string): DemoSyncStore {
+  const rpc = async <T>(fn: string, args: Record<string, unknown>): Promise<T> => {
+    const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: { apikey: key, "Content-Type": "application/json" },
+      body: JSON.stringify(args),
+    });
+    if (!res.ok) throw new Error(`supabase ${fn} ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    return (await res.json()) as T;
   };
-
   return {
-    async versions(room) {
-      const rows = (await sql`SELECT key, version FROM pmec.demo_state WHERE room = ${room}`) as { key: string; version: number }[];
-      const out: Record<string, number> = {};
-      for (const key of DEMO_SYNC_KEYS) out[key] = rows.find((row) => row.key === key)?.version ?? 0;
-      return out;
-    },
-    read,
+    versions: (room) => rpc<Record<string, number>>("pmec_demo_versions", { p_room: room }),
+    read: (room, key) => rpc<{ value: unknown; version: number }>("pmec_demo_read", { p_room: room, p_key: key }),
     async write(room, key, value, baseVersion, force) {
-      // One atomic statement: insert, or update only while nobody has written since
-      // baseVersion. No row back means the check failed.
-      const rows = (await sql`
-        INSERT INTO pmec.demo_state AS s (room, key, value, version, updated_at)
-        VALUES (${room}, ${key}, ${JSON.stringify(value)}::jsonb, 1, now())
-        ON CONFLICT (room, key) DO UPDATE
-          SET value = EXCLUDED.value, version = s.version + 1, updated_at = now()
-          WHERE ${force}::boolean OR s.version = ${baseVersion}
-        RETURNING version`) as { version: number }[];
-      if (rows[0]) return { ok: true, version: rows[0].version };
-      const current = await read(room, key);
-      return { ok: false, value: current.value, version: current.version };
+      const out = await rpc<{ ok: boolean; version: number; value?: unknown }>("pmec_demo_write", {
+        p_room: room, p_key: key, p_value: value, p_base: baseVersion, p_force: force,
+      });
+      return out.ok ? { ok: true, version: out.version } : { ok: false, value: out.value ?? null, version: out.version };
     },
   };
 }
 
 /** Picks the store for this process, or null when the demo has nowhere to sync. */
 export function resolveDemoStore(env: NodeJS.ProcessEnv = process.env): DemoSyncStore | null {
-  // Say which store was picked, never the connection string: a silent 503 in the middle of a
-  // demo is otherwise impossible to tell apart from a database error.
-  if (env.NEON_DATABASE_URL) {
-    console.info("[demo-sync] store: neon");
-    return createNeonDemoStore(env.NEON_DATABASE_URL);
+  // Say which store was picked, never the key: a silent 503 in the middle of a demo is
+  // otherwise impossible to tell apart from a database error.
+  if (env.PMEC_DEMO_SUPABASE_URL && env.PMEC_DEMO_SUPABASE_KEY) {
+    console.info("[demo-sync] store: supabase");
+    return createSupabaseDemoStore(env.PMEC_DEMO_SUPABASE_URL, env.PMEC_DEMO_SUPABASE_KEY);
   }
   if (env.PMEC_DEMO_SYNC_MEMORY === "1") {
     console.info("[demo-sync] store: memory (single process)");
     return createMemoryDemoStore();
   }
-  console.warn("[demo-sync] store: none — NEON_DATABASE_URL is not set, answering 503");
+  console.warn("[demo-sync] store: none — PMEC_DEMO_SUPABASE_URL/KEY not set, answering 503");
   return null;
 }
 
