@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCrossTabStore } from "@/lib/pmec-cross-tab";
+import { mergeJobOrders } from "@/lib/pmec-demo-merge";
+import { useDemoSync } from "@/lib/pmec-demo-sync";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import {
@@ -64,6 +66,8 @@ function normalizeJobOrder(jobOrder: JobOrder): JobOrder {
   return { ...jobOrder, costDocuments: jobOrder.costDocuments.map(normalizeDocument) };
 }
 
+const INITIAL_RAW = JSON.stringify(initialPmeJobOrders.map(normalizeJobOrder));
+
 export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
   const [jobOrders, setJobOrders] = useState<JobOrder[]>(() => initialPmeJobOrders.map(normalizeJobOrder));
   const [ready, setReady] = useState(false);
@@ -85,12 +89,15 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
   // What this window last wrote or took in, so two open windows cannot answer each other's
   // writes forever: each arriving copy is a new object to React, identical content or not.
   const lastRaw = useRef<string | null>(null);
+  // Set by the demo sync below. A ref, because this save effect has to be declared first.
+  const pushRef = useRef<(raw: string) => void>(() => undefined);
   useEffect(() => {
     if (!ready) return;
     const raw = JSON.stringify(jobOrders);
     if (raw === lastRaw.current) return;
     lastRaw.current = raw;
     void AsyncStorage.setItem(STORAGE_KEY, raw);
+    pushRef.current(raw);
   }, [jobOrders, ready]);
 
   // Another window of the same showcase writing these projects lands here, so an assignment
@@ -106,6 +113,10 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
     }
   }, []);
   useCrossTabStore(STORAGE_KEY, applyStored);
+  // Across portal., hr., pm. and separate devices. Must come after the save effect above:
+  // see the ordering note in lib/pmec-demo-sync.ts.
+  const { push: pushDemoSync, reset: resetDemoSync } = useDemoSync({ key: STORAGE_KEY, ready, initialRaw: INITIAL_RAW, apply: applyStored, merge: mergeJobOrders });
+  pushRef.current = pushDemoSync;
 
   const mutate = useCallback(
     (jobOrderId: string, transform: (jobOrder: JobOrder) => JobOrder) => {
@@ -257,7 +268,8 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
   const resetDemo = useCallback(() => {
     void AsyncStorage.removeItem(STORAGE_KEY);
     setJobOrders(initialPmeJobOrders.map(normalizeJobOrder));
-  }, []);
+    resetDemoSync();
+  }, [resetDemoSync]);
 
   const value = useMemo<PmecJobOrderWorkspace>(() => ({
     ready,

@@ -69,3 +69,5 @@ Thumbs.db
 
 # Claude Code local dev server config
 .claude/launch.json
+.vercel
+.env*

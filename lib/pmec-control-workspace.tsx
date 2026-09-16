@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { useCrossTabStore } from "@/lib/pmec-cross-tab";
+import { mergeControl } from "@/lib/pmec-demo-merge";
+import { useDemoSync } from "@/lib/pmec-demo-sync";
 import { initialAssignments, initialLeave, initialLogs, workforce } from "@/lib/pmec-control-seeds";
 import { usePmecJobOrders } from "@/lib/pmec-job-order-workspace";
 import { usePmecDeliverySync } from "@/lib/pmec-delivery-sync";
@@ -20,6 +22,7 @@ type ControlState = { assignments: TaskAssignment[]; timeLogs: PmecTimeLog[]; le
 type ControlContextValue = ControlState & { ready: boolean; deliverySyncState: "live" | "demo"; workforce: PmecWorkforcePerson[]; sharedAssignments: SharedAssignment[]; assignTask: (jobOrderId: string, taskId: string, employeeId: string) => void; addTimeLog: (input: Omit<PmecTimeLog, "id" | "status">) => void; approveTimeLog: (id: string) => void; reviewLeave: (id: string, status: "approved" | "rejected", note?: string) => void; requestLeave: (input: Omit<PmecLeaveRequest, "id" | "status">) => void; resetControlDemo: () => void };
 const ControlContext = createContext<ControlContextValue | null>(null);
 const initialState: ControlState = { assignments: initialAssignments, timeLogs: initialLogs, leaveRequests: initialLeave };
+const INITIAL_RAW = JSON.stringify(initialState);
 
 export function PmecControlWorkspaceProvider({ children }: PropsWithChildren) {
   const { jobOrders, updateTask } = usePmecJobOrders();
@@ -30,11 +33,17 @@ export function PmecControlWorkspaceProvider({ children }: PropsWithChildren) {
   // What this window last wrote or took in. Without it two open windows would answer each
   // other's writes forever, because each arriving copy is a new object to React.
   const lastRaw = useRef<string | null>(null);
-  useEffect(() => { if (!ready) return; const raw = JSON.stringify(state); if (raw === lastRaw.current) return; lastRaw.current = raw; void AsyncStorage.setItem(STORAGE_KEY, raw); }, [ready, state]);
+  // Set by the demo sync below. A ref, because this save effect has to be declared first.
+  const pushRef = useRef<(raw: string) => void>(() => undefined);
+  useEffect(() => { if (!ready) return; const raw = JSON.stringify(state); if (raw === lastRaw.current) return; lastRaw.current = raw; void AsyncStorage.setItem(STORAGE_KEY, raw); pushRef.current(raw); }, [ready, state]);
   // A second window writing this workspace, the employee view beside the control center,
   // lands here, so both screens show the same leave, assignments and hours as they change.
   const applyStored = useCallback((raw: string) => { if (raw === lastRaw.current) return; lastRaw.current = raw; try { const parsed = JSON.parse(raw) as ControlState; if (Array.isArray(parsed.assignments) && Array.isArray(parsed.timeLogs) && Array.isArray(parsed.leaveRequests)) setState(parsed); } catch { /* keep the current state */ } }, []);
   useCrossTabStore(STORAGE_KEY, applyStored);
+  // Across portal., hr., pm. and separate devices. Must come after the save effect above:
+  // see the ordering note in lib/pmec-demo-sync.ts.
+  const { push: pushDemoSync, reset: resetDemoSync } = useDemoSync({ key: STORAGE_KEY, ready, initialRaw: INITIAL_RAW, apply: applyStored, merge: mergeControl });
+  pushRef.current = pushDemoSync;
   const syncedAssignments = shared.allAssignments.map((item) => ({ id: item.id, jobOrderId: item.jobOrderId, taskId: item.taskId, employeeId: item.employeeId, assignedAt: item.dueDate ?? new Date().toISOString().slice(0, 10) }));
   const syncedTimeLogs = shared.allTimeLogs.map((item) => ({ id: item.id, employeeId: item.employeeId, jobOrderId: item.jobOrderId, taskId: item.taskId, date: item.workDate, hours: item.minutes / 60, note: item.note, status: item.status === "approved" ? "Approved" as const : "Submitted" as const, synced: true }));
   const deliverySyncState = shared.managerSyncState === "live" ? "live" as const : "demo" as const;
@@ -45,7 +54,7 @@ export function PmecControlWorkspaceProvider({ children }: PropsWithChildren) {
   const approveTimeLog = useCallback((id: string) => { const remote = syncedTimeLogs.find((item) => item.id === id); if (remote) void shared.reviewTime(id, "approved", "Approved in PMEC Control Center"); setState((current) => ({ ...current, timeLogs: current.timeLogs.map((item) => item.id === id ? { ...item, status: "Approved", approvedAt: new Date().toISOString() } : item) })); }, [shared, syncedTimeLogs]);
   const reviewLeave = useCallback((id: string, status: "approved" | "rejected", note?: string) => setState((current) => ({ ...current, leaveRequests: current.leaveRequests.map((item) => item.id === id ? { ...item, status, note: note?.trim() || item.note } : item) })), []);
   const requestLeave = useCallback((input: Omit<PmecLeaveRequest, "id" | "status">) => setState((current) => ({ ...current, leaveRequests: [{ ...input, id: `leave-${Date.now()}`, status: "pending" as const }, ...current.leaveRequests] })), []);
-  const resetControlDemo = useCallback(() => { void AsyncStorage.removeItem(STORAGE_KEY); setState(initialState); }, []);
+  const resetControlDemo = useCallback(() => { void AsyncStorage.removeItem(STORAGE_KEY); setState(initialState); resetDemoSync(); }, [resetDemoSync]);
   // Away follows approved leave, so a decision in HR shows up in People, Capacity and planning.
   const today = todayKey();
   const workforceNow = useMemo(() => { const away = new Set(state.leaveRequests.filter((item) => item.status === "approved" && item.startDate <= today && today <= item.endDate).map((item) => item.employeeId)); return workforce.map((person) => (away.has(person.id) ? { ...person, status: "Away" as const } : person)); }, [state.leaveRequests, today]);
