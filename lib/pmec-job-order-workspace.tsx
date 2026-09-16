@@ -1,5 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCrossTabStore } from "@/lib/pmec-cross-tab";
+import { mergeJobOrders } from "@/lib/pmec-demo-merge";
+import { useDemoSync } from "@/lib/pmec-demo-sync";
+import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   applyBulkCostDocumentApproval,
@@ -16,7 +19,7 @@ import {
   type WorkPackageTask,
 } from "@/lib/pmec-job-orders";
 
-const STORAGE_KEY = "lumen.pmec.job-orders.v1";
+const STORAGE_KEY = "lumen.pmec.job-orders.v2";
 
 type ApprovalDecision = {
   status: CostDocumentApprovalStatus;
@@ -63,6 +66,8 @@ function normalizeJobOrder(jobOrder: JobOrder): JobOrder {
   return { ...jobOrder, costDocuments: jobOrder.costDocuments.map(normalizeDocument) };
 }
 
+const INITIAL_RAW = JSON.stringify(initialPmeJobOrders.map(normalizeJobOrder));
+
 export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
   const [jobOrders, setJobOrders] = useState<JobOrder[]>(() => initialPmeJobOrders.map(normalizeJobOrder));
   const [ready, setReady] = useState(false);
@@ -81,9 +86,37 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
       .finally(() => setReady(true));
   }, []);
 
+  // What this window last wrote or took in, so two open windows cannot answer each other's
+  // writes forever: each arriving copy is a new object to React, identical content or not.
+  const lastRaw = useRef<string | null>(null);
+  // Set by the demo sync below. A ref, because this save effect has to be declared first.
+  const pushRef = useRef<(raw: string) => void>(() => undefined);
   useEffect(() => {
-    if (ready) void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(jobOrders));
+    if (!ready) return;
+    const raw = JSON.stringify(jobOrders);
+    if (raw === lastRaw.current) return;
+    lastRaw.current = raw;
+    void AsyncStorage.setItem(STORAGE_KEY, raw);
+    pushRef.current(raw);
   }, [jobOrders, ready]);
+
+  // Another window of the same showcase writing these projects lands here, so an assignment
+  // made in the control center reaches the employee view beside it.
+  const applyStored = useCallback((raw: string) => {
+    if (raw === lastRaw.current) return;
+    lastRaw.current = raw;
+    try {
+      const parsed = JSON.parse(raw) as JobOrder[];
+      if (Array.isArray(parsed)) setJobOrders(parsed.map(normalizeJobOrder));
+    } catch {
+      // Keep the projects already on screen.
+    }
+  }, []);
+  useCrossTabStore(STORAGE_KEY, applyStored);
+  // Across portal., hr., pm. and separate devices. Must come after the save effect above:
+  // see the ordering note in lib/pmec-demo-sync.ts.
+  const { push: pushDemoSync, reset: resetDemoSync } = useDemoSync({ key: STORAGE_KEY, ready, initialRaw: INITIAL_RAW, apply: applyStored, merge: mergeJobOrders });
+  pushRef.current = pushDemoSync;
 
   const mutate = useCallback(
     (jobOrderId: string, transform: (jobOrder: JobOrder) => JobOrder) => {
@@ -235,7 +268,8 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
   const resetDemo = useCallback(() => {
     void AsyncStorage.removeItem(STORAGE_KEY);
     setJobOrders(initialPmeJobOrders.map(normalizeJobOrder));
-  }, []);
+    resetDemoSync();
+  }, [resetDemoSync]);
 
   const value = useMemo<PmecJobOrderWorkspace>(() => ({
     ready,

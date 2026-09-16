@@ -1,56 +1,49 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
+import { useCrossTabStore } from "@/lib/pmec-cross-tab";
+import { mergeControl } from "@/lib/pmec-demo-merge";
+import { useDemoSync } from "@/lib/pmec-demo-sync";
+import { initialAssignments, initialLeave, initialLogs, workforce } from "@/lib/pmec-control-seeds";
 import { usePmecJobOrders } from "@/lib/pmec-job-order-workspace";
 import { usePmecDeliverySync } from "@/lib/pmec-delivery-sync";
 import type { SharedAssignment } from "@/lib/pmec-delivery-sync";
 import { todayKey } from "@/lib/pmec-month-calendar";
 
 export type PmecWorkforcePerson = { id: string; name: string; role: string; discipline: string; type: "Employee" | "Contractor"; location: string; status: "Active" | "Away" | "Pending"; allocation: number; weeklyCapacity: number; employment: string };
-export type PmecTimeLog = { id: string; employeeId: string; jobOrderId: string; taskId: string; date: string; hours: number; note: string; status: "Submitted" | "Approved"; synced?: boolean };
-export type PmecLeaveRequest = { id: string; employeeId: string; type: "Vacation" | "Sick" | "Personal"; startDate: string; endDate: string; workDays: number; status: "pending" | "approved" | "rejected"; note?: string };
+export type PmecTimeLog = { id: string; employeeId: string; jobOrderId: string; taskId: string; date: string; hours: number; note: string; status: "Submitted" | "Approved"; synced?: boolean; approvedAt?: string };
+export type PmecLeaveRequest = { id: string; employeeId: string; type: "Vacation" | "Sick" | "Personal"; startDate: string; endDate: string; workDays: number; status: "pending" | "approved" | "rejected"; note?: string; reason?: string };
 export type TaskAssignment = { id: string; jobOrderId: string; taskId: string; employeeId: string; assignedAt: string };
 
-const STORAGE_KEY = "lumen.pmec.control-center.v1";
-const staffSeeds = [
-  ["emp-01", "Aaron Croes", "Project Director", "Project Management", "Aruba", 88], ["emp-02", "Nour El-Sayed", "Senior Process Engineer", "Process / Instrumentation", "Cairo", 82], ["emp-03", "Luis Herrera", "Civil Structural Lead", "Civil / Structural", "Panama", 91], ["emp-04", "Karim Fathy", "Control Systems Engineer", "Process / Instrumentation", "Cairo", 76], ["emp-05", "Sofia Arends", "Electrical Engineer", "Electrical", "Aruba", 84], ["emp-06", "Daniel Geerman", "QA / HSE Lead", "Quality / Safety", "Aruba", 72], ["emp-07", "Amelia Ruiz", "Project Coordinator", "Project Management", "Panama", 68], ["emp-08", "Mila Tromp", "Planner", "Project Management", "Aruba", 64], ["emp-09", "Noah Croes", "Electrical Technician", "Electrical", "Aruba", 92], ["emp-10", "Iris Peterson", "Mechanical Engineer", "Mechanical", "Aruba", 78], ["emp-11", "Owen De Cuba", "Safety Officer", "Quality / Safety", "Aruba", 70], ["emp-12", "Nora Kock", "Quantity Surveyor", "Project Management", "Aruba", 66], ["emp-13", "Levi Lacle", "Site Engineer", "Civil / Structural", "Aruba", 86], ["emp-14", "Ella Thijsen", "QA Specialist", "Quality / Safety", "Aruba", 74], ["emp-15", "Mason Croes", "Procurement Engineer", "Electrical", "Aruba", 89], ["emp-16", "Lina Loefstok", "Mechanical Technician", "Mechanical", "Aruba", 60], ["emp-17", "Julian Koolman", "Field Supervisor", "Project Management", "Aruba", 80], ["emp-18", "Mia Eman", "Instrumentation Engineer", "Process / Instrumentation", "Cairo", 77], ["emp-19", "Theo Nichols", "Design Engineer", "Electrical", "Aruba", 63], ["emp-20", "Sara Doran", "Civil Engineer", "Civil / Structural", "Panama", 83], ["emp-21", "Jade Figaroa", "Document Controller", "Project Management", "Aruba", 56], ["emp-22", "Victor Quant", "Mechanical Lead", "Mechanical", "Aruba", 87], ["emp-23", "Olivia Maduro", "Electrical Designer", "Electrical", "Aruba", 71], ["emp-24", "Henry Peterson", "HSE Coordinator", "Quality / Safety", "Aruba", 69], ["emp-25", "Ava Arends", "Project Engineer", "Project Management", "Aruba", 90], ["emp-26", "Gabriel Lacle", "Structural Engineer", "Civil / Structural", "Panama", 75], ["emp-27", "Eva Tromp", "Junior Planner", "Project Management", "Aruba", 58], ["employee-76", "Percy Solagnier", "Mechanical Engineer", "Mechanical", "Aruba", 73],
-] as const;
-const contractorSeeds = [["con-01", "ELMAR N.V.", "Electrical Subcontractor", "Electrical", "Aruba", 82], ["con-02", "Estructuras del Istmo S.A.", "Structural Subcontractor", "Civil / Structural", "Panama", 85], ["con-03", "Nile Controls LLC", "Controls Contractor", "Process / Instrumentation", "Cairo", 61], ["con-04", "Coastline HVAC", "Mechanical Subcontractor", "Mechanical", "Aruba", 52], ["con-05", "Island Scaffolding", "Access Contractor", "Quality / Safety", "Aruba", 48], ["con-06", "Terra Solar", "Electrical Specialist", "Electrical", "Aruba", 66]] as const;
-const workforce: PmecWorkforcePerson[] = [...staffSeeds.map(([id, name, role, discipline, location, allocation], index) => ({ id, name, role, discipline, location, allocation, type: "Employee" as const, weeklyCapacity: 40, employment: "PMEC employee", status: index === 20 ? "Pending" as const : "Active" as const })), ...contractorSeeds.map(([id, name, role, discipline, location, allocation]) => ({ id, name, role, discipline, location, allocation, type: "Contractor" as const, weeklyCapacity: 40, employment: "External specialist", status: "Active" as const }))];
-const initialAssignments: TaskAssignment[] = [{ id: "assign-1", jobOrderId: "jo-coastal-substation", taskId: "coastal-2", employeeId: "emp-05", assignedAt: "2026-04-01" }, { id: "assign-2", jobOrderId: "jo-water-treatment", taskId: "water-2", employeeId: "emp-04", assignedAt: "2026-04-02" }, { id: "assign-3", jobOrderId: "jo-hospital-wing", taskId: "hospital-5", employeeId: "emp-03", assignedAt: "2026-04-05" }];
-const initialLogs: PmecTimeLog[] = [{ id: "log-1", employeeId: "emp-05", jobOrderId: "jo-coastal-substation", taskId: "coastal-2", date: "2026-04-20", hours: 8, note: "Factory acceptance test coordination", status: "Approved" }, { id: "log-2", employeeId: "emp-09", jobOrderId: "jo-coastal-substation", taskId: "coastal-2", date: "2026-04-21", hours: 7.5, note: "Relay configuration review", status: "Submitted" }, { id: "log-3", employeeId: "emp-04", jobOrderId: "jo-water-treatment", taskId: "water-2", date: "2026-04-20", hours: 8, note: "Control narrative drafting", status: "Approved" }, { id: "log-4", employeeId: "emp-02", jobOrderId: "jo-water-treatment", taskId: "water-2", date: "2026-04-21", hours: 6, note: "Client design workshop", status: "Approved" }, { id: "log-5", employeeId: "emp-03", jobOrderId: "jo-hospital-wing", taskId: "hospital-5", date: "2026-04-21", hours: 7, note: "Certification review with inspector", status: "Submitted" }, { id: "log-6", employeeId: "emp-06", jobOrderId: "jo-hospital-wing", taskId: "hospital-5", date: "2026-04-21", hours: 4, note: "QA evidence reconciliation", status: "Approved" }];
-// Demo leave sits around the current week so the calendar, forecast and away counts open on
-// current dates. Weeks count from this Monday; weekday 0 is Monday.
-const seedDay = (week: number, weekday: number) => { const date = new Date(); date.setHours(12, 0, 0, 0); date.setDate(date.getDate() - ((date.getDay() + 6) % 7) + week * 7 + weekday); return todayKey(date); };
-const initialLeave: PmecLeaveRequest[] = [
-  { id: "leave-1", employeeId: "emp-08", type: "Vacation", startDate: seedDay(0, 0), endDate: seedDay(0, 4), workDays: 5, status: "approved", note: "Approved by HR" },
-  { id: "leave-2", employeeId: "emp-05", type: "Personal", startDate: seedDay(1, 0), endDate: seedDay(1, 0), workDays: 1, status: "pending" },
-  { id: "leave-3", employeeId: "emp-13", type: "Sick", startDate: seedDay(0, 2), endDate: seedDay(0, 3), workDays: 2, status: "approved", note: "Recorded by HR" },
-  { id: "leave-4", employeeId: "emp-17", type: "Vacation", startDate: seedDay(1, 2), endDate: seedDay(1, 4), workDays: 3, status: "pending" },
-  { id: "leave-5", employeeId: "emp-02", type: "Vacation", startDate: seedDay(2, 0), endDate: seedDay(2, 4), workDays: 5, status: "approved", note: "Approved by HR" },
-  { id: "leave-6", employeeId: "emp-21", type: "Personal", startDate: seedDay(2, 3), endDate: seedDay(2, 3), workDays: 1, status: "pending" },
-  { id: "leave-7", employeeId: "emp-04", type: "Vacation", startDate: seedDay(3, 0), endDate: seedDay(3, 2), workDays: 3, status: "rejected", note: "Please select an alternative work window." },
-  { id: "leave-8", employeeId: "emp-10", type: "Vacation", startDate: seedDay(3, 1), endDate: seedDay(4, 1), workDays: 6, status: "approved", note: "Approved by HR" },
-  { id: "leave-9", employeeId: "emp-06", type: "Vacation", startDate: seedDay(-1, 0), endDate: seedDay(-1, 4), workDays: 5, status: "approved", note: "Approved by HR" },
-];
-// Browsers that opened the demo before the seeds moved still hold the original April and May
-// requests. Leave is reviewed here but never created, so a stored list made only of those
-// seeds is untouched demo data, and it is replaced.
-const legacyLeaveStarts: Record<string, string> = { "leave-1": "2026-05-11", "leave-2": "2026-04-28", "leave-3": "2026-04-17" };
-const isLegacyLeave = (requests: PmecLeaveRequest[]) => requests.length > 0 && requests.every((request) => legacyLeaveStarts[request.id] === request.startDate);
+// v2: the showcase data set. v1 holds the thin April seeds and is not read.
+const STORAGE_KEY = "lumen.pmec.control-center.v2";
 
 type ControlState = { assignments: TaskAssignment[]; timeLogs: PmecTimeLog[]; leaveRequests: PmecLeaveRequest[] };
-type ControlContextValue = ControlState & { ready: boolean; deliverySyncState: "live" | "demo"; workforce: PmecWorkforcePerson[]; sharedAssignments: SharedAssignment[]; assignTask: (jobOrderId: string, taskId: string, employeeId: string) => void; addTimeLog: (input: Omit<PmecTimeLog, "id" | "status">) => void; approveTimeLog: (id: string) => void; reviewLeave: (id: string, status: "approved" | "rejected", note?: string) => void; resetControlDemo: () => void };
+type ControlContextValue = ControlState & { ready: boolean; deliverySyncState: "live" | "demo"; workforce: PmecWorkforcePerson[]; sharedAssignments: SharedAssignment[]; assignTask: (jobOrderId: string, taskId: string, employeeId: string) => void; addTimeLog: (input: Omit<PmecTimeLog, "id" | "status">) => void; approveTimeLog: (id: string) => void; reviewLeave: (id: string, status: "approved" | "rejected", note?: string) => void; requestLeave: (input: Omit<PmecLeaveRequest, "id" | "status">) => void; resetControlDemo: () => void };
 const ControlContext = createContext<ControlContextValue | null>(null);
 const initialState: ControlState = { assignments: initialAssignments, timeLogs: initialLogs, leaveRequests: initialLeave };
+const INITIAL_RAW = JSON.stringify(initialState);
 
 export function PmecControlWorkspaceProvider({ children }: PropsWithChildren) {
   const { jobOrders, updateTask } = usePmecJobOrders();
   const shared = usePmecDeliverySync();
   const [state, setState] = useState<ControlState>(initialState);
   const [ready, setReady] = useState(false);
-  useEffect(() => { void AsyncStorage.getItem(STORAGE_KEY).then((stored) => { if (stored) { try { const parsed = JSON.parse(stored) as ControlState; if (Array.isArray(parsed.assignments) && Array.isArray(parsed.timeLogs) && Array.isArray(parsed.leaveRequests)) setState(isLegacyLeave(parsed.leaveRequests) ? { ...parsed, leaveRequests: initialLeave } : parsed); } catch { /* retain seed state */ } } }).finally(() => setReady(true)); }, []);
-  useEffect(() => { if (ready) void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }, [ready, state]);
+  useEffect(() => { void AsyncStorage.getItem(STORAGE_KEY).then((stored) => { if (stored) { try { const parsed = JSON.parse(stored) as ControlState; if (Array.isArray(parsed.assignments) && Array.isArray(parsed.timeLogs) && Array.isArray(parsed.leaveRequests)) setState(parsed); } catch { /* retain seed state */ } } }).finally(() => setReady(true)); }, []);
+  // What this window last wrote or took in. Without it two open windows would answer each
+  // other's writes forever, because each arriving copy is a new object to React.
+  const lastRaw = useRef<string | null>(null);
+  // Set by the demo sync below. A ref, because this save effect has to be declared first.
+  const pushRef = useRef<(raw: string) => void>(() => undefined);
+  useEffect(() => { if (!ready) return; const raw = JSON.stringify(state); if (raw === lastRaw.current) return; lastRaw.current = raw; void AsyncStorage.setItem(STORAGE_KEY, raw); pushRef.current(raw); }, [ready, state]);
+  // A second window writing this workspace, the employee view beside the control center,
+  // lands here, so both screens show the same leave, assignments and hours as they change.
+  const applyStored = useCallback((raw: string) => { if (raw === lastRaw.current) return; lastRaw.current = raw; try { const parsed = JSON.parse(raw) as ControlState; if (Array.isArray(parsed.assignments) && Array.isArray(parsed.timeLogs) && Array.isArray(parsed.leaveRequests)) setState(parsed); } catch { /* keep the current state */ } }, []);
+  useCrossTabStore(STORAGE_KEY, applyStored);
+  // Across portal., hr., pm. and separate devices. Must come after the save effect above:
+  // see the ordering note in lib/pmec-demo-sync.ts.
+  const { push: pushDemoSync, reset: resetDemoSync } = useDemoSync({ key: STORAGE_KEY, ready, initialRaw: INITIAL_RAW, apply: applyStored, merge: mergeControl });
+  pushRef.current = pushDemoSync;
   const syncedAssignments = shared.allAssignments.map((item) => ({ id: item.id, jobOrderId: item.jobOrderId, taskId: item.taskId, employeeId: item.employeeId, assignedAt: item.dueDate ?? new Date().toISOString().slice(0, 10) }));
   const syncedTimeLogs = shared.allTimeLogs.map((item) => ({ id: item.id, employeeId: item.employeeId, jobOrderId: item.jobOrderId, taskId: item.taskId, date: item.workDate, hours: item.minutes / 60, note: item.note, status: item.status === "approved" ? "Approved" as const : "Submitted" as const, synced: true }));
   const deliverySyncState = shared.managerSyncState === "live" ? "live" as const : "demo" as const;
@@ -58,13 +51,14 @@ export function PmecControlWorkspaceProvider({ children }: PropsWithChildren) {
   const timeLogs = [...syncedTimeLogs, ...state.timeLogs.filter((item) => !syncedTimeLogs.some((remote) => remote.id === item.id))];
   const assignTask = useCallback((jobOrderId: string, taskId: string, employeeId: string) => { const person = workforce.find((item) => item.id === employeeId); const jobOrder = jobOrders.find((item) => item.id === jobOrderId); const task = jobOrder?.tasks.find((item) => item.id === taskId); if (!person || !jobOrder || !task) return; updateTask(jobOrderId, taskId, { assignedTo: person.name }); if (shared.managerSyncState === "live") { void shared.assign({ jobOrderId, jobOrderTitle: jobOrder.title, taskId, taskTitle: task.title, employeeId, employeeName: person.name, discipline: person.discipline, status: task.progress >= 100 ? "complete" : task.progress > 0 ? "in_progress" : "assigned", progress: task.progress, assignedBy: "Aaron Croes", dueDate: jobOrder.targetEndDate }).catch(() => undefined); } setState((current) => ({ ...current, assignments: [...current.assignments.filter((item) => item.taskId !== taskId || item.jobOrderId !== jobOrderId), { id: `assignment-${Date.now()}`, jobOrderId, taskId, employeeId, assignedAt: new Date().toISOString().slice(0, 10) }] })); }, [jobOrders, shared, updateTask]);
   const addTimeLog = useCallback((input: Omit<PmecTimeLog, "id" | "status">) => { const assignment = assignments.find((item) => item.employeeId === input.employeeId && item.jobOrderId === input.jobOrderId && item.taskId === input.taskId); const person = workforce.find((item) => item.id === input.employeeId); if (assignment && person && shared.employeeSyncState === "live") void shared.submitTime({ assignmentId: assignment.id, jobOrderId: input.jobOrderId, taskId: input.taskId, workDate: input.date, minutes: Math.max(15, Math.round(input.hours * 60)), note: input.note }).catch(() => undefined); setState((current) => ({ ...current, timeLogs: [{ ...input, id: `time-${Date.now()}`, status: "Submitted" }, ...current.timeLogs] })); }, [assignments, shared]);
-  const approveTimeLog = useCallback((id: string) => { const remote = syncedTimeLogs.find((item) => item.id === id); if (remote) void shared.reviewTime(id, "approved", "Approved in PMEC Control Center"); setState((current) => ({ ...current, timeLogs: current.timeLogs.map((item) => item.id === id ? { ...item, status: "Approved" } : item) })); }, [shared, syncedTimeLogs]);
+  const approveTimeLog = useCallback((id: string) => { const remote = syncedTimeLogs.find((item) => item.id === id); if (remote) void shared.reviewTime(id, "approved", "Approved in PMEC Control Center"); setState((current) => ({ ...current, timeLogs: current.timeLogs.map((item) => item.id === id ? { ...item, status: "Approved", approvedAt: new Date().toISOString() } : item) })); }, [shared, syncedTimeLogs]);
   const reviewLeave = useCallback((id: string, status: "approved" | "rejected", note?: string) => setState((current) => ({ ...current, leaveRequests: current.leaveRequests.map((item) => item.id === id ? { ...item, status, note: note?.trim() || item.note } : item) })), []);
-  const resetControlDemo = useCallback(() => { void AsyncStorage.removeItem(STORAGE_KEY); setState(initialState); }, []);
+  const requestLeave = useCallback((input: Omit<PmecLeaveRequest, "id" | "status">) => setState((current) => ({ ...current, leaveRequests: [{ ...input, id: `leave-${Date.now()}`, status: "pending" as const }, ...current.leaveRequests] })), []);
+  const resetControlDemo = useCallback(() => { void AsyncStorage.removeItem(STORAGE_KEY); setState(initialState); resetDemoSync(); }, [resetDemoSync]);
   // Away follows approved leave, so a decision in HR shows up in People, Capacity and planning.
   const today = todayKey();
   const workforceNow = useMemo(() => { const away = new Set(state.leaveRequests.filter((item) => item.status === "approved" && item.startDate <= today && today <= item.endDate).map((item) => item.employeeId)); return workforce.map((person) => (away.has(person.id) ? { ...person, status: "Away" as const } : person)); }, [state.leaveRequests, today]);
-  const value = useMemo<ControlContextValue>(() => ({ ...state, assignments, timeLogs, ready, deliverySyncState, workforce: workforceNow, sharedAssignments: shared.allAssignments, assignTask, addTimeLog, approveTimeLog, reviewLeave, resetControlDemo }), [state, assignments, timeLogs, ready, deliverySyncState, workforceNow, shared.allAssignments, assignTask, addTimeLog, approveTimeLog, reviewLeave, resetControlDemo]);
+  const value = useMemo<ControlContextValue>(() => ({ ...state, assignments, timeLogs, ready, deliverySyncState, workforce: workforceNow, sharedAssignments: shared.allAssignments, assignTask, addTimeLog, approveTimeLog, reviewLeave, requestLeave, resetControlDemo }), [state, assignments, timeLogs, ready, deliverySyncState, workforceNow, shared.allAssignments, assignTask, addTimeLog, approveTimeLog, reviewLeave, requestLeave, resetControlDemo]);
   return <ControlContext.Provider value={value}>{children}</ControlContext.Provider>;
 }
 export function usePmecControl() { const context = useContext(ControlContext); if (!context) throw new Error("usePmecControl must be used inside PmecControlWorkspaceProvider"); return context; }

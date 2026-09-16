@@ -17,11 +17,11 @@ describe("local employee self-service demo", () => {
     });
   });
 
-  it("includes local attendance, leave, payslip, event, and activity records", () => {
-    expect(initialEssState.attendance.length).toBeGreaterThan(0);
-    expect(initialEssState.leaveRequests.length).toBeGreaterThan(0);
-    expect(initialEssState.payslips).toHaveLength(3);
-    expect(initialEssState.events.length).toBeGreaterThan(0);
-    expect(initialEssState.activity.length).toBeGreaterThan(0);
+  it("includes a showcase's worth of attendance, leave, payslips, events, and activity", () => {
+    expect(initialEssState.attendance.length).toBeGreaterThanOrEqual(12);
+    expect(initialEssState.leaveRequests.length).toBeGreaterThanOrEqual(6);
+    expect(initialEssState.payslips).toHaveLength(6);
+    expect(initialEssState.events.length).toBeGreaterThanOrEqual(4);
+    expect(initialEssState.activity.length).toBeGreaterThanOrEqual(8);
   });
 });

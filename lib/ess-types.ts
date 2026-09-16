@@ -26,4 +26,6 @@ export type PersonalEvent = { id: string; title: string; date: string; type: "pe
 export type ActivityItem = { id: string; title: string; detail: string; createdAt: string; tone: "accent" | "neutral" | "success" };
 export type ClockInSelection = { projectId: string; phaseId: string; taskId?: string };
 
-export type EssState = { onboarded: boolean; sessionEmployeeId?: string; employee: DemoEmployee; attendance: AttendanceRecord[]; projects: WorkProject[]; leaveRequests: LeaveRequest[]; publicHolidays: PublicHoliday[]; payslips: Payslip[]; events: PersonalEvent[]; activity: ActivityItem[] };
+/** Which delivery updates this employee has read or archived, by notification id. */
+export type UpdateState = { read: string[]; archived: string[] };
+export type EssState = { onboarded: boolean; sessionEmployeeId?: string; employee: DemoEmployee; attendance: AttendanceRecord[]; projects: WorkProject[]; leaveRequests: LeaveRequest[]; publicHolidays: PublicHoliday[]; payslips: Payslip[]; events: PersonalEvent[]; activity: ActivityItem[]; updates?: UpdateState };

@@ -391,7 +391,7 @@ await flow("Projects", "A project → ← returns to Projects", MOBILE, async (p
   const s0 = await settle(p);
   const project = await p.evaluate(() => {
     try {
-      const pr = (JSON.parse(localStorage.getItem("lumen.ess.v1"))?.projects ?? [])[0];
+      const pr = (JSON.parse(localStorage.getItem(Object.keys(localStorage).find((key) => key.startsWith("lumen.ess.")) ?? ""))?.projects ?? [])[0];
       return pr ? { id: pr.id, name: pr.name ?? pr.title ?? null } : null;
     } catch {
       return null;

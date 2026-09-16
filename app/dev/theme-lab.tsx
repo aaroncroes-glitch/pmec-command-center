@@ -6,7 +6,7 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { SchemeColors, type ColorScheme } from "@/constants/theme";
 import { useColors } from "@/hooks/use-colors";
-import { useThemeContext } from "@/lib/theme-provider";
+import { ThemeProvider, useThemeContext } from "@/lib/theme-provider";
 
 type PaletteName = keyof typeof SchemeColors.light;
 
@@ -25,6 +25,15 @@ function ColorSwatch({ name, value }: { name: PaletteName; value: string }) {
 }
 
 export default function ThemeLabScreen() {
+  // The app root does not mount ThemeProvider, and without it this page threw on load.
+  return (
+    <ThemeProvider>
+      <ThemeLab />
+    </ThemeProvider>
+  );
+}
+
+function ThemeLab() {
   const [pressCount, setPressCount] = useState(0);
   const [lastAction, setLastAction] = useState<string>("None yet");
   const { colorScheme, setColorScheme } = useThemeContext();

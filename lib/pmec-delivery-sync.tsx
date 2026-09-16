@@ -4,6 +4,7 @@ import { useOptionalAuth } from "@/lib/pmec-clerk-optional";
 
 import { useEss } from "@/lib/ess-workspace";
 import { usePmecAccess } from "@/lib/pmec-access";
+import { showcaseMode } from "@/lib/pmec-showcase";
 import { trpc } from "@/lib/trpc";
 
 export type SharedAssignment = { id: string; jobOrderId: string; jobOrderTitle: string; taskId: string; taskTitle: string; employeeId: string; employeeName: string; discipline: string; status: "assigned" | "in_progress" | "blocked" | "complete"; progress: number; assignedBy: string; dueDate: string | null };
@@ -30,9 +31,11 @@ export function PmecDeliverySyncProvider({ children }: PropsWithChildren) {
   const employeeName = `${employee.firstName} ${employee.lastName}`;
   const utils = trpc.useUtils();
   const controlSurface = pathname.startsWith("/control-center") || pathname.startsWith("/job-orders") || pathname.startsWith("/admin");
-  const managerAssignmentsEnabled = controlSurface && accessReady && can("assign") && isSignedIn === true;
-  const managerTimeLogsEnabled = controlSurface && accessReady && can("hoursRead") && isSignedIn === true;
-  const employeeDeliveryEnabled = !controlSurface && isAuthenticated;
+  // The showcase runs on demo data held in the browser, so it must not call the server at all.
+  const live = !showcaseMode;
+  const managerAssignmentsEnabled = live && controlSurface && accessReady && can("assign") && isSignedIn === true;
+  const managerTimeLogsEnabled = live && controlSurface && accessReady && can("hoursRead") && isSignedIn === true;
+  const employeeDeliveryEnabled = live && !controlSurface && isAuthenticated;
   const allAssignments = trpc.pmecDelivery.assignments.useQuery(undefined, { enabled: managerAssignmentsEnabled, refetchInterval: 12_000 });
   const employeeAssignments = trpc.pmecDelivery.assignments.useQuery({ employeeId }, { enabled: employeeDeliveryEnabled, refetchInterval: 12_000 });
   const allTimeLogs = trpc.pmecDelivery.timeLogs.useQuery(undefined, { enabled: managerTimeLogsEnabled, refetchInterval: 12_000 });

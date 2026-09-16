@@ -97,7 +97,7 @@ const makeStyles = (palette: Palette) =>
     },
     ink: { color: palette.foreground },
     muted: { color: palette.muted },
-    accent: { color: palette.accent },
+    accent: { color: palette.accentText },
     heading: {
       color: palette.foreground,
       fontSize: type.heading,

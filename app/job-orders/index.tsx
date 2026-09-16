@@ -322,112 +322,118 @@ export default function JobOrdersPage() {
         </View>
       </View>
       <View style={styles.main}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>PMEC / PROJECT DELIVERY</Text>
-            <Text style={styles.title}>Project{`\n`}Tracker.</Text>
-            <Text style={styles.subtitle}>
-              Search projects and monitor delivery progress, budget variance, work breakdown, and
-              schedule across every discipline.
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => setCreating(true)}
-            style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.newButtonText}>NEW PROJECT</Text>
-            <Text style={styles.newButtonArrow}>+</Text>
-          </Pressable>
-        </View>
-        <View style={styles.kpiGrid}>
-          <StatTile
-            label="Authorized budget"
-            figure={{ kind: "money", values: toMoney(portfolio.budget) }}
-            caption="Filtered project currencies"
-          />
-          <StatTile
-            label="Derived spend"
-            figure={{ kind: "money", values: toMoney(portfolio.spent) }}
-            caption="Labor + materials + subcontract"
-          />
-          <StatTile
-            label="Active projects"
-            figure={{ kind: "count", value: portfolio.active }}
-            caption="Across all PMEC regions"
-          />
-          <StatTile
-            label="Decision queue"
-            figure={{ kind: "count", value: pendingDecisionCount }}
-            caption="Pending cost-document decisions"
-            onPress={() => setDecisionSummary(true)}
-          />
-        </View>
-        <View style={styles.filterBar}>
-          <View style={projectSearchStyles.row}>
-            <TextInput
-              accessibilityLabel="Search projects"
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search project, client, manager, region, or tag"
-              placeholderTextColor={palette.muted}
-              style={projectSearchStyles.input}
-            />
-            <Text style={projectSearchStyles.count}>
-              {visible.length} RESULT{visible.length === 1 ? "" : "S"}
-            </Text>
-          </View>
-          <View style={styles.tabs}>
-            {(["ACTIVE", "COMPLETED", "ALL"] as PortfolioTab[]).map((item) => (
-              <Chip key={item} label={item} selected={tab === item} onPress={() => setTab(item)} />
-            ))}
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chips}
-          >
-            {(["ALL", ...DISCIPLINES] as const).map((item) => (
-              <Chip
-                key={item}
-                label={item === "ALL" ? "All disciplines" : DISCIPLINE_LABELS[item]}
-                selected={discipline === item}
-                onPress={() => setDiscipline(item)}
-              />
-            ))}
-          </ScrollView>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chips}
-          >
-            {budgetFilterOptions.map((item) => (
-              <Chip
-                key={item}
-                label={item === "ALL" ? "All budgets" : BUDGET_ALERT_LABELS[item]}
-                selected={budgetFilter === item}
-                onPress={() => setBudgetFilter(item)}
-              />
-            ))}
-          </ScrollView>
-        </View>
-        <ScrollView contentContainerStyle={styles.cardGrid} showsVerticalScrollIndicator={false}>
-          {visible.length ? (
-            visible.map((job) => (
-              <JobOrderCard
-                key={job.id}
-                job={job}
-                styles={styles}
-                onPress={() => setSelected(job)}
-              />
-            ))
-          ) : (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>No projects match this view.</Text>
-              <Text style={styles.emptyCopy}>
-                Clear a filter or search by project, client, manager, region, or tag.
+        {/* The header, figures and filters scroll with the projects. Pinned, they took about 620px
+            of an 820px iPad screen and left the cards a narrow strip at the bottom. */}
+        <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.eyebrow}>PMEC / PROJECT DELIVERY</Text>
+              <Text style={styles.title}>Project{`\n`}Tracker.</Text>
+              <Text style={styles.subtitle}>
+                Search projects and monitor delivery progress, budget variance, work breakdown, and
+                schedule across every discipline.
               </Text>
             </View>
-          )}
+            <Pressable
+              onPress={() => setCreating(true)}
+              style={({ pressed }) => [styles.newButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.newButtonText}>NEW PROJECT</Text>
+              <Text style={styles.newButtonArrow}>+</Text>
+            </Pressable>
+          </View>
+          <View style={styles.kpiGrid}>
+            <StatTile
+              label="Authorized budget"
+              figure={{ kind: "money", values: toMoney(portfolio.budget) }}
+              caption="Filtered project currencies"
+            />
+            <StatTile
+              label="Derived spend"
+              figure={{ kind: "money", values: toMoney(portfolio.spent) }}
+              caption="Labor + materials + subcontract"
+            />
+            <StatTile
+              label="Active projects"
+              figure={{ kind: "count", value: portfolio.active }}
+              caption="Across all PMEC regions"
+            />
+            <StatTile
+              label="Decision queue"
+              figure={{ kind: "count", value: pendingDecisionCount }}
+              caption="Pending cost-document decisions"
+              onPress={() => setDecisionSummary(true)}
+            />
+          </View>
+          <View style={styles.filterBar}>
+            <View style={projectSearchStyles.row}>
+              <TextInput
+                accessibilityLabel="Search projects"
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search project, client, manager, region, or tag"
+                placeholderTextColor={palette.muted}
+                style={projectSearchStyles.input}
+              />
+              <Text style={projectSearchStyles.count}>
+                {visible.length} RESULT{visible.length === 1 ? "" : "S"}
+              </Text>
+            </View>
+            <View style={styles.tabs}>
+              {(["ACTIVE", "COMPLETED", "ALL"] as PortfolioTab[]).map((item) => (
+                <Chip key={item} label={item} selected={tab === item} onPress={() => setTab(item)} />
+              ))}
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipRow}
+              contentContainerStyle={styles.chips}
+            >
+              {(["ALL", ...DISCIPLINES] as const).map((item) => (
+                <Chip
+                  key={item}
+                  label={item === "ALL" ? "All disciplines" : DISCIPLINE_LABELS[item]}
+                  selected={discipline === item}
+                  onPress={() => setDiscipline(item)}
+                />
+              ))}
+            </ScrollView>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipRow}
+              contentContainerStyle={styles.chips}
+            >
+              {budgetFilterOptions.map((item) => (
+                <Chip
+                  key={item}
+                  label={item === "ALL" ? "All budgets" : BUDGET_ALERT_LABELS[item]}
+                  selected={budgetFilter === item}
+                  onPress={() => setBudgetFilter(item)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+          <View style={styles.cardGrid}>
+            {visible.length ? (
+              visible.map((job) => (
+                <JobOrderCard
+                  key={job.id}
+                  job={job}
+                  styles={styles}
+                  onPress={() => setSelected(job)}
+                />
+              ))
+            ) : (
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>No projects match this view.</Text>
+                <Text style={styles.emptyCopy}>
+                  Clear a filter or search by project, client, manager, region, or tag.
+                </Text>
+              </View>
+            )}
+          </View>
         </ScrollView>
       </View>
       <JobOrderPanel
@@ -1917,10 +1923,10 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
   StyleSheet.create({
     actionHint: { color: palette.muted, fontSize: 13, lineHeight: 18, marginTop: 12 },
     page: { backgroundColor: palette.background, flex: 1, flexDirection: "row" },
-    rail: { backgroundColor: palette.foreground, padding: 24, width: 220 },
-    brand: { color: palette.inverseText, fontSize: 30, fontWeight: "900", letterSpacing: -1.2 },
+    rail: { backgroundColor: palette.rail, padding: 24, width: 220 },
+    brand: { color: "#F6F3EE", fontSize: 30, fontWeight: "900", letterSpacing: -1.2 },
     brandSub: {
-      color: palette.accent,
+      color: palette.accentText,
       fontSize: 9,
       fontWeight: "900",
       letterSpacing: 1,
@@ -1944,6 +1950,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     },
     railFootCopy: { color: "#8E8982", fontSize: 10, lineHeight: 15, marginTop: 6 },
     main: { flex: 1 },
+    mainScroll: { flex: 1 },
     header: {
       alignItems: "flex-start",
       borderBottomColor: palette.border,
@@ -1953,7 +1960,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       paddingHorizontal: 34,
       paddingVertical: 29,
     },
-    eyebrow: { color: palette.accent, fontSize: 10, fontWeight: "900", letterSpacing: 1.1 },
+    eyebrow: { color: palette.accentText, fontSize: 10, fontWeight: "900", letterSpacing: 1.1 },
     title: {
       color: palette.foreground,
       fontSize: 45,
@@ -1978,7 +1985,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       fontWeight: "900",
       letterSpacing: 0.7,
     },
-    newButtonArrow: { color: palette.accent, fontSize: 20, fontWeight: "400", lineHeight: 20 },
+    newButtonArrow: { color: palette.accentText, fontSize: 20, fontWeight: "400", lineHeight: 20 },
     kpiGrid: { flexDirection: "row", gap: 12, paddingHorizontal: 34, paddingTop: 18 },
     kpi: { backgroundColor: palette.surfaceStrong, flex: 1, minHeight: 122, padding: 16 },
     kpiLabel: { color: palette.muted, fontSize: 9, fontWeight: "900", letterSpacing: 0.65 },
@@ -2008,7 +2015,10 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     tabActive: { backgroundColor: palette.foreground, borderColor: palette.foreground },
     tabText: { color: palette.muted, fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
     tabTextActive: { color: palette.inverseText },
-    chips: { gap: 7 },
+    // A dense chip reaches its 44px target with an invisible 8px ring. A horizontal row clips
+    // anything outside its box, so the row makes room for the ring and pulls itself back.
+    chipRow: { marginHorizontal: -8, marginVertical: -8 },
+    chips: { gap: 7, paddingHorizontal: 8, paddingVertical: 8 },
     chip: {
       borderColor: palette.border,
       borderRadius: 15,
@@ -2018,7 +2028,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     },
     chipActive: { backgroundColor: palette.accentSoft, borderColor: palette.accent },
     chipText: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.4 },
-    chipTextActive: { color: palette.accent },
+    chipTextActive: { color: palette.accentText },
     cardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 14, padding: 34 },
     card: {
       borderColor: palette.border,
@@ -2033,12 +2043,12 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     pillDark: { backgroundColor: palette.foreground },
     pillPlain: { backgroundColor: palette.surfaceStrong },
     pillWarn: { backgroundColor: "#F7E8C8" },
-    pillRisk: { backgroundColor: "#F7DDD8" },
+    pillRisk: { backgroundColor: palette.dangerSoft },
     pillText: { color: palette.foreground, fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
     pillTextDark: { color: palette.inverseText },
     cardRegion: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
     cardDiscipline: {
-      color: palette.accent,
+      color: palette.accentText,
       fontSize: 9,
       fontWeight: "900",
       letterSpacing: 0.7,
@@ -2133,7 +2143,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     },
     drawerHeaderMain: { flex: 1, paddingRight: 20 },
     drawerDiscipline: {
-      color: palette.accent,
+      color: palette.accentText,
       fontSize: 9,
       fontWeight: "900",
       letterSpacing: 0.7,
@@ -2163,7 +2173,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     },
     detailDescription: { color: palette.foreground, fontSize: 14, lineHeight: 21, maxWidth: 720 },
     tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 14 },
-    tag: { color: palette.accent, fontSize: 10, fontWeight: "700" },
+    tag: { color: palette.accentText, fontSize: 10, fontWeight: "700" },
     detailFacts: { flexDirection: "row", gap: 12, marginTop: 20 },
     detailFact: { backgroundColor: palette.surfaceStrong, flex: 1, padding: 12 },
     detailFactLabel: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
@@ -2175,7 +2185,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       marginTop: 20,
       paddingBottom: 4,
     },
-    advanceText: { color: palette.accent, fontSize: 10, fontWeight: "900", letterSpacing: 0.6 },
+    advanceText: { color: palette.accentText, fontSize: 10, fontWeight: "900", letterSpacing: 0.6 },
     section: {
       alignItems: "center",
       borderBottomColor: palette.border,
@@ -2191,7 +2201,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       fontWeight: "900",
       letterSpacing: 0.8,
     },
-    sectionAction: { color: palette.accent, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
+    sectionAction: { color: palette.accentText, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
     stats: { flexDirection: "row", gap: 10, marginTop: 14 },
     stat: { backgroundColor: palette.surfaceStrong, flex: 1, padding: 13 },
     statLabel: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
@@ -2210,7 +2220,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       letterSpacing: 0.5,
       marginTop: 9,
     },
-    multiplierRisk: { color: "#B4483E" },
+    multiplierRisk: { color: palette.dangerText },
     listCard: { borderColor: palette.border, borderWidth: StyleSheet.hairlineWidth, marginTop: 11 },
     milestone: {
       alignItems: "center",
@@ -2235,10 +2245,10 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     listTitle: { color: palette.foreground, fontSize: 13, fontWeight: "900" },
     listMeta: { color: palette.muted, fontSize: 10, lineHeight: 15, marginTop: 4 },
     inlineAction: { alignSelf: "flex-start", padding: 13 },
-    inlineActionText: { color: palette.accent, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
+    inlineActionText: { color: palette.accentText, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
     wbsGroup: { marginTop: 16 },
     wbsTitle: {
-      color: palette.accent,
+      color: palette.accentText,
       fontSize: 9,
       fontWeight: "900",
       letterSpacing: 0.7,
@@ -2248,7 +2258,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     taskHeader: { alignItems: "center", flexDirection: "row", gap: 10, padding: 13 },
     taskStatus: { borderRadius: 11, paddingHorizontal: 7, paddingVertical: 5 },
     statusDone: { backgroundColor: `${palette.success}22` },
-    statusBlocked: { backgroundColor: "#F7DDD8" },
+    statusBlocked: { backgroundColor: palette.dangerSoft },
     statusProgress: { backgroundColor: palette.accentSoft },
     statusPlain: { backgroundColor: palette.surfaceStrong },
     taskStatusText: {
@@ -2257,7 +2267,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       fontWeight: "900",
       letterSpacing: 0.45,
     },
-    taskProgress: { color: palette.accent, fontSize: 12, fontWeight: "900" },
+    taskProgress: { color: palette.accentText, fontSize: 12, fontWeight: "900" },
     taskBody: {
       backgroundColor: palette.surfaceStrong,
       borderTopColor: palette.border,
@@ -2330,14 +2340,14 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       justifyContent: "center",
       width: 32,
     },
-    documentIconText: { color: palette.accent, fontSize: 8, fontWeight: "900" },
+    documentIconText: { color: palette.accentText, fontSize: 8, fontWeight: "900" },
     documentAmount: { color: palette.foreground, fontSize: 10, fontWeight: "900" },
     emptyInline: { color: palette.muted, fontSize: 11, padding: 14 },
-    danger: { backgroundColor: "#F7DDD8", marginTop: 28, padding: 15 },
-    dangerTitle: { color: "#B4483E", fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
+    danger: { backgroundColor: palette.dangerSoft, marginTop: 28, padding: 15 },
+    dangerTitle: { color: palette.dangerText, fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
     dangerCopy: { color: "#7D4B46", fontSize: 11, lineHeight: 16, marginTop: 7 },
     deleteText: {
-      color: "#B4483E",
+      color: palette.dangerText,
       fontSize: 9,
       fontWeight: "900",
       letterSpacing: 0.55,
@@ -2345,7 +2355,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     },
     confirmRow: { alignItems: "center", flexDirection: "row", gap: 14, marginTop: 13 },
     deleteConfirm: {
-      backgroundColor: "#B4483E",
+      backgroundColor: palette.danger,
       borderRadius: 10,
       paddingHorizontal: 11,
       paddingVertical: 9,
@@ -2407,9 +2417,9 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     },
     gateCopy: { color: "#B7B0A8", fontSize: 15, lineHeight: 22, marginTop: 17, maxWidth: 300 },
     pressed: { opacity: 0.7 },
-    budgetRisk: { backgroundColor: "#B4483E" },
-    budgetWarn: { backgroundColor: "#B57618" },
-    budgetSafe: { backgroundColor: "#3A7563" },
+    budgetRisk: { backgroundColor: palette.danger },
+    budgetWarn: { backgroundColor: palette.warningText },
+    budgetSafe: { backgroundColor: palette.success },
   });
 
 function ProjectTeamPanel({
@@ -3011,8 +3021,8 @@ const projectTeamStyles = StyleSheet.create({
   personName: { color: "#1A1A1A", fontSize: 11, fontWeight: "900" },
   personMeta: { color: "#756F68", fontSize: 9, marginTop: 3 },
   personAction: { alignItems: "flex-end", gap: 5 },
-  availability: { color: "#3A7563", fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
-  unavailable: { color: "#B4483E" },
+  availability: { color: "#1F6349", fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
+  unavailable: { color: "#9E3A31" },
   assignText: { color: "#A84B2A", fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
 });
 const calendarStyles = StyleSheet.create({
