@@ -11,7 +11,7 @@ import { neon } from "@neondatabase/serverless";
  * It is deliberately narrow, because it is unauthenticated:
  *  - only the two showcase workspace keys are accepted, so it cannot become general storage;
  *  - payloads are capped;
- *  - it lives in its own table and never touches the real delivery tables;
+ *  - it lives in its own table, pmec.demo_state, and never touches the delivery tables;
  *  - a room code keeps two demos running at once from overwriting each other.
  * Real, signed-in data still goes through the tRPC router and its authorization.
  */
@@ -57,25 +57,12 @@ export function createMemoryDemoStore(): DemoSyncStore {
 
 export function createNeonDemoStore(connectionString: string): DemoSyncStore {
   const sql = neon(connectionString);
-  // Created on first use so the demo needs no migration run against the live database.
-  let ready: Promise<unknown> | null = null;
-  const ensure = () =>
-    (ready ??= sql`
-      CREATE TABLE IF NOT EXISTS pmec_demo_state (
-        room text NOT NULL,
-        key text NOT NULL,
-        value jsonb NOT NULL,
-        version integer NOT NULL,
-        updated_at timestamptz NOT NULL DEFAULT now(),
-        PRIMARY KEY (room, key)
-      )`.catch((error: unknown) => {
-      ready = null;
-      throw error;
-    }));
+  // The table comes from neon/20260916_pmec_demo_sync.sql, applied by an owner role. The
+  // runtime role this connects as can read and upsert but cannot create tables, so nothing
+  // here attempts DDL.
 
   const read = async (room: string, key: string) => {
-    await ensure();
-    const rows = (await sql`SELECT value, version FROM pmec_demo_state WHERE room = ${room} AND key = ${key}`) as {
+    const rows = (await sql`SELECT value, version FROM pmec.demo_state WHERE room = ${room} AND key = ${key}`) as {
       value: unknown;
       version: number;
     }[];
@@ -84,23 +71,21 @@ export function createNeonDemoStore(connectionString: string): DemoSyncStore {
 
   return {
     async versions(room) {
-      await ensure();
-      const rows = (await sql`SELECT key, version FROM pmec_demo_state WHERE room = ${room}`) as { key: string; version: number }[];
+      const rows = (await sql`SELECT key, version FROM pmec.demo_state WHERE room = ${room}`) as { key: string; version: number }[];
       const out: Record<string, number> = {};
       for (const key of DEMO_SYNC_KEYS) out[key] = rows.find((row) => row.key === key)?.version ?? 0;
       return out;
     },
     read,
     async write(room, key, value, baseVersion, force) {
-      await ensure();
       // One atomic statement: insert, or update only while nobody has written since
       // baseVersion. No row back means the check failed.
       const rows = (await sql`
-        INSERT INTO pmec_demo_state (room, key, value, version, updated_at)
+        INSERT INTO pmec.demo_state AS s (room, key, value, version, updated_at)
         VALUES (${room}, ${key}, ${JSON.stringify(value)}::jsonb, 1, now())
         ON CONFLICT (room, key) DO UPDATE
-          SET value = EXCLUDED.value, version = pmec_demo_state.version + 1, updated_at = now()
-          WHERE ${force} OR pmec_demo_state.version = ${baseVersion}
+          SET value = EXCLUDED.value, version = s.version + 1, updated_at = now()
+          WHERE ${force}::boolean OR s.version = ${baseVersion}
         RETURNING version`) as { version: number }[];
       if (rows[0]) return { ok: true, version: rows[0].version };
       const current = await read(room, key);
@@ -111,8 +96,17 @@ export function createNeonDemoStore(connectionString: string): DemoSyncStore {
 
 /** Picks the store for this process, or null when the demo has nowhere to sync. */
 export function resolveDemoStore(env: NodeJS.ProcessEnv = process.env): DemoSyncStore | null {
-  if (env.NEON_DATABASE_URL) return createNeonDemoStore(env.NEON_DATABASE_URL);
-  if (env.PMEC_DEMO_SYNC_MEMORY === "1") return createMemoryDemoStore();
+  // Say which store was picked, never the connection string: a silent 503 in the middle of a
+  // demo is otherwise impossible to tell apart from a database error.
+  if (env.NEON_DATABASE_URL) {
+    console.info("[demo-sync] store: neon");
+    return createNeonDemoStore(env.NEON_DATABASE_URL);
+  }
+  if (env.PMEC_DEMO_SYNC_MEMORY === "1") {
+    console.info("[demo-sync] store: memory (single process)");
+    return createMemoryDemoStore();
+  }
+  console.warn("[demo-sync] store: none — NEON_DATABASE_URL is not set, answering 503");
   return null;
 }
 
@@ -126,7 +120,10 @@ export function registerDemoSyncRoutes(app: Express, getStore: () => DemoSyncSto
   let store: DemoSyncStore | null | undefined;
   const current = () => (store === undefined ? (store = getStore()) : store);
 
-  const unavailable = (res: Response) => res.status(503).json({ error: "demo sync unavailable" });
+  const unavailable = (res: Response, error?: unknown) => {
+    if (error) console.error("[demo-sync] store error:", error instanceof Error ? error.message : String(error));
+    return res.status(503).json({ error: "demo sync unavailable" });
+  };
   // Every response is live state; a cached poll would show a stale screen.
   const noStore = (res: Response) => res.setHeader("Cache-Control", "no-store");
 
@@ -138,8 +135,8 @@ export function registerDemoSyncRoutes(app: Express, getStore: () => DemoSyncSto
     if (!room) return res.status(400).json({ error: "bad room" });
     try {
       res.json({ versions: await s.versions(room) });
-    } catch {
-      unavailable(res);
+    } catch (error) {
+      unavailable(res, error);
     }
   });
 
@@ -152,8 +149,8 @@ export function registerDemoSyncRoutes(app: Express, getStore: () => DemoSyncSto
     if (!isKey(req.query.key)) return res.status(400).json({ error: "unknown key" });
     try {
       res.json(await s.read(room, req.query.key));
-    } catch {
-      unavailable(res);
+    } catch (error) {
+      unavailable(res, error);
     }
   });
 
@@ -175,8 +172,8 @@ export function registerDemoSyncRoutes(app: Express, getStore: () => DemoSyncSto
       const result = await s.write(room, key, value, baseVersion, force === true);
       if (result.ok) return res.json({ version: result.version });
       return res.status(409).json({ value: result.value, version: result.version });
-    } catch {
-      unavailable(res);
+    } catch (error) {
+      unavailable(res, error);
     }
   });
 }
