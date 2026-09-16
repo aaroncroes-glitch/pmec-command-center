@@ -42,7 +42,9 @@ type LeaveLike = WithId & { status: string };
 type LogLike = WithId & { status: string };
 type AssignmentLike = WithId & { jobOrderId: string; taskId: string; assignedAt: string };
 
-export type ControlShape = { assignments: AssignmentLike[]; timeLogs: LogLike[]; leaveRequests: LeaveLike[] };
+type AttendanceLike = WithId & { clockOut?: string };
+
+export type ControlShape = { assignments: AssignmentLike[]; timeLogs: LogLike[]; leaveRequests: LeaveLike[]; attendance?: AttendanceLike[] };
 
 export function mergeControl<T extends ControlShape>(server: T, mine: T): T {
   return {
@@ -55,6 +57,9 @@ export function mergeControl<T extends ControlShape>(server: T, mine: T): T {
     // reassigning a task replaces the old record instead of leaving both behind.
     assignments: unionBy(server.assignments, mine.assignments, (item) => `${item.jobOrderId}:${item.taskId}`, (remote, local) =>
       remote.assignedAt > local.assignedAt ? remote : local),
+    // A finished shift is further along than an open one, so a clock-out is never lost.
+    attendance: unionBy(server.attendance ?? [], mine.attendance ?? [], (item) => item.id, (remote, local) =>
+      (remote.clockOut && !local.clockOut ? remote : local)),
   } as T;
 }
 

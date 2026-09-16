@@ -77,3 +77,20 @@ describe("demo sync: reset", () => {
     expect(writeBack).toBe(true);
   });
 });
+
+describe("attendance merge", () => {
+  type Row = { id: string; employeeId: string; date: string; clockIn: string; clockOut?: string; late: boolean };
+  const base = { assignments: [], timeLogs: [], leaveRequests: [], attendance: [] as Row[] };
+  it("keeps a clock-out over an open clock-in and unions both devices", () => {
+    const open: Row = { id: "a1", employeeId: "employee-76", date: "2026-09-16", clockIn: "2026-09-16T07:00:00.000Z", late: false };
+    const closed = { ...open, clockOut: "2026-09-16T15:00:00.000Z" };
+    const other = { ...open, id: "a2", employeeId: "emp-03" };
+    const merged = mergeControl({ ...base, attendance: [closed] }, { ...base, attendance: [open, other] });
+    expect(merged.attendance?.find((item) => item.id === "a1")?.clockOut).toBe(closed.clockOut);
+    expect(merged.attendance).toHaveLength(2);
+  });
+  it("accepts copies saved before attendance existed", () => {
+    const { attendance: _drop, ...old } = base;
+    expect((mergeControl(old, old) as { attendance?: unknown }).attendance).toEqual([]);
+  });
+});
