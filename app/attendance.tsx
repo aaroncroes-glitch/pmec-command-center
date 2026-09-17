@@ -5,13 +5,12 @@ import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ScreenContainer } from "@/components/screen-container";
 import { haptic } from "@/lib/haptics";
-import { useEss } from "@/lib/ess-workspace";
-import { useEmployeeAttendance } from "@/lib/pmec-employee-data";
+import { useEmployeeAttendance, useEmployeeProjects } from "@/lib/pmec-employee-data";
 import { useLumen } from "@/lib/lumen-workspace";
 
 type Step = "project" | "phase" | "task" | "scan" | "success";
 export default function AttendanceScreen() {
-  const router = useRouter(); const { projects } = useEss(); const { clockIn, clockOut, todayAttendance } = useEmployeeAttendance(); const { palette } = useLumen(); const styles = useMemo(() => makeStyles(palette), [palette]); const [step, setStep] = useState<Step>(todayAttendance?.clockIn ? "success" : "project"); const [projectId, setProjectId] = useState(""); const [phaseId, setPhaseId] = useState(""); const [taskId, setTaskId] = useState(""); const project = projects.find((item) => item.id === projectId); const phase = project?.phases.find((item) => item.id === phaseId);
+  const router = useRouter(); const { projects } = useEmployeeProjects(); const { clockIn, clockOut, todayAttendance } = useEmployeeAttendance(); const { palette } = useLumen(); const styles = useMemo(() => makeStyles(palette), [palette]); const [step, setStep] = useState<Step>(todayAttendance?.clockIn ? "success" : "project"); const [projectId, setProjectId] = useState(""); const [phaseId, setPhaseId] = useState(""); const [taskId, setTaskId] = useState(""); const project = projects.find((item) => item.id === projectId); const phase = project?.phases.find((item) => item.id === phaseId);
   // The shared record can arrive after first render; an open shift should land on CLOCK OUT, not the project picker.
   useEffect(() => { if (todayAttendance?.clockIn && !todayAttendance.clockOut && step === "project") setStep("success"); }, [todayAttendance, step]);
   const beginScan = () => { setStep("scan"); setTimeout(() => { clockIn({ projectId, phaseId, taskId: taskId || undefined }); haptic.success(); setStep("success"); }, 2200); };

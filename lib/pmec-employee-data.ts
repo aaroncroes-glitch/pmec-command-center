@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from "react";
 
 import { useEss } from "@/lib/ess-workspace";
-import type { AttendanceRecord, LeaveRequest } from "@/lib/ess-types";
+import type { AttendanceRecord, LeaveRequest, ProjectTaskStatus, WorkProject } from "@/lib/ess-types";
+import { groupWorkPackages, type JobOrder, type WorkPackageStatus } from "@/lib/pmec-job-orders";
 import { useLumen } from "@/lib/lumen-workspace";
 import { workingDayCount } from "@/lib/lumen-utils";
 import { usePmecControl, type ClockInSelection } from "@/lib/pmec-control-workspace";
@@ -135,4 +136,39 @@ export function useEmployeeAttendance() {
     control.clockOut(employeeId);
   }, [control, employeeId, ess]);
   return { todayAttendance, clockIn, clockOut };
+}
+
+const PROJECT_COLORS = ["#FE8503", "#3A7563", "#96734C", "#6059A8", "#2F6690", "#A23B3B"];
+const taskStatus = (status: WorkPackageStatus): ProjectTaskStatus => (status === "COMPLETED" ? "done" : status === "NOT_STARTED" ? "todo" : "in_progress");
+const packageStatus: Record<ProjectTaskStatus, WorkPackageStatus> = { todo: "NOT_STARTED", in_progress: "IN_PROGRESS", done: "COMPLETED" };
+
+/** The PM's job orders, shaped as the employee's project list. */
+export function jobOrdersAsProjects(jobOrders: JobOrder[]): WorkProject[] {
+  return jobOrders
+    .filter((job) => job.phase !== "CANCELLED")
+    .map((job, index) => ({
+      id: job.id,
+      name: job.title,
+      code: job.id.toUpperCase(),
+      client: job.clientName,
+      color: PROJECT_COLORS[index % PROJECT_COLORS.length],
+      status: job.phase === "COMPLETED" ? "completed" : job.phase === "PLANNING" || job.phase === "DESIGN" ? "planning" : "active",
+      phases: groupWorkPackages(job).map(([name, tasks]: [string, JobOrder["tasks"]]) => ({
+        id: `${job.id}::${name}`,
+        name,
+        tasks: tasks.map((task) => ({ id: task.id, title: task.title, status: taskStatus(task.status), estimatedHours: 0 })),
+      })),
+    }));
+}
+
+/** The employee's projects: in a showcase these are the PM's live job orders, both ways. */
+export function useEmployeeProjects() {
+  const ess = useEss();
+  const { jobOrders, updateTask } = usePmecJobOrders();
+  const projects = useMemo(() => (showcaseMode ? jobOrdersAsProjects(jobOrders) : ess.projects), [jobOrders, ess.projects]);
+  const updateProjectTask = useCallback((projectId: string, phaseId: string, taskId: string, status: ProjectTaskStatus) => {
+    if (!showcaseMode) { ess.updateProjectTask(projectId, phaseId, taskId, status); return; }
+    updateTask(projectId, taskId, { status: packageStatus[status], progress: status === "done" ? 100 : status === "todo" ? 0 : 50 });
+  }, [ess, updateTask]);
+  return { projects, updateProjectTask };
 }
