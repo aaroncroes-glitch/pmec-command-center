@@ -1,10 +1,11 @@
 import { useCallback, useMemo } from "react";
 
 import { useEss } from "@/lib/ess-workspace";
-import type { LeaveRequest } from "@/lib/ess-types";
+import type { AttendanceRecord, LeaveRequest } from "@/lib/ess-types";
 import { useLumen } from "@/lib/lumen-workspace";
 import { workingDayCount } from "@/lib/lumen-utils";
-import { usePmecControl } from "@/lib/pmec-control-workspace";
+import { usePmecControl, type ClockInSelection } from "@/lib/pmec-control-workspace";
+import { todayKey } from "@/lib/pmec-month-calendar";
 import { usePmecDeliverySync, type SharedAssignment, type SharedTimeLog } from "@/lib/pmec-delivery-sync";
 import { usePmecJobOrders } from "@/lib/pmec-job-order-workspace";
 import { showcaseMode } from "@/lib/pmec-showcase";
@@ -112,4 +113,26 @@ export function useResetDemo() {
     resetEssDemo();
     resetWorkspace();
   }, [resetControlDemo, resetDemo, resetEssDemo, resetWorkspace]);
+}
+
+/** The employee's clock-in for today: in a showcase it is the same record HR and PM see live. */
+export function useEmployeeAttendance() {
+  const ess = useEss();
+  const control = usePmecControl();
+  const employeeId = ess.employee.id;
+  const todayAttendance: AttendanceRecord | undefined = useMemo(() => {
+    if (!showcaseMode) return ess.todayAttendance;
+    const date = todayKey();
+    const record = control.attendance.find((item) => item.employeeId === employeeId && item.date === date);
+    return record ? { id: record.id, date: record.date, clockIn: record.clockIn, clockOut: record.clockOut, projectId: record.projectId, phaseId: record.phaseId, taskId: record.taskId, late: record.late } : undefined;
+  }, [control.attendance, employeeId, ess.todayAttendance]);
+  const clockIn = useCallback((selection: ClockInSelection) => {
+    if (!showcaseMode) { ess.clockIn(selection as never); return; }
+    control.clockIn(employeeId, selection);
+  }, [control, employeeId, ess]);
+  const clockOut = useCallback(() => {
+    if (!showcaseMode) { ess.clockOut(); return; }
+    control.clockOut(employeeId);
+  }, [control, employeeId, ess]);
+  return { todayAttendance, clockIn, clockOut };
 }
