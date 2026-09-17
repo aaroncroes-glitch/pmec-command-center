@@ -4,11 +4,11 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { ScreenContainer } from "@/components/screen-container";
-import { useEss } from "@/lib/ess-workspace";
+import { useEmployeeProjects } from "@/lib/pmec-employee-data";
 import { useLumen } from "@/lib/lumen-workspace";
 
 export default function ProjectsScreen() {
-  const router = useRouter(); const { projects } = useEss(); const gate = useEssGate({ requireOnboarded: false }); const { palette } = useLumen(); const styles = useMemo(() => makeStyles(palette), [palette]);
+  const router = useRouter(); const { projects } = useEmployeeProjects(); const gate = useEssGate({ requireOnboarded: false }); const { palette } = useLumen(); const styles = useMemo(() => makeStyles(palette), [palette]);
   if (gate) return gate;
   return <ScreenContainer containerClassName={styles.container} edges={["top", "left", "right"]}><FlatList data={projects} contentContainerStyle={styles.content} keyExtractor={(project) => project.id} ListHeaderComponent={<View style={styles.hero}><Text style={styles.kicker}>ASSIGNED WORK</Text><Text style={styles.title}>PROJECTS</Text><Text style={styles.subtitle}>Track what you own, stage by stage.</Text></View>} renderItem={({ item, index }) => { const tasks = item.phases.flatMap((phase) => phase.tasks); const done = tasks.filter((task) => task.status === "done").length; const progress = Math.round(done / tasks.length * 100); return <Animated.View entering={FadeInDown.delay(index * 55).duration(240)}><Pressable accessibilityRole="button" onPress={() => router.push(`/work-project/${item.id}`)} style={({ pressed }) => [styles.project, pressed && styles.pressed]}><View style={[styles.colorBar, { backgroundColor: item.color }]} /><View style={styles.copy}><View style={styles.headline}><Text style={styles.name}>{item.name}</Text><Text style={styles.percent}>{progress}%</Text></View><Text style={styles.meta}>{item.code} · {item.client}</Text><View style={styles.track}><View style={[styles.fill, { backgroundColor: item.color, width: `${progress}%` }]} /></View><Text style={styles.status}>{item.status.toUpperCase()} · {done}/{tasks.length} COMPLETE</Text></View><Text style={styles.arrow}>→</Text></Pressable></Animated.View>; }} /></ScreenContainer>;
 }
