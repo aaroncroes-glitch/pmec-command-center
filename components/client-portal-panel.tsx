@@ -135,8 +135,8 @@ export function ClientPortalPanel({ job }: { job: JobOrder }) {
       ) : null}
       {load.kind === "locked" ? (
         <Text style={styles.copy}>
-          This job order belongs to a live client. Publishing to real clients is switched off in the showcase and opens
-          when staff sign-in is enabled.
+          This job order belongs to a live client. Only demonstration clients can be published while the Command
+          Center is in demo mode.
         </Text>
       ) : null}
       {load.kind === "unavailable" ? <Text style={styles.error}>{load.message}</Text> : null}

@@ -3,15 +3,13 @@ import type { Express, Request, Response } from "express";
 /**
  * The project manager's side of the client delivery portal.
  *
- * What a client sees lives in its own Supabase project ("PMEC Client Delivery"), read by
- * the portal on pmec.group under row-level security. The Command Center never exposes that
- * database to the browser: these routes call a handful of database functions with a token
- * that only this server holds (PMEC_PORTAL_PM_TOKEN), and the database refuses anything
- * without it.
+ * What a client sees lives in its own Supabase project ("PMEC Client Delivery"). These
+ * routes call a handful of database functions on the PM's behalf.
  *
- * Staff sign-in is off while the Command Center runs as a showcase, so these routes only
- * write to projects whose client is flagged as a demonstration. A real client's project
- * cannot be published from here until staff sign-in is back and gates these routes.
+ * Demo mode: nothing here needs a sign-in or a secret. The database lets anyone publish to
+ * a client flagged as a demonstration, and these routes refuse every other client, so the
+ * demo can never fail on authorisation and never touch a real client. When real clients
+ * arrive, PMEC_PORTAL_PM_TOKEN (checked in the database) and staff sign-in gate the rest.
  */
 
 const PROJECT_ID = /^[a-z0-9][a-z0-9-]{0,79}$/;
@@ -26,7 +24,7 @@ export class PortalRpcError extends Error {
   }
 }
 
-export function createPortalRpc(url: string, publishableKey: string, token: string): PortalRpc {
+export function createPortalRpc(url: string, publishableKey: string, token: string | null): PortalRpc {
   return async <T>(fn: string, args: Record<string, unknown>) => {
     const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/rpc/${fn}`, {
       method: "POST",
@@ -41,14 +39,17 @@ export function createPortalRpc(url: string, publishableKey: string, token: stri
   };
 }
 
-/** Picks the connection for this process, or null when the portal is not configured. */
-export function resolvePortalRpc(env: NodeJS.ProcessEnv = process.env): PortalRpc | null {
-  const { PMEC_PORTAL_SUPABASE_URL: url, PMEC_PORTAL_SUPABASE_KEY: key, PMEC_PORTAL_PM_TOKEN: token } = env;
-  if (!url || !key || !token) {
-    console.warn("[client-portal] not configured — PMEC_PORTAL_SUPABASE_URL/KEY/PM_TOKEN missing, answering 503");
-    return null;
-  }
-  return createPortalRpc(url, key, token);
+// The project's address and publishable key are public by design, so the demo works on any
+// deployment with no configuration.
+const DEFAULT_URL = "https://cvzgyaccdshdizsuxewh.supabase.co";
+const DEFAULT_KEY = "sb_publishable_v9A5ihNTdIwXMhQ9FeOtIw_gsL9tJz3";
+
+export function resolvePortalRpc(env: NodeJS.ProcessEnv = process.env): PortalRpc {
+  return createPortalRpc(
+    env.PMEC_PORTAL_SUPABASE_URL || DEFAULT_URL,
+    env.PMEC_PORTAL_SUPABASE_KEY || DEFAULT_KEY,
+    env.PMEC_PORTAL_PM_TOKEN || null,
+  );
 }
 
 // ── Input shaping ─────────────────────────────────────────────────────────────────────
@@ -154,7 +155,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
         return null;
       }
       if (!scope.is_demo) {
-        res.status(403).json({ error: "real client projects need staff sign-in" });
+        res.status(403).json({ error: "only demonstration clients can be published in demo mode" });
         return null;
       }
     } catch (error) {
