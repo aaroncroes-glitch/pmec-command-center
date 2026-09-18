@@ -6,6 +6,7 @@ import { createContext } from "./_core/context";
 import { registerOAuthRoutes } from "./_core/oauth";
 import { registerStorageProxy } from "./_core/storageProxy";
 import { registerDemoSyncRoutes, resolveDemoStore } from "./pmec-demo-sync";
+import { registerClientPortalRoutes, resolvePortalRpc } from "./pmec-client-portal";
 
 const PMEC_PRODUCTION_ORIGINS = new Set([
   "https://portal.pmec.group",
@@ -47,6 +48,7 @@ export function createPmecHttpApp() {
 
   // Showcase only: shares the demo workspaces across portal., hr. and pm. and across devices.
   registerDemoSyncRoutes(app, () => resolveDemoStore());
+  registerClientPortalRoutes(app, () => resolvePortalRpc());
 
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, timestamp: Date.now() });
