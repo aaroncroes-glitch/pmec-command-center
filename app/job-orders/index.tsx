@@ -60,6 +60,7 @@ import { type PmecWorkforcePerson, usePmecControl } from "@/lib/pmec-control-wor
 import * as DocumentPicker from "expo-document-picker";
 import { useLumen } from "@/lib/lumen-workspace";
 import { BackButton, Chip, StatTile } from "@/components/pmec";
+import { ClientPortalPanel } from "@/components/client-portal-panel";
 
 type PortfolioTab = "ACTIVE" | "COMPLETED" | "ALL";
 type BudgetFilter = "ALL" | Exclude<BudgetAlertStatus, "ON_TRACK">;
@@ -825,6 +826,7 @@ function JobOrderPanel({
               <Text style={styles.addTaskText}>+ ADD WORK PACKAGE</Text>
             </Pressable>
             <ProjectTeamPanel job={job} control={control} />
+            <ClientPortalPanel job={job} />
             <Section
               styles={styles}
               title="COST DOCUMENTS"
