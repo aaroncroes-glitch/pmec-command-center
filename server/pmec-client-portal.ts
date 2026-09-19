@@ -77,7 +77,10 @@ export type PublishInput = {
 
 /** Validates a milestone list; null when any entry is malformed or there are too many. */
 export function shapeMilestones(input: unknown): Record<string, unknown>[] | null {
-  const milestones = Array.isArray(input) ? (input as PublishInput["milestones"]) : [];
+  // Anything that is not a list is refused rather than read as "no milestones": the sync
+  // replaces the client's whole programme, so a malformed request must never empty it.
+  if (!Array.isArray(input)) return null;
+  const milestones = input as PublishInput["milestones"];
   if (milestones.length > 60) return null;
   const shaped: Record<string, unknown>[] = [];
   for (const m of milestones) {
@@ -200,6 +203,8 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     if (!ok) return;
     const milestones = shapeMilestones(req.body?.milestones);
     if (!milestones) return res.status(400).json({ error: "bad milestone" });
+    // A job order always has milestones; an empty list here is a fault, not an intent.
+    if (milestones.length === 0) return res.status(400).json({ error: "no milestones" });
     try {
       res.json({ count: await ok.call<number>("pm_sync_milestones", { p_project: ok.projectId, p_milestones: milestones }) });
     } catch (error) {
