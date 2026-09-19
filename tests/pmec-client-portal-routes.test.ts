@@ -101,9 +101,18 @@ describe("milestone sync route", () => {
     expect((await post(`${base}/api/client-portal/jo-hotel-renovation/milestones`, { milestones: [{ id: "m4", title: "x", status: "done" }] })).status).toBe(400);
   });
 
+  it("never empties the client's programme on a malformed or empty list", async () => {
+    const { rpc, calls } = fakeRpc({ exists: true, is_demo: true });
+    const base = await start(rpc);
+    for (const body of [{ milestones: "x" }, {}, { milestones: [] }]) {
+      expect((await post(`${base}/api/client-portal/jo-hotel-renovation/milestones`, body)).status).toBe(400);
+    }
+    expect(calls.some((c) => c.fn === "pm_sync_milestones")).toBe(false);
+  });
+
   it("maps 'publish the project first' to 409", async () => {
     const base = await start(fakeRpc({ exists: true, is_demo: true }, new PortalRpcError("publish the project first", 400, "55000")).rpc);
-    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/milestones`, { milestones: [] })).status).toBe(409);
+    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/milestones`, { milestones: [{ id: "m1", title: "x", status: "complete" }] })).status).toBe(409);
   });
 });
 

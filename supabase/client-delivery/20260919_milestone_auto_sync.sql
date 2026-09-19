@@ -41,3 +41,7 @@ begin
   );
 end;
 $$;
+
+-- Follow-up (applied as milestone_sync_refuses_empty): pm_sync_milestones also raises
+-- 'no milestones' (22023) when p_milestones is null, not an array, or empty, before
+-- deleting anything. A malformed request once emptied the demo programme; it cannot now.
