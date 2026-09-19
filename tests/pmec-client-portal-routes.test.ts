@@ -85,6 +85,28 @@ describe("client portal routes", () => {
   });
 });
 
+describe("milestone sync route", () => {
+  it("sends only milestones, shaped", async () => {
+    const { rpc, calls } = fakeRpc({ exists: true, is_demo: true });
+    const base = await start(rpc);
+    const res = await post(`${base}/api/client-portal/jo-hotel-renovation/milestones`, { milestones: [{ id: "m4", code: "M04", title: "Chillers set", status: "complete", targetDate: "2026-10-09" }] });
+    expect(res.status).toBe(200);
+    const call = calls.find((c) => c.fn === "pm_sync_milestones")!;
+    expect((call.args.p_milestones as { status: string }[])[0].status).toBe("complete");
+    expect(call.args).not.toHaveProperty("p_project_json");
+  });
+
+  it("rejects a malformed milestone", async () => {
+    const base = await start(fakeRpc({ exists: true, is_demo: true }).rpc);
+    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/milestones`, { milestones: [{ id: "m4", title: "x", status: "done" }] })).status).toBe(400);
+  });
+
+  it("maps 'publish the project first' to 409", async () => {
+    const base = await start(fakeRpc({ exists: true, is_demo: true }, new PortalRpcError("publish the project first", 400, "55000")).rpc);
+    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/milestones`, { milestones: [] })).status).toBe(409);
+  });
+});
+
 describe("shapePublish", () => {
   it("rejects out-of-range progress and unknown milestone states", () => {
     expect(shapePublish("p", { ...publishBody, project: { ...publishBody.project, progress: 140 } }).ok).toBe(false);

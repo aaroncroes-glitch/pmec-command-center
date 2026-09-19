@@ -42,6 +42,7 @@ type PortalState = {
     published_by: string | null;
   } | null;
   client: { name: string } | null;
+  milestones?: { id: string; title: string; target_date: string | null; status: string }[];
   change_orders: ChangeOrder[];
   updates: { id: string; title: string; detail: string | null; posted_at: string }[];
 };
@@ -66,6 +67,10 @@ const money = (value: number, currency: string) => {
     return `${currency} ${Math.round(value).toLocaleString("en-US")}`;
   }
 };
+
+/** A comparable fingerprint of a milestone list, local or published. */
+const milestoneKey = (items: { id: string; title: string; targetDate?: string | null; target_date?: string | null; status: string }[]) =>
+  items.map((item) => `${item.id}|${item.title}|${item.targetDate ?? item.target_date ?? ""}|${item.status}`).join("~");
 
 /** Achieved milestones are complete, the next one is live, the rest are to come. */
 export function milestonesForClient(job: JobOrder) {
@@ -93,6 +98,39 @@ export function ClientPortalPanel({ job }: { job: JobOrder }) {
   const endpoint = `${base}/api/client-portal/${encodeURIComponent(job.id)}`;
   const [load, setLoad] = useState<Load>({ kind: "loading" });
   const { applyClientChangeOrders } = usePmecJobOrders();
+
+  // Milestones follow the job order on their own once the project has been published: tick
+  // one here and the client's programme moves, without pressing Publish. Before the first
+  // publish nothing is sent, so a milestone can never publish a project by itself.
+  const [milestoneSync, setMilestoneSync] = useState<"idle" | "syncing" | "synced" | "failed">("idle");
+  const [retry, setRetry] = useState(0);
+  const localMilestones = useMemo(() => milestonesForClient(job), [job]);
+  const localKey = milestoneKey(localMilestones);
+  const publishedKey = load.kind === "ready" && load.state.milestones ? milestoneKey(load.state.milestones) : null;
+  const isPublished = load.kind === "ready" && Boolean(load.state.project?.published_at);
+  useEffect(() => {
+    if (!isPublished || publishedKey === null || publishedKey === localKey) return;
+    let cancelled = false;
+    setMilestoneSync("syncing");
+    void fetch(`${endpoint}/milestones`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ milestones: localMilestones }) })
+      .then(async (res) => {
+        if (cancelled) return;
+        if (!res.ok) throw new Error(String(res.status));
+        setMilestoneSync("synced");
+        await refresh();
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMilestoneSync("failed");
+        retryTimer = setTimeout(() => setRetry((value) => value + 1), 4000);
+      });
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the two fingerprints
+  }, [isPublished, publishedKey, localKey, endpoint, retry]);
 
   // A change order the client approved moves this job order's budget. Applying is
   // idempotent, so every refresh can safely re-send the full approved list.
@@ -164,6 +202,15 @@ export function ClientPortalPanel({ job }: { job: JobOrder }) {
         </Text>
       ) : null}
       {load.kind === "unavailable" ? <Text style={styles.error}>{load.message}</Text> : null}
+      {load.kind === "ready" && isPublished ? (
+        <Text style={[styles.meta, milestoneSync === "failed" ? styles.live : styles.ok]}>
+          {milestoneSync === "syncing"
+            ? "SENDING MILESTONE CHANGE TO CLIENT…"
+            : milestoneSync === "failed"
+              ? "MILESTONE CHANGE NOT SENT YET — RETRYING"
+              : "MILESTONES SYNC TO THE CLIENT AUTOMATICALLY"}
+        </Text>
+      ) : null}
 
       {load.kind === "ready" ? <ReadyPanel job={job} endpoint={endpoint} state={load.state} onChanged={refresh} /> : null}
     </View>
@@ -267,8 +314,8 @@ function PublishForm({ job, endpoint, published, onDone }: { job: JobOrder; endp
     <View style={styles.block}>
       <Text style={styles.blockTitle}>PROGRESS, MILESTONES & BUDGET</Text>
       <Text style={styles.copy}>
-        Edit freely; the client sees nothing until you publish. Milestones are taken from this job order: achieved ones
-        show as complete, the next one as in progress.
+        Edit freely; figures reach the client when you publish. Milestones come from this job order (achieved ones show
+        as complete, the next one as in progress) and, once published, follow it automatically.
       </Text>
       <View style={styles.row}>
         <Field label="ORIGINAL CONTRACT VALUE" value={contract} onChange={setContract} numeric />

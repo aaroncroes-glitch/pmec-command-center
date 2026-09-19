@@ -75,6 +75,20 @@ export type PublishInput = {
   publishedBy: string;
 };
 
+/** Validates a milestone list; null when any entry is malformed or there are too many. */
+export function shapeMilestones(input: unknown): Record<string, unknown>[] | null {
+  const milestones = Array.isArray(input) ? (input as PublishInput["milestones"]) : [];
+  if (milestones.length > 60) return null;
+  const shaped: Record<string, unknown>[] = [];
+  for (const m of milestones) {
+    const id = text(m?.id, 80);
+    const title = text(m?.title, 200);
+    if (!id || !title || !MILESTONE_STATUS.has(m?.status)) return null;
+    shaped.push({ id, code: text(m.code, 12) || id.toUpperCase(), title, detail: text(m.detail, 1000) || null, target_date: date(m.targetDate), status: m.status });
+  }
+  return shaped;
+}
+
 /** Validates a publish request; returns the database payload or an error message. */
 export function shapePublish(projectId: string, body: unknown): { ok: true; project: Record<string, unknown>; milestones: Record<string, unknown>[]; publishedBy: string } | { ok: false; error: string } {
   const input = body as Partial<PublishInput> | null;
@@ -89,15 +103,8 @@ export function shapePublish(projectId: string, body: unknown): { ok: true; proj
   if (contract === null || contract < 0) return { ok: false, error: "bad contract value" };
   if (invoiced === null || invoiced < 0) return { ok: false, error: "bad invoiced value" };
   if (!Number.isInteger(p.progress) || (p.progress as number) < 0 || (p.progress as number) > 100) return { ok: false, error: "bad progress" };
-  const milestones = Array.isArray(input?.milestones) ? input.milestones : [];
-  if (milestones.length > 60) return { ok: false, error: "too many milestones" };
-  const shapedMilestones: Record<string, unknown>[] = [];
-  for (const m of milestones) {
-    const id = text(m?.id, 80);
-    const title = text(m?.title, 200);
-    if (!id || !title || !MILESTONE_STATUS.has(m?.status)) return { ok: false, error: "bad milestone" };
-    shapedMilestones.push({ id, code: text(m.code, 12) || id.toUpperCase(), title, detail: text(m.detail, 1000) || null, target_date: date(m.targetDate), status: m.status });
-  }
+  const shapedMilestones = shapeMilestones(input?.milestones);
+  if (!shapedMilestones) return { ok: false, error: "bad milestone" };
   return {
     ok: true,
     project: {
@@ -182,6 +189,19 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     if (!shaped.ok) return res.status(400).json({ error: shaped.error });
     try {
       res.json(await ok.call("pm_publish_project", { p_project: shaped.project, p_milestones: shaped.milestones, p_published_by: shaped.publishedBy }));
+    } catch (error) {
+      fail(res, error);
+    }
+  });
+
+  // Milestones only: follows the job order automatically once the project is published.
+  app.post("/api/client-portal/:projectId/milestones", async (req, res) => {
+    const ok = await guard(req, res);
+    if (!ok) return;
+    const milestones = shapeMilestones(req.body?.milestones);
+    if (!milestones) return res.status(400).json({ error: "bad milestone" });
+    try {
+      res.json({ count: await ok.call<number>("pm_sync_milestones", { p_project: ok.projectId, p_milestones: milestones }) });
     } catch (error) {
       fail(res, error);
     }
