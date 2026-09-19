@@ -73,6 +73,41 @@ export function taskTotalCost(taskItem: WorkPackageTask) { return taskItem.labor
 export function jobOrderProgress(job: JobOrder) { return job.tasks.length ? Math.round(job.tasks.reduce((sum, item) => sum + item.progress, 0) / job.tasks.length) : 0; }
 export function jobOrderSpent(job: JobOrder) { return job.tasks.reduce((sum, item) => sum + taskTotalCost(item), 0); }
 export function contingencyAmount(job: JobOrder) { return Math.round(job.budget * job.contingencyPct / 100); }
+/** A change order the client approved in their portal, as the job order records it. */
+export type ClientChangeOrder = { id: string; number: number; title: string; amount: number; decidedAt: string; decidedBy: string; note?: string | null };
+export const clientChangeOrderDocumentId = (id: string) => `client-co-${id}`;
+
+/**
+ * Folds a client-approved change order into the job order: the budget moves by its amount
+ * and an approved CHANGE_ORDER cost document records where the money came from. Applying the
+ * same change order twice changes nothing, so any number of PM screens can run this.
+ */
+export function applyClientChangeOrder(job: JobOrder, order: ClientChangeOrder): JobOrder {
+  const documentId = clientChangeOrderDocumentId(order.id);
+  if (job.costDocuments.some((document) => document.id === documentId)) return job;
+  const code = `CO-${String(order.number).padStart(2, "0")}`;
+  return {
+    ...job,
+    budget: Math.round((job.budget + order.amount) * 100) / 100,
+    costDocuments: [
+      ...job.costDocuments,
+      {
+        id: documentId,
+        url: "",
+        description: `${code} — ${order.title} (approved by client in portal)`,
+        documentType: "CHANGE_ORDER",
+        approvalStatus: "APPROVED",
+        reviewNote: order.note ?? undefined,
+        approvalHistory: [{ id: `${documentId}-decision`, status: "APPROVED", reviewNote: order.note ?? undefined, changedAt: order.decidedAt, changedBy: order.decidedBy }],
+        tags: ["Change order", "Client portal"],
+        amount: order.amount,
+        uploadedAt: order.decidedAt,
+        uploadedBy: "Client portal",
+      },
+    ],
+  };
+}
+
 export function totalAuthorized(job: JobOrder) { return job.budget + contingencyAmount(job); }
 export function actualSpentPctOfBudget(job: JobOrder) { return job.budget ? Math.round(jobOrderSpent(job) / job.budget * 100) : 0; }
 export function spentPctOfBudget(job: JobOrder) { return Math.min(actualSpentPctOfBudget(job), 100); }

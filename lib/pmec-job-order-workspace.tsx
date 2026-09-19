@@ -6,6 +6,8 @@ import { createContext, type PropsWithChildren, useCallback, useContext, useEffe
 
 import {
   applyBulkCostDocumentApproval,
+  applyClientChangeOrder,
+  type ClientChangeOrder,
   costDocumentCategoryTags,
   initialPmeJobOrders,
   lineItemTotal,
@@ -36,6 +38,7 @@ type PmecJobOrderWorkspace = {
   toggleMilestone: (jobOrderId: string, milestoneId: string) => void;
   addMilestone: (jobOrderId: string, input: Omit<JobOrderMilestone, "id" | "achieved">) => void;
   addCostDocument: (jobOrderId: string, input: Omit<CostDocument, "id" | "uploadedAt" | "approvalHistory">) => void;
+  applyClientChangeOrders: (jobOrderId: string, orders: ClientChangeOrder[]) => void;
   updateCostDocument: (jobOrderId: string, documentId: string, updates: Partial<CostDocument>) => void;
   recordCostDocumentDecision: (jobOrderId: string, documentId: string, decision: ApprovalDecision) => void;
   bulkApproveCostDocuments: (targets: CostDocumentBulkApprovalTarget[], decision: Omit<ApprovalDecision, "status">) => void;
@@ -193,6 +196,15 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
     }));
   }, [mutate]);
 
+  const applyClientChangeOrders = useCallback((jobOrderId: string, orders: ClientChangeOrder[]) => {
+    setJobOrders((current) => current.map((jobOrder) => {
+      if (jobOrder.id !== jobOrderId) return jobOrder;
+      const next = orders.reduce(applyClientChangeOrder, jobOrder);
+      // Unchanged when every order was already applied, so no write and no sync loop.
+      return next === jobOrder ? jobOrder : { ...next, updatedAt: stamp() };
+    }));
+  }, []);
+
   const addCostDocument = useCallback((jobOrderId: string, input: Omit<CostDocument, "id" | "uploadedAt" | "approvalHistory">) => {
     const uploadedAt = stamp();
     const approvalStatus = input.approvalStatus ?? "PENDING";
@@ -280,6 +292,7 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
     toggleMilestone,
     addMilestone,
     addCostDocument,
+    applyClientChangeOrders,
     updateCostDocument,
     recordCostDocumentDecision,
     bulkApproveCostDocuments,
@@ -295,6 +308,7 @@ export function PmecJobOrderWorkspaceProvider({ children }: PropsWithChildren) {
     toggleMilestone,
     addMilestone,
     addCostDocument,
+    applyClientChangeOrders,
     updateCostDocument,
     recordCostDocumentDecision,
     bulkApproveCostDocuments,

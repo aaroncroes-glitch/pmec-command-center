@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { getApiBaseUrl } from "@/constants/oauth";
-import type { JobOrder } from "@/lib/pmec-job-orders";
+import { clientChangeOrderDocumentId, type JobOrder } from "@/lib/pmec-job-orders";
+import { usePmecJobOrders } from "@/lib/pmec-job-order-workspace";
 
 /**
  * What this job order's client sees at client.pmec.group, and the change orders they
@@ -91,6 +92,29 @@ export function ClientPortalPanel({ job }: { job: JobOrder }) {
   const base = getApiBaseUrl();
   const endpoint = `${base}/api/client-portal/${encodeURIComponent(job.id)}`;
   const [load, setLoad] = useState<Load>({ kind: "loading" });
+  const { applyClientChangeOrders } = usePmecJobOrders();
+
+  // A change order the client approved moves this job order's budget. Applying is
+  // idempotent, so every refresh can safely re-send the full approved list.
+  const approved = load.kind === "ready" ? load.state.change_orders.filter((order) => order.status === "approved") : [];
+  const unapplied = approved.filter((order) => !job.costDocuments.some((document) => document.id === clientChangeOrderDocumentId(order.id)));
+  const unappliedKey = unapplied.map((order) => order.id).join(",");
+  useEffect(() => {
+    if (!unappliedKey) return;
+    applyClientChangeOrders(
+      job.id,
+      unapplied.map((order) => ({
+        id: order.id,
+        number: order.number,
+        title: order.title,
+        amount: Number(order.amount),
+        decidedAt: order.decided_at ?? new Date().toISOString(),
+        decidedBy: order.decided_by_label ?? "Client",
+        note: order.decision_note,
+      })),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the ids that still need applying
+  }, [unappliedKey, job.id, applyClientChangeOrders]);
 
   const refresh = useCallback(async () => {
     try {
@@ -191,7 +215,13 @@ function PublishForm({ job, endpoint, published, onDone }: { job: JobOrder; endp
   const taskProgress = job.tasks.length ? Math.round((doneTasks / job.tasks.length) * 100) : 0;
   const [contract, setContract] = useState(String(published?.original_contract_value ?? job.budget));
   const [invoiced, setInvoiced] = useState(String(published?.invoiced_to_date ?? 0));
-  const [progress, setProgress] = useState(String(published?.progress ?? taskProgress));
+  // Always start from the work itself, so employees' task updates reach the client on the
+  // next publish without the PM recalculating anything.
+  const [progress, setProgress] = useState(String(taskProgress));
+  const [touched, setTouched] = useState(false);
+  useEffect(() => {
+    if (!touched) setProgress(String(taskProgress));
+  }, [taskProgress, touched]);
   const [statusLabel, setStatusLabel] = useState(published?.status_label ?? "On programme");
   const [headline, setHeadline] = useState(published?.headline ?? "");
   const [busy, setBusy] = useState(false);
@@ -243,8 +273,18 @@ function PublishForm({ job, endpoint, published, onDone }: { job: JobOrder; endp
       <View style={styles.row}>
         <Field label="ORIGINAL CONTRACT VALUE" value={contract} onChange={setContract} numeric />
         <Field label="INVOICED TO DATE" value={invoiced} onChange={setInvoiced} numeric />
-        <Field label="PROGRESS %" value={progress} onChange={setProgress} numeric narrow />
+        <Field label="PROGRESS %" value={progress} onChange={(value) => { setTouched(true); setProgress(value); }} numeric narrow />
       </View>
+      <Text style={styles.meta}>
+        LIVE FROM WORK PACKAGES: {taskProgress}% ({doneTasks}/{job.tasks.length} complete)
+        {published ? ` · CLIENT CURRENTLY SEES ${published.progress}%` : ""}
+        {published && published.progress !== taskProgress ? " · PUBLISH TO UPDATE" : ""}
+      </Text>
+      {touched && Number(progress) !== taskProgress ? (
+        <Pressable accessibilityRole="button" onPress={() => { setTouched(false); setProgress(String(taskProgress)); }} style={styles.secondary}>
+          <Text style={styles.secondaryText}>USE LIVE {taskProgress}%</Text>
+        </Pressable>
+      ) : null}
       <Text style={styles.label}>STATUS SHOWN TO CLIENT</Text>
       <View style={styles.chips}>
         {STATUS_LABELS.map((label) => (
@@ -336,6 +376,7 @@ function ChangeOrders({ endpoint, currency, orders, onDone }: { endpoint: string
                 {order.decision_note ? ` — “${order.decision_note}”` : ""}
               </Text>
             ) : null}
+            {order.status === "approved" ? <Text style={[styles.meta, styles.ok]}>ADDED TO THIS JOB ORDER&apos;S BUDGET</Text> : null}
           </View>
           <Text style={[styles.orderStatus, order.status === "approved" ? styles.ok : order.status === "pending" ? styles.live : styles.muted]}>
             {order.status === "pending" ? "AWAITING CLIENT" : order.status.toUpperCase()}
