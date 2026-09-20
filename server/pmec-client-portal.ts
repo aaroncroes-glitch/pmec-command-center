@@ -15,6 +15,7 @@ import type { Express, Request, Response } from "express";
 const PROJECT_ID = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const MILESTONE_STATUS = new Set(["complete", "active", "upcoming"]);
+const MAX_LINES = 40;
 
 export type PortalRpc = <T>(fn: string, args: Record<string, unknown>) => Promise<T>;
 
@@ -126,6 +127,36 @@ export function shapePublish(projectId: string, body: unknown): { ok: true; proj
   };
 }
 
+/** A priced line on a quote or an invoice. */
+export type MoneyLine = { description: string; quantity: number; unitPrice: number };
+
+/**
+ * Validates priced lines and totals them the way the database will, so the PM sees the
+ * same figure the client is sent. Returns null when any line is unusable.
+ */
+export function shapeLines(input: unknown): { lines: MoneyLine[]; subtotal: number } | null {
+  if (!Array.isArray(input) || input.length === 0 || input.length > MAX_LINES) return null;
+  const lines: MoneyLine[] = [];
+  let subtotal = 0;
+  for (const raw of input as MoneyLine[]) {
+    const description = text(raw?.description, 300);
+    const quantity = money(raw?.quantity);
+    const unitPrice = money(raw?.unitPrice);
+    if (!description || quantity === null || unitPrice === null) return null;
+    if (quantity <= 0 || unitPrice < 0 || quantity > 1e6 || unitPrice > 1e9) return null;
+    const amount = Math.round(quantity * unitPrice * 100) / 100;
+    subtotal = Math.round((subtotal + amount) * 100) / 100;
+    lines.push({ description, quantity, unitPrice });
+  }
+  if (subtotal <= 0) return null;
+  return { lines, subtotal };
+}
+
+const taxRate = (value: unknown) => {
+  const rate = typeof value === "number" && Number.isFinite(value) ? value : 0;
+  return rate >= 0 && rate <= 100 ? Math.round(rate * 100) / 100 : null;
+};
+
 // ── Routes ────────────────────────────────────────────────────────────────────────────
 export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc | null) {
   let rpc: PortalRpc | null | undefined;
@@ -229,6 +260,87 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     if (!UUID.test(id)) return res.status(400).json({ error: "bad change order" });
     try {
       res.json(await ok.call("pm_withdraw_change_order", { p_id: id }));
+    } catch (error) {
+      fail(res, error);
+    }
+  });
+
+  // Invoices: issued against a project, then marked paid (or voided) by the PM.
+  app.post("/api/client-portal/:projectId/invoices", async (req, res) => {
+    const ok = await guard(req, res);
+    if (!ok) return;
+    const title = text(req.body?.title, 200);
+    const shaped = shapeLines(req.body?.lines);
+    const rate = taxRate(req.body?.taxRate);
+    if (!title) return res.status(400).json({ error: "title is required" });
+    if (!shaped) return res.status(400).json({ error: "every line needs a description, a quantity and a price" });
+    if (rate === null) return res.status(400).json({ error: "bad tax rate" });
+    try {
+      res.json(await ok.call("pm_issue_invoice", {
+        p_project: ok.projectId,
+        p_title: title,
+        p_currency: text(req.body?.currency, 3).toUpperCase() || "AWG",
+        p_lines: shaped.lines,
+        p_tax_rate: rate,
+        p_due_date: date(req.body?.dueDate),
+        p_issued_by: text(req.body?.issuedBy, 200) || "PMEC project management",
+      }));
+    } catch (error) {
+      fail(res, error);
+    }
+  });
+
+  app.post("/api/client-portal/:projectId/invoices/:id/settle", async (req, res) => {
+    const ok = await guard(req, res);
+    if (!ok) return;
+    const id = String(req.params.id ?? "");
+    const status = text(req.body?.status, 10);
+    if (!UUID.test(id)) return res.status(400).json({ error: "bad invoice" });
+    if (status !== "paid" && status !== "void") return res.status(400).json({ error: "bad status" });
+    try {
+      res.json(await ok.call("pm_settle_invoice", { p_id: id, p_status: status, p_note: text(req.body?.note, 500) }));
+    } catch (error) {
+      fail(res, error);
+    }
+  });
+
+  // Quotes belong to the client, so they can be raised before a job order exists; this
+  // route reaches them through a project the PM already has open.
+  app.post("/api/client-portal/:projectId/quotes", async (req, res) => {
+    const ok = await guard(req, res);
+    if (!ok) return;
+    const title = text(req.body?.title, 200);
+    const shaped = shapeLines(req.body?.lines);
+    const rate = taxRate(req.body?.taxRate);
+    const clientName = text(req.body?.clientName, 200);
+    if (!clientName) return res.status(400).json({ error: "client is required" });
+    if (!title) return res.status(400).json({ error: "title is required" });
+    if (!shaped) return res.status(400).json({ error: "every line needs a description, a quantity and a price" });
+    if (rate === null) return res.status(400).json({ error: "bad tax rate" });
+    try {
+      res.json(await ok.call("pm_send_quote", {
+        p_client_name: clientName,
+        p_project: text(req.body?.linkProject, 80) || null,
+        p_title: title,
+        p_summary: text(req.body?.summary, 4000),
+        p_currency: text(req.body?.currency, 3).toUpperCase() || "AWG",
+        p_lines: shaped.lines,
+        p_tax_rate: rate,
+        p_valid_until: date(req.body?.validUntil),
+        p_raised_by: text(req.body?.raisedBy, 200) || "PMEC project management",
+      }));
+    } catch (error) {
+      fail(res, error);
+    }
+  });
+
+  app.post("/api/client-portal/:projectId/quotes/:id/withdraw", async (req, res) => {
+    const ok = await guard(req, res);
+    if (!ok) return;
+    const id = String(req.params.id ?? "");
+    if (!UUID.test(id)) return res.status(400).json({ error: "bad quote" });
+    try {
+      res.json(await ok.call("pm_withdraw_quote", { p_id: id }));
     } catch (error) {
       fail(res, error);
     }
