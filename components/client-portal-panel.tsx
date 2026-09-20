@@ -45,6 +45,39 @@ type PortalState = {
   milestones?: { id: string; title: string; target_date: string | null; status: string }[];
   change_orders: ChangeOrder[];
   updates: { id: string; title: string; detail: string | null; posted_at: string }[];
+  invoices?: Invoice[];
+  quotes?: Quote[];
+};
+
+type MoneyLine = { description: string; quantity: number; unitPrice: number };
+
+type Invoice = {
+  id: string;
+  number: number;
+  title: string;
+  currency: string;
+  subtotal: number;
+  tax_rate: number;
+  tax_amount: number;
+  total: number;
+  status: "sent" | "paid" | "void";
+  issued_at: string;
+  due_date: string | null;
+  paid_at: string | null;
+};
+
+type Quote = {
+  id: string;
+  number: number;
+  title: string;
+  currency: string;
+  total: number;
+  status: "sent" | "accepted" | "rejected" | "withdrawn" | "expired";
+  sent_at: string;
+  valid_until: string | null;
+  decided_at: string | null;
+  decided_by_label: string | null;
+  decision_note: string | null;
 };
 
 type Load =
@@ -222,6 +255,9 @@ function ReadyPanel({ job, endpoint, state, onChanged }: { job: JobOrder; endpoi
   const currency = published?.currency ?? job.currency;
   const approved = state.change_orders.filter((order) => order.status === "approved").reduce((sum, order) => sum + Number(order.amount), 0);
   const pending = state.change_orders.filter((order) => order.status === "pending");
+  const live = (state.invoices ?? []).filter((invoice) => invoice.status !== "void");
+  const invoiced = live.reduce((sum, invoice) => sum + Number(invoice.total), 0);
+  const outstanding = live.filter((invoice) => invoice.status === "sent").reduce((sum, invoice) => sum + Number(invoice.total), 0);
 
   return (
     <>
@@ -230,10 +266,14 @@ function ReadyPanel({ job, endpoint, state, onChanged }: { job: JobOrder; endpoi
         <Figure label="APPROVED CHANGES" value={`${approved >= 0 ? "+" : ""}${money(approved, currency)}`} />
         <Figure label="CURRENT CONTRACT" value={money(Number(published?.original_contract_value ?? 0) + approved, currency)} strong />
         <Figure label="AWAITING CLIENT" value={`${pending.length} CHANGE ORDER${pending.length === 1 ? "" : "S"}`} />
+        <Figure label="INVOICED" value={money(invoiced, currency)} />
+        <Figure label="OUTSTANDING" value={money(outstanding, currency)} strong={outstanding > 0} />
       </View>
 
       <PublishForm job={job} endpoint={endpoint} published={published} onDone={onChanged} />
       <ChangeOrders endpoint={endpoint} currency={currency} orders={state.change_orders} onDone={onChanged} />
+      <Invoices endpoint={endpoint} currency={currency} invoices={state.invoices ?? []} onDone={onChanged} />
+      <Quotes endpoint={endpoint} currency={currency} clientName={state.client?.name ?? ""} quotes={state.quotes ?? []} onDone={onChanged} />
       <SiteUpdate endpoint={endpoint} updates={state.updates} onDone={onChanged} />
     </>
   );
@@ -449,6 +489,256 @@ function ChangeOrders({ endpoint, currency, orders, onDone }: { endpoint: string
   );
 }
 
+/** A small editable table of priced lines, shared by invoices and quotes. */
+function LineEditor({ lines, onChange, currency }: { lines: MoneyLine[]; onChange: (lines: MoneyLine[]) => void; currency: string }) {
+  const set = (index: number, patch: Partial<MoneyLine>) => onChange(lines.map((line, i) => (i === index ? { ...line, ...patch } : line)));
+  const subtotal = lines.reduce((sum, line) => sum + Math.round(line.quantity * line.unitPrice * 100) / 100, 0);
+  return (
+    <View style={{ marginTop: 10 }}>
+      {lines.map((line, index) => (
+        <View key={index} style={styles.lineRow}>
+          <View style={[styles.field, { flexGrow: 1, minWidth: 200, marginTop: 0 }]}>
+            <Text style={styles.label}>DESCRIPTION</Text>
+            <TextInput accessibilityLabel={`line ${index + 1} description`} value={line.description} onChangeText={(value) => set(index, { description: value })} placeholder="What the client is being charged for" placeholderTextColor="#766B5F" style={styles.input} />
+          </View>
+          <View style={[styles.field, { width: 76, marginTop: 0 }]}>
+            <Text style={styles.label}>QTY</Text>
+            <TextInput accessibilityLabel={`line ${index + 1} quantity`} value={String(line.quantity)} keyboardType="numeric" onChangeText={(value) => set(index, { quantity: Number(value.replace(/[^\d.]/g, "")) || 0 })} style={styles.input} />
+          </View>
+          <View style={[styles.field, { width: 128, marginTop: 0 }]}>
+            <Text style={styles.label}>UNIT PRICE</Text>
+            <TextInput accessibilityLabel={`line ${index + 1} unit price`} value={String(line.unitPrice)} keyboardType="numeric" onChangeText={(value) => set(index, { unitPrice: Number(value.replace(/[^\d.]/g, "")) || 0 })} style={styles.input} />
+          </View>
+          <View style={{ justifyContent: "flex-end", paddingBottom: 10 }}>
+            <Text style={styles.lineTotal}>{money(Math.round(line.quantity * line.unitPrice * 100) / 100, currency)}</Text>
+          </View>
+          {lines.length > 1 ? (
+            <Pressable accessibilityRole="button" accessibilityLabel={`remove line ${index + 1}`} onPress={() => onChange(lines.filter((_, i) => i !== index))} style={styles.removeLine}>
+              <Text style={styles.secondaryText}>×</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ))}
+      <View style={styles.lineFoot}>
+        <Pressable accessibilityRole="button" onPress={() => onChange([...lines, { description: "", quantity: 1, unitPrice: 0 }])} style={styles.secondary}>
+          <Text style={styles.secondaryText}>+ ADD LINE</Text>
+        </Pressable>
+        <Text style={styles.subtotal}>SUBTOTAL {money(subtotal, currency)}</Text>
+      </View>
+    </View>
+  );
+}
+
+const emptyLines: MoneyLine[] = [{ description: "", quantity: 1, unitPrice: 0 }];
+const TAX_RATE = "7";
+const plusDays = (days: number) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+
+function totals(lines: MoneyLine[], rate: string) {
+  const subtotal = lines.reduce((sum, line) => sum + Math.round(line.quantity * line.unitPrice * 100) / 100, 0);
+  const tax = Math.round(subtotal * (Number(rate) || 0)) / 100;
+  return { subtotal, tax, total: subtotal + tax };
+}
+
+function Invoices({ endpoint, currency, invoices, onDone }: { endpoint: string; currency: string; invoices: Invoice[]; onDone: () => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [lines, setLines] = useState<MoneyLine[]>(emptyLines);
+  const [rate, setRate] = useState(TAX_RATE);
+  const [due, setDue] = useState(plusDays(30));
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const sum = totals(lines, rate);
+
+  const issue = async () => {
+    if (!title.trim()) return setMessage({ tone: "error", text: "Give the invoice a title." });
+    if (sum.subtotal <= 0) return setMessage({ tone: "error", text: "Add at least one priced line." });
+    setBusy(true);
+    setMessage(null);
+    try {
+      await send(`${endpoint}/invoices`, { title, lines, taxRate: Number(rate) || 0, dueDate: due, currency });
+      setTitle("");
+      setLines(emptyLines);
+      setOpen(false);
+      setMessage({ tone: "ok", text: "Issued. The client can see it in their portal." });
+      await onDone();
+    } catch (error) {
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "Could not issue the invoice." });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const settle = async (invoice: Invoice, status: "paid" | "void") => {
+    try {
+      await send(`${endpoint}/invoices/${invoice.id}/settle`, { status });
+      await onDone();
+    } catch (error) {
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "Could not update the invoice." });
+    }
+  };
+
+  return (
+    <View style={styles.block}>
+      <Text style={styles.blockTitle}>INVOICES</Text>
+      {invoices.length === 0 ? <Text style={styles.copy}>No invoices have been issued on this job order.</Text> : null}
+      {invoices.map((invoice) => (
+        <View key={invoice.id} style={styles.order}>
+          <View style={styles.flex}>
+            <Text style={styles.orderTitle}>INV-{String(invoice.number).padStart(2, "0")} · {invoice.title}</Text>
+            <Text style={styles.meta}>
+              {money(Number(invoice.total), invoice.currency)} incl. {invoice.tax_rate}% tax · issued {when(invoice.issued_at)}
+              {invoice.due_date ? ` · due ${invoice.due_date}` : ""}
+            </Text>
+            {invoice.paid_at ? <Text style={[styles.meta, styles.ok]}>PAID {when(invoice.paid_at)}</Text> : null}
+          </View>
+          <Text style={[styles.orderStatus, invoice.status === "paid" ? styles.ok : invoice.status === "void" ? styles.muted : styles.live]}>
+            {invoice.status === "sent" ? "AWAITING PAYMENT" : invoice.status.toUpperCase()}
+          </Text>
+          {invoice.status === "sent" ? (
+            <View style={styles.buttonRow}>
+              <Pressable accessibilityRole="button" accessibilityLabel={`mark invoice ${invoice.number} paid`} onPress={() => settle(invoice, "paid")} style={styles.secondary}>
+                <Text style={styles.secondaryText}>MARK PAID</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel={`void invoice ${invoice.number}`} onPress={() => settle(invoice, "void")} style={styles.secondary}>
+                <Text style={styles.secondaryText}>VOID</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+      ))}
+
+      {open ? (
+        <>
+          <Field label="INVOICE TITLE" value={title} onChange={setTitle} placeholder="e.g. Progress claim 02 — chiller installation" />
+          <LineEditor lines={lines} onChange={setLines} currency={currency} />
+          <View style={styles.row}>
+            <Field label="TAX %" value={rate} onChange={setRate} numeric narrow />
+            <Field label="DUE DATE" value={due} onChange={setDue} narrow placeholder="YYYY-MM-DD" />
+          </View>
+          <Text style={styles.totalLine}>
+            TAX {money(sum.tax, currency)} · TOTAL {money(sum.total, currency)}
+          </Text>
+          <View style={styles.buttonRow}>
+            <Pressable accessibilityRole="button" disabled={busy} onPress={issue} style={[styles.primary, busy && styles.disabled]}>
+              <Text style={styles.primaryText}>{busy ? "ISSUING…" : "ISSUE TO CLIENT"}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" onPress={() => setOpen(false)} style={[styles.secondary, { marginTop: 16 }]}>
+              <Text style={styles.secondaryText}>CANCEL</Text>
+            </Pressable>
+          </View>
+        </>
+      ) : (
+        <Pressable accessibilityRole="button" onPress={() => setOpen(true)} style={styles.secondaryWide}>
+          <Text style={styles.secondaryText}>+ NEW INVOICE</Text>
+        </Pressable>
+      )}
+      {message ? <Text style={message.tone === "ok" ? styles.success : styles.error}>{message.text}</Text> : null}
+    </View>
+  );
+}
+
+function Quotes({ endpoint, currency, clientName, quotes, onDone }: { endpoint: string; currency: string; clientName: string; quotes: Quote[]; onDone: () => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [summary, setSummary] = useState("");
+  const [lines, setLines] = useState<MoneyLine[]>(emptyLines);
+  const [rate, setRate] = useState(TAX_RATE);
+  const [valid, setValid] = useState(plusDays(30));
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const sum = totals(lines, rate);
+
+  const sendQuote = async () => {
+    if (!title.trim()) return setMessage({ tone: "error", text: "Give the quote a title." });
+    if (sum.subtotal <= 0) return setMessage({ tone: "error", text: "Add at least one priced line." });
+    setBusy(true);
+    setMessage(null);
+    try {
+      await send(`${endpoint}/quotes`, { clientName, title, summary, lines, taxRate: Number(rate) || 0, validUntil: valid, currency });
+      setTitle("");
+      setSummary("");
+      setLines(emptyLines);
+      setOpen(false);
+      setMessage({ tone: "ok", text: "Sent. The client can accept or reject it in their portal." });
+      await onDone();
+    } catch (error) {
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "Could not send the quote." });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const withdraw = async (quote: Quote) => {
+    try {
+      await send(`${endpoint}/quotes/${quote.id}/withdraw`, {});
+      await onDone();
+    } catch (error) {
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "Could not withdraw the quote." });
+    }
+  };
+
+  return (
+    <View style={styles.block}>
+      <Text style={styles.blockTitle}>QUOTES · NEW WORK FOR THIS CLIENT</Text>
+      {quotes.length === 0 ? <Text style={styles.copy}>No quotes have been sent to {clientName || "this client"}.</Text> : null}
+      {quotes.map((quote) => (
+        <View key={quote.id} style={styles.order}>
+          <View style={styles.flex}>
+            <Text style={styles.orderTitle}>Q-{String(quote.number).padStart(2, "0")} · {quote.title}</Text>
+            <Text style={styles.meta}>
+              {money(Number(quote.total), quote.currency)} · sent {when(quote.sent_at)}
+              {quote.valid_until ? ` · valid to ${quote.valid_until}` : ""}
+            </Text>
+            {quote.decided_at && quote.status !== "withdrawn" ? (
+              <Text style={[styles.meta, quote.status === "accepted" ? styles.ok : undefined]}>
+                {quote.status === "accepted" ? "Accepted" : "Rejected"} by {quote.decided_by_label} · {when(quote.decided_at)}
+                {quote.decision_note ? ` — “${quote.decision_note}”` : ""}
+              </Text>
+            ) : null}
+            {quote.status === "accepted" ? <Text style={[styles.meta, styles.ok]}>READY TO RAISE AS A JOB ORDER</Text> : null}
+          </View>
+          <Text style={[styles.orderStatus, quote.status === "accepted" ? styles.ok : quote.status === "sent" ? styles.live : styles.muted]}>
+            {quote.status === "sent" ? "AWAITING CLIENT" : quote.status.toUpperCase()}
+          </Text>
+          {quote.status === "sent" ? (
+            <Pressable accessibilityRole="button" accessibilityLabel={`withdraw quote ${quote.number}`} onPress={() => withdraw(quote)} style={styles.secondary}>
+              <Text style={styles.secondaryText}>WITHDRAW</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ))}
+
+      {open ? (
+        <>
+          <Field label="QUOTE TITLE" value={title} onChange={setTitle} placeholder="e.g. Pool deck heat pump replacement" />
+          <Field label="WHAT THE CLIENT WILL READ" value={summary} onChange={setSummary} multiline placeholder="The scope in a sentence or two, and why it is worth doing now" />
+          <LineEditor lines={lines} onChange={setLines} currency={currency} />
+          <View style={styles.row}>
+            <Field label="TAX %" value={rate} onChange={setRate} numeric narrow />
+            <Field label="VALID UNTIL" value={valid} onChange={setValid} narrow placeholder="YYYY-MM-DD" />
+          </View>
+          <Text style={styles.totalLine}>
+            TAX {money(sum.tax, currency)} · TOTAL {money(sum.total, currency)}
+          </Text>
+          <View style={styles.buttonRow}>
+            <Pressable accessibilityRole="button" disabled={busy} onPress={sendQuote} style={[styles.primary, busy && styles.disabled]}>
+              <Text style={styles.primaryText}>{busy ? "SENDING…" : "SEND QUOTE TO CLIENT"}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" onPress={() => setOpen(false)} style={[styles.secondary, { marginTop: 16 }]}>
+              <Text style={styles.secondaryText}>CANCEL</Text>
+            </Pressable>
+          </View>
+        </>
+      ) : (
+        <Pressable accessibilityRole="button" onPress={() => setOpen(true)} style={styles.secondaryWide}>
+          <Text style={styles.secondaryText}>+ NEW QUOTE</Text>
+        </Pressable>
+      )}
+      {message ? <Text style={message.tone === "ok" ? styles.success : styles.error}>{message.text}</Text> : null}
+    </View>
+  );
+}
+
 function SiteUpdate({ endpoint, updates, onDone }: { endpoint: string; updates: PortalState["updates"]; onDone: () => Promise<void> }) {
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
@@ -554,6 +844,13 @@ const styles = StyleSheet.create({
   secondaryWide: { alignSelf: "flex-start", borderColor: "#1A1A1A", borderRadius: 12, borderWidth: 1, marginTop: 14, paddingHorizontal: 14, paddingVertical: 11 },
   secondaryText: { color: "#1A1A1A", fontSize: 9, fontWeight: "900", letterSpacing: 0.55 },
   disabled: { opacity: 0.55 },
+  buttonRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  lineRow: { alignItems: "flex-start", borderBottomColor: "#EAE4DB", borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", gap: 10, paddingVertical: 8 },
+  lineTotal: { color: "#1A1A1A", fontSize: 12, fontVariant: ["tabular-nums"], fontWeight: "900" },
+  removeLine: { alignItems: "center", borderColor: "#B9AFA3", borderRadius: 8, borderWidth: 1, height: 30, justifyContent: "center", marginTop: 18, width: 30 },
+  lineFoot: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "space-between", marginTop: 12 },
+  subtotal: { color: "#6E6256", fontSize: 11, fontVariant: ["tabular-nums"], fontWeight: "900", letterSpacing: 0.5 },
+  totalLine: { color: "#1A1A1A", fontSize: 12, fontVariant: ["tabular-nums"], fontWeight: "900", letterSpacing: 0.5, marginTop: 14 },
   success: { color: "#2F5E4B", fontSize: 11, fontWeight: "700", marginTop: 10 },
   error: { color: "#9E3B30", fontSize: 11, fontWeight: "700", marginTop: 10 },
 });

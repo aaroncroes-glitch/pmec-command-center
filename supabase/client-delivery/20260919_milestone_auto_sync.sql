@@ -41,3 +41,11 @@ begin
   );
 end;
 $$;
+
+-- Later migrations applied to this project, in order:
+--   quotes_and_invoices            tables public.quotes + public.invoices with RLS (client
+--                                  members, plus open read for demonstration clients),
+--                                  demo_decide_quote, pm_send_quote, pm_withdraw_quote,
+--                                  pm_issue_invoice, pm_settle_invoice; pm_project_state
+--                                  also returns 'invoices' and 'quotes'.
+--   demo_reset_with_quotes_invoices demo_reset_project also clears and re-seeds them.

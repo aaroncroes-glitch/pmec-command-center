@@ -2,7 +2,7 @@ import express from "express";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { PortalRpcError, registerClientPortalRoutes, shapePublish, type PortalRpc } from "../server/pmec-client-portal";
+import { PortalRpcError, registerClientPortalRoutes, shapeLines, shapePublish, type PortalRpc } from "../server/pmec-client-portal";
 
 type Call = { fn: string; args: Record<string, unknown> };
 
@@ -111,5 +111,72 @@ describe("shapePublish", () => {
   it("rejects out-of-range progress and unknown milestone states", () => {
     expect(shapePublish("p", { ...publishBody, project: { ...publishBody.project, progress: 140 } }).ok).toBe(false);
     expect(shapePublish("p", { ...publishBody, milestones: [{ id: "m", title: "x", status: "done" }] }).ok).toBe(false);
+  });
+});
+
+describe("money lines", () => {
+  it("totals lines the way the database does", () => {
+    const shaped = shapeLines([
+      { description: "Heat pumps", quantity: 2, unitPrice: 38500 },
+      { description: "Pipework", quantity: 1, unitPrice: 24600 },
+    ])!;
+    expect(shaped.subtotal).toBe(101600);
+    expect(shaped.lines).toHaveLength(2);
+  });
+
+  it("refuses empty, unpriced or nonsense lines", () => {
+    expect(shapeLines([])).toBeNull();
+    expect(shapeLines("x")).toBeNull();
+    expect(shapeLines([{ description: "", quantity: 1, unitPrice: 10 }])).toBeNull();
+    expect(shapeLines([{ description: "Free", quantity: 1, unitPrice: 0 }])).toBeNull();
+    expect(shapeLines([{ description: "Negative", quantity: -1, unitPrice: 10 }])).toBeNull();
+  });
+});
+
+describe("invoice and quote routes", () => {
+  const lines = [{ description: "Progress claim", quantity: 1, unitPrice: 134400 }];
+
+  it("issues an invoice with shaped lines and tax", async () => {
+    const { rpc, calls } = fakeRpc({ exists: true, is_demo: true });
+    const base = await start(rpc);
+    const res = await post(`${base}/api/client-portal/jo-hotel-renovation/invoices`, { title: "Progress claim 02", lines, taxRate: 7, dueDate: "2026-10-31", currency: "awg" });
+    expect(res.status).toBe(200);
+    const call = calls.find((c) => c.fn === "pm_issue_invoice")!;
+    expect(call.args.p_currency).toBe("AWG");
+    expect(call.args.p_tax_rate).toBe(7);
+    expect(call.args.p_due_date).toBe("2026-10-31");
+  });
+
+  it("rejects an invoice with no usable lines", async () => {
+    const { rpc, calls } = fakeRpc({ exists: true, is_demo: true });
+    const base = await start(rpc);
+    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/invoices`, { title: "Empty", lines: [] })).status).toBe(400);
+    expect(calls.some((c) => c.fn === "pm_issue_invoice")).toBe(false);
+  });
+
+  it("only settles to paid or void", async () => {
+    const base = await start(fakeRpc({ exists: true, is_demo: true }).rpc);
+    const id = "0f8fad5b-d9cb-469f-a165-70867728950e";
+    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/invoices/${id}/settle`, { status: "cancelled" })).status).toBe(400);
+    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/invoices/${id}/settle`, { status: "paid" })).status).toBe(200);
+  });
+
+  it("maps a second settlement to 409", async () => {
+    const base = await start(fakeRpc({ exists: true, is_demo: true }, new PortalRpcError("already settled", 400, "55000")).rpc);
+    const id = "0f8fad5b-d9cb-469f-a165-70867728950e";
+    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/invoices/${id}/settle`, { status: "paid" })).status).toBe(409);
+  });
+
+  it("sends a quote for the named client", async () => {
+    const { rpc, calls } = fakeRpc({ exists: true, is_demo: true });
+    const base = await start(rpc);
+    const res = await post(`${base}/api/client-portal/jo-hotel-renovation/quotes`, { clientName: "Renaissance Aruba", title: "Pool deck heat pumps", lines, taxRate: 7, validUntil: "2026-10-20" });
+    expect(res.status).toBe(200);
+    expect(calls.find((c) => c.fn === "pm_send_quote")!.args.p_client_name).toBe("Renaissance Aruba");
+  });
+
+  it("needs a client on a quote", async () => {
+    const base = await start(fakeRpc({ exists: true, is_demo: true }).rpc);
+    expect((await post(`${base}/api/client-portal/jo-hotel-renovation/quotes`, { title: "No client", lines })).status).toBe(400);
   });
 });
