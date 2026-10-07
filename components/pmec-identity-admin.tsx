@@ -1,4 +1,5 @@
 import { HairlineFigure } from "@/components/hairline-figure";
+import { hairlineWeb } from "@/lib/hairline-platform";
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useOptionalAuth } from "@/lib/pmec-clerk-optional";
@@ -59,7 +60,7 @@ export function PmecIdentityAdmin() {
   const data = overview.data;
 
   return <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-    <View style={styles.hero}><View style={styles.heroCopy}><Text style={styles.kicker}>PMEC / ORGANIZATION ADMIN</Text><Text style={styles.title}>Identity mapping,{`\n`}with a paper trail.</Text><Text style={styles.subtitle}>Link a real Production Clerk user to one PMEC person and an active least-privilege membership. Payroll authority is never granted from this workspace.</Text></View><HairlineFigure name="vault" plate={palette.foreground} themeMode="dark" intensity={0.62} label="Secured identity vault" style={styles.heroFigure} minWidth={880} /><View style={styles.heroCallout}><Text style={styles.heroNumber}>{availableUsers.length}</Text><Text style={styles.heroLabel}>UNLINKED PRODUCTION{`\n`}CLERK ACCOUNTS</Text></View></View>
+    <View style={styles.hero}><View style={styles.heroCopy}><Text style={styles.kicker}>PMEC / ORGANIZATION ADMIN</Text><Text style={styles.title}>Identity mapping,{`\n`}with a paper trail.</Text><Text style={styles.subtitle}>Link a real Production Clerk user to one PMEC person and an active least-privilege membership. Payroll authority is never granted from this workspace.</Text></View>{hairlineWeb ? <HairlineFigure name="vault" plate={palette.foreground} themeMode="dark" intensity={0.62} label="Secured identity vault" style={styles.heroFigure} minWidth={880} /> : null}<View style={styles.heroCallout}><Text style={styles.heroNumber}>{availableUsers.length}</Text><Text style={styles.heroLabel}>UNLINKED PRODUCTION{`\n`}CLERK ACCOUNTS</Text></View></View>
 
     <View style={styles.guardrail}><Text style={styles.guardrailTitle}>CONTROL BOUNDARY</Text><Text style={styles.guardrailCopy}>Organization administrators can create employee, Project Manager, and HR memberships. They cannot grant organization-admin or payroll permissions here; those privileges remain independently governed.</Text></View>
 

@@ -1,4 +1,4 @@
-import { View, type ViewStyle } from "react-native";
+import type { ViewStyle } from "react-native";
 
 import type { ThemeMode } from "@/lib/lumen-theme";
 
@@ -22,11 +22,11 @@ type Props = {
   intensity?: number;
   label?: string;
   style?: ViewStyle;
-  /** Hide on narrow layouts (web only; no-op on native). */
+  /** Hide on narrow layouts (web only). */
   minWidth?: number;
 };
 
-/** Native / SSR: empty 5:4 box so layout does not shift on web when Hairline mounts. */
-export function HairlineFigure({ style }: Props) {
-  return <View style={[{ width: "100%", aspectRatio: 5 / 4 }, style]} pointerEvents="none" />;
+/** Native: no figure and no reserved space. */
+export function HairlineFigure(_props: Props) {
+  return null;
 }
