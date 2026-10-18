@@ -15,7 +15,7 @@ Notifications.setNotificationHandler({
 async function configureReminders() {
   if (Platform.OS === "web") return false;
   if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL, { name: "Upcoming tasks", importance: Notifications.AndroidImportance.DEFAULT, lightColor: "#FF5A1F" });
+    await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL, { name: "Upcoming tasks", importance: Notifications.AndroidImportance.DEFAULT, lightColor: "#49FAF1" });
   }
   await Notifications.setNotificationCategoryAsync(REMINDER_CATEGORY, [{ identifier: REMINDER_DONE_ACTION, buttonTitle: "Mark done", options: { opensAppToForeground: true } }]);
   const existing = await Notifications.getPermissionsAsync();

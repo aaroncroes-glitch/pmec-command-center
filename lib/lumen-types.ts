@@ -7,6 +7,6 @@ export type Recurrence = "none" | "daily" | "weekly" | "monthly";
 
 export type Project = { id: string; name: string; color: string; status: ProjectStatus; description: string; createdAt: string };
 export type Task = { id: string; title: string; projectId: string; dueDate: string; priority: TaskPriority; completed: boolean; createdAt: string; completedAt?: string; tags?: string[]; recurrence?: Recurrence; reminderAt?: string; notificationId?: string; recurrenceSourceId?: string };
-export type WorkspaceState = { projects: Project[]; tasks: Task[]; activeDate: string; themeMode: ThemeMode; motionMode: MotionMode; activePriority?: TaskPriority | "all"; activeTag?: string };
+export type WorkspaceState = { projects: Project[]; tasks: Task[]; activeDate: string; themeMode: ThemeMode; motionMode: MotionMode; /** 2 = the October 2026 black-and-cyan brand. */ brandVersion?: number; activePriority?: TaskPriority | "all"; activeTag?: string };
 export type NewTask = { title: string; projectId: string; dueDate: string; priority: TaskPriority; tags: string[]; recurrence: Recurrence; reminderAt?: string };
 export type NewProject = Pick<Project, "name" | "description">;

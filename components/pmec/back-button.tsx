@@ -31,7 +31,7 @@ export type BackButtonProps = {
   /** Visible text for the text variant. */
   text?: string;
   /** "inverse" for the dark desktop rail. */
-  tone?: "ink" | "inverse";
+  tone?: "ink" | "inverse" | "rail";
   /** Layout for the whole control, such as spacing below it. */
   style?: StyleProp<ViewStyle>;
 };
@@ -54,7 +54,8 @@ export function BackButton({
 }: BackButtonProps) {
   const { palette } = useLumen();
   const safeBack = useSafeBack(fallback);
-  const ink = tone === "inverse" ? palette.inverseText : palette.foreground;
+  // "rail" sits on the navigation rail, which is dark in both modes.
+  const ink = tone === "rail" ? palette.railText : tone === "inverse" ? palette.inverseText : palette.foreground;
   const handlePress = onPress ?? safeBack;
 
   return (

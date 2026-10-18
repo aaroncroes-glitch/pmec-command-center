@@ -25,7 +25,7 @@ The visual language is **editorial utility** rather than card-heavy productivity
 | Ink | `#191919` | Headings, body copy, icons, and primary buttons |
 | Clay | `#E7E0D8` | Elevated neutral surfaces and inactive states |
 | Hairline | `#D4CDC3` | Section separators and form edges |
-| Signal orange | `#FF5A1F` | Completion state, primary action, and selected state |
+| Cyan | `#49FAF1` (deep `#0B5560` as text on light) | Completion state, primary action, and selected state |
 | Night | `#171717` | Dark-mode canvas |
 | Night surface | `#242424` | Dark-mode panels and tab surfaces |
 | Dark hairline | `#3B3B3B` | Dark-mode separators |
@@ -38,7 +38,7 @@ The Today screen opens with a 48–52 pt uppercase weekday, date metadata, then 
 
 | Flow | Steps |
 | --- | --- |
-| **Complete a task** | Today → tap task checkbox → crisp success haptic → checkbox fills with signal orange → task title reduces in contrast and list settles. |
+| **Complete a task** | Today → tap task checkbox → crisp success haptic → checkbox fills with cyan → task title reduces in contrast and list settles. |
 | **Create a task** | Today or Project detail → tap lower-right create button → composer sheet rises from bottom → enter title and select context → save → sheet dismisses and task appears in its intended list position. |
 | **Manage a project** | Projects → select project row → Project detail → create or complete tasks → project progress updates. |
 | **Plan the week** | Today → select a nearby day in the timeline → view that day’s tasks → add or complete a task → return to Today. |

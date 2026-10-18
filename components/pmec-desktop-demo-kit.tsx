@@ -1,23 +1,25 @@
 import type { ReactNode } from "react";
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
+// The legacy PM/HR mock-ups (/pm-ui-demo, /hr-ui-demo) are fixed to the dark brand: they are
+// desktop showcases with no theme switch of their own. Values match lib/lumen-theme.ts (dark).
 const colors = {
-  paper: "#F4F0E8",
-  paperStrong: "#EAE3D6",
-  ink: "#171512",
-  muted: "#746F66",
-  rail: "#151515",
-  railMuted: "#AAA39A",
-  orange: "#F15A2A",
-  orangeSoft: "#FBE3D8",
-  green: "#2E765B",
-  greenSoft: "#DDECE5",
-  amber: "#A66712",
-  amberSoft: "#F4E6C7",
-  red: "#A84331",
-  redSoft: "#F3DDDA",
-  line: "#D6CFC2",
-  white: "#FFFFFF",
+  paper: "#000000",
+  paperStrong: "#11161A",
+  ink: "#E6EDF2",
+  muted: "#8BA3B3",
+  rail: "#0A0D0F",
+  railMuted: "#8BA3B3",
+  orange: "#49FAF1",
+  orangeSoft: "#0B2A2C",
+  green: "#7FD6AE",
+  greenSoft: "#0F2A20",
+  amber: "#F0B45A",
+  amberSoft: "#2A1F0B",
+  red: "#FF8A8F",
+  redSoft: "#2A1012",
+  line: "#26323A",
+  white: "#0A0D0F",
 };
 
 export type DemoTone = "neutral" | "orange" | "green" | "amber" | "red";

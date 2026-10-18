@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import type { LumenPalette } from "@/lib/lumen-theme";
+import { useLumen } from "@/lib/lumen-workspace";
+import { useThemedStyles } from "@/lib/use-themed-styles";
 
 import { getApiBaseUrl } from "@/constants/oauth";
 import { clientChangeOrderDocumentId, type JobOrder } from "@/lib/pmec-job-orders";
@@ -127,6 +130,8 @@ export function milestonesForClient(job: JobOrder) {
 }
 
 export function ClientPortalPanel({ job }: { job: JobOrder }) {
+  const { palette } = useLumen();
+  const styles = useThemedStyles(makeStyles);
   const base = getApiBaseUrl();
   const endpoint = `${base}/api/client-portal/${encodeURIComponent(job.id)}`;
   const [load, setLoad] = useState<Load>({ kind: "loading" });
@@ -221,7 +226,7 @@ export function ClientPortalPanel({ job }: { job: JobOrder }) {
         ) : null}
       </View>
 
-      {load.kind === "loading" ? <ActivityIndicator style={{ marginTop: 18, alignSelf: "flex-start" }} color="#A84B2A" /> : null}
+      {load.kind === "loading" ? <ActivityIndicator style={{ marginTop: 18, alignSelf: "flex-start" }} color={palette.accentText} /> : null}
       {load.kind === "unlinked" ? (
         <Text style={styles.copy}>
           This job order is not shared with a client yet. Once PMEC links it to a client account, you can publish its
@@ -251,6 +256,7 @@ export function ClientPortalPanel({ job }: { job: JobOrder }) {
 }
 
 function ReadyPanel({ job, endpoint, state, onChanged }: { job: JobOrder; endpoint: string; state: PortalState; onChanged: () => Promise<void> }) {
+  const styles = useThemedStyles(makeStyles);
   const published = state.project;
   const currency = published?.currency ?? job.currency;
   const approved = state.change_orders.filter((order) => order.status === "approved").reduce((sum, order) => sum + Number(order.amount), 0);
@@ -280,6 +286,7 @@ function ReadyPanel({ job, endpoint, state, onChanged }: { job: JobOrder; endpoi
 }
 
 function Figure({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.figure}>
       <Text style={styles.label}>{label}</Text>
@@ -298,6 +305,7 @@ async function send(url: string, body: unknown) {
 }
 
 function PublishForm({ job, endpoint, published, onDone }: { job: JobOrder; endpoint: string; published: PortalState["project"]; onDone: () => Promise<void> }) {
+  const styles = useThemedStyles(makeStyles);
   const doneTasks = job.tasks.filter((task) => task.status === "COMPLETED").length;
   const taskProgress = job.tasks.length ? Math.round((doneTasks / job.tasks.length) * 100) : 0;
   const [contract, setContract] = useState(String(published?.original_contract_value ?? job.budget));
@@ -408,6 +416,7 @@ function PublishForm({ job, endpoint, published, onDone }: { job: JobOrder; endp
 }
 
 function ChangeOrders({ endpoint, currency, orders, onDone }: { endpoint: string; currency: string; orders: ChangeOrder[]; onDone: () => Promise<void> }) {
+  const styles = useThemedStyles(makeStyles);
   const [title, setTitle] = useState("");
   const [reason, setReason] = useState("");
   const [amount, setAmount] = useState("");
@@ -491,6 +500,8 @@ function ChangeOrders({ endpoint, currency, orders, onDone }: { endpoint: string
 
 /** A small editable table of priced lines, shared by invoices and quotes. */
 function LineEditor({ lines, onChange, currency }: { lines: MoneyLine[]; onChange: (lines: MoneyLine[]) => void; currency: string }) {
+  const { palette } = useLumen();
+  const styles = useThemedStyles(makeStyles);
   const set = (index: number, patch: Partial<MoneyLine>) => onChange(lines.map((line, i) => (i === index ? { ...line, ...patch } : line)));
   const subtotal = lines.reduce((sum, line) => sum + Math.round(line.quantity * line.unitPrice * 100) / 100, 0);
   return (
@@ -499,7 +510,7 @@ function LineEditor({ lines, onChange, currency }: { lines: MoneyLine[]; onChang
         <View key={index} style={styles.lineRow}>
           <View style={[styles.field, { flexGrow: 1, minWidth: 200, marginTop: 0 }]}>
             <Text style={styles.label}>DESCRIPTION</Text>
-            <TextInput accessibilityLabel={`line ${index + 1} description`} value={line.description} onChangeText={(value) => set(index, { description: value })} placeholder="What the client is being charged for" placeholderTextColor="#766B5F" style={styles.input} />
+            <TextInput accessibilityLabel={`line ${index + 1} description`} value={line.description} onChangeText={(value) => set(index, { description: value })} placeholder="What the client is being charged for" placeholderTextColor={palette.muted} style={styles.input} />
           </View>
           <View style={[styles.field, { width: 76, marginTop: 0 }]}>
             <Text style={styles.label}>QTY</Text>
@@ -540,6 +551,7 @@ function totals(lines: MoneyLine[], rate: string) {
 }
 
 function Invoices({ endpoint, currency, invoices, onDone }: { endpoint: string; currency: string; invoices: Invoice[]; onDone: () => Promise<void> }) {
+  const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [lines, setLines] = useState<MoneyLine[]>(emptyLines);
@@ -638,6 +650,7 @@ function Invoices({ endpoint, currency, invoices, onDone }: { endpoint: string; 
 }
 
 function Quotes({ endpoint, currency, clientName, quotes, onDone }: { endpoint: string; currency: string; clientName: string; quotes: Quote[]; onDone: () => Promise<void> }) {
+  const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -740,6 +753,7 @@ function Quotes({ endpoint, currency, clientName, quotes, onDone }: { endpoint: 
 }
 
 function SiteUpdate({ endpoint, updates, onDone }: { endpoint: string; updates: PortalState["updates"]; onDone: () => Promise<void> }) {
+  const styles = useThemedStyles(makeStyles);
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -781,6 +795,8 @@ function SiteUpdate({ endpoint, updates, onDone }: { endpoint: string; updates: 
 }
 
 function Field({ label, value, onChange, numeric, narrow, multiline, placeholder }: { label: string; value: string; onChange: (value: string) => void; numeric?: boolean; narrow?: boolean; multiline?: boolean; placeholder?: string }) {
+  const { palette } = useLumen();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.field, narrow ? styles.fieldNarrow : styles.fieldWide]}>
       <Text style={styles.label}>{label}</Text>
@@ -791,66 +807,66 @@ function Field({ label, value, onChange, numeric, narrow, multiline, placeholder
         keyboardType={numeric ? "numeric" : "default"}
         multiline={multiline}
         placeholder={placeholder}
-        placeholderTextColor="#766B5F"
+        placeholderTextColor={palette.muted}
         style={[styles.input, multiline && styles.inputMulti]}
       />
     </View>
   );
 }
 
-// Matches the job order screen's own panels (projectTeamStyles). Text colours clear 4.5:1
-// on the #FFFDF8 card; the muted #6E6256 is 5.6:1.
-const styles = StyleSheet.create({
-  section: { borderTopColor: "#DDD6CC", borderTopWidth: StyleSheet.hairlineWidth, marginTop: 30, paddingTop: 24 },
+// Built from the palette, like the job order screen around it, so it follows light and
+// dark. Every text token it uses is AA-checked in lib/lumen-theme.ts.
+const makeStyles = (palette: LumenPalette) => StyleSheet.create({
+  section: { borderTopColor: palette.border, borderTopWidth: StyleSheet.hairlineWidth, marginTop: 30, paddingTop: 24 },
   header: { alignItems: "flex-start", flexDirection: "row", gap: 12, justifyContent: "space-between" },
   flex: { flex: 1 },
-  kicker: { color: "#A84B2A", fontSize: 10, fontWeight: "900", letterSpacing: 0.8 },
-  title: { color: "#1A1A1A", fontSize: 14, fontWeight: "900", marginTop: 6 },
-  badge: { backgroundColor: "#F2E6DB", color: "#8A3D22", fontSize: 8, fontWeight: "900", letterSpacing: 0.55, paddingHorizontal: 8, paddingVertical: 6 },
-  badgeLive: { backgroundColor: "#E3EFE8", color: "#2F5E4B" },
-  copy: { color: "#6E6256", fontSize: 11, lineHeight: 16, marginTop: 10, maxWidth: 720 },
-  figures: { borderColor: "#DDD6CC", borderWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", marginTop: 18 },
+  kicker: { color: palette.accentText, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 },
+  title: { color: palette.foreground, fontSize: 14, fontWeight: "900", marginTop: 6 },
+  badge: { backgroundColor: palette.accentSoft, color: palette.accentText, fontSize: 8, fontWeight: "900", letterSpacing: 0.55, paddingHorizontal: 8, paddingVertical: 6 },
+  badgeLive: { backgroundColor: palette.successSoft, color: palette.successText },
+  copy: { color: palette.muted, fontSize: 11, lineHeight: 16, marginTop: 10, maxWidth: 720 },
+  figures: { borderColor: palette.border, borderWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", marginTop: 18 },
   figure: { flexGrow: 1, minWidth: 150, padding: 14 },
-  figureValue: { color: "#1A1A1A", fontSize: 15, fontWeight: "900", marginTop: 6 },
-  figureStrong: { color: "#A84B2A" },
-  block: { borderTopColor: "#EAE4DB", borderTopWidth: StyleSheet.hairlineWidth, marginTop: 22, paddingTop: 18 },
-  blockTitle: { color: "#1A1A1A", fontSize: 11, fontWeight: "900", letterSpacing: 0.7 },
+  figureValue: { color: palette.foreground, fontSize: 15, fontWeight: "900", marginTop: 6 },
+  figureStrong: { color: palette.accentText },
+  block: { borderTopColor: palette.border, borderTopWidth: StyleSheet.hairlineWidth, marginTop: 22, paddingTop: 18 },
+  blockTitle: { color: palette.foreground, fontSize: 11, fontWeight: "900", letterSpacing: 0.7 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   field: { marginTop: 12 },
   fieldWide: { flexGrow: 1, minWidth: 220 },
   fieldNarrow: { minWidth: 120 },
-  label: { color: "#6E6256", fontSize: 8, fontWeight: "900", letterSpacing: 0.65, marginTop: 4 },
-  input: { borderColor: "#B9AFA3", borderRadius: 10, borderWidth: 1, color: "#1A1A1A", fontSize: 13, marginTop: 6, paddingHorizontal: 12, paddingVertical: 10 },
+  label: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.65, marginTop: 4 },
+  input: { borderColor: palette.field, borderRadius: 10, borderWidth: 1, color: palette.foreground, fontSize: 13, marginTop: 6, paddingHorizontal: 12, paddingVertical: 10 },
   inputMulti: { minHeight: 70, textAlignVertical: "top" },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
-  chip: { borderColor: "#DDD6CC", borderRadius: 12, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 9 },
-  chipActive: { backgroundColor: "#1A1A1A", borderColor: "#1A1A1A" },
-  chipText: { color: "#1A1A1A", fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
-  chipTextActive: { color: "#FFFDF8" },
-  milestone: { alignItems: "center", borderBottomColor: "#EAE4DB", borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", gap: 10, paddingVertical: 9 },
-  milestoneStatus: { color: "#6E6256", fontSize: 8, fontWeight: "900", letterSpacing: 0.55, width: 86 },
-  milestoneTitle: { color: "#1A1A1A", flex: 1, fontSize: 12, fontWeight: "800" },
-  meta: { color: "#6E6256", fontSize: 10, marginTop: 3 },
-  ok: { color: "#2F5E4B" },
-  live: { color: "#A84B2A" },
-  muted: { color: "#6E6256" },
-  order: { alignItems: "center", borderBottomColor: "#EAE4DB", borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", gap: 12, paddingVertical: 12 },
-  orderTitle: { color: "#1A1A1A", fontSize: 12, fontWeight: "900" },
+  chip: { borderColor: palette.border, borderRadius: 12, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 9 },
+  chipActive: { backgroundColor: palette.inverse, borderColor: palette.foreground },
+  chipText: { color: palette.foreground, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
+  chipTextActive: { color: palette.inverseText },
+  milestone: { alignItems: "center", borderBottomColor: palette.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", gap: 10, paddingVertical: 9 },
+  milestoneStatus: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.55, width: 86 },
+  milestoneTitle: { color: palette.foreground, flex: 1, fontSize: 12, fontWeight: "800" },
+  meta: { color: palette.muted, fontSize: 10, marginTop: 3 },
+  ok: { color: palette.successText },
+  live: { color: palette.accentText },
+  muted: { color: palette.muted },
+  order: { alignItems: "center", borderBottomColor: palette.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", gap: 12, paddingVertical: 12 },
+  orderTitle: { color: palette.foreground, fontSize: 12, fontWeight: "900" },
   orderStatus: { fontSize: 8, fontWeight: "900", letterSpacing: 0.55 },
-  update: { borderBottomColor: "#EAE4DB", borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 8 },
-  primary: { alignSelf: "flex-start", backgroundColor: "#1A1A1A", borderRadius: 12, marginTop: 16, paddingHorizontal: 16, paddingVertical: 12 },
-  primaryText: { color: "#FFFDF8", fontSize: 10, fontWeight: "900", letterSpacing: 0.6 },
-  secondary: { borderColor: "#B9AFA3", borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7 },
-  secondaryWide: { alignSelf: "flex-start", borderColor: "#1A1A1A", borderRadius: 12, borderWidth: 1, marginTop: 14, paddingHorizontal: 14, paddingVertical: 11 },
-  secondaryText: { color: "#1A1A1A", fontSize: 9, fontWeight: "900", letterSpacing: 0.55 },
+  update: { borderBottomColor: palette.border, borderBottomWidth: StyleSheet.hairlineWidth, paddingVertical: 8 },
+  primary: { alignSelf: "flex-start", backgroundColor: palette.inverse, borderRadius: 12, marginTop: 16, paddingHorizontal: 16, paddingVertical: 12 },
+  primaryText: { color: palette.inverseText, fontSize: 10, fontWeight: "900", letterSpacing: 0.6 },
+  secondary: { borderColor: palette.field, borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7 },
+  secondaryWide: { alignSelf: "flex-start", borderColor: palette.foreground, borderRadius: 12, borderWidth: 1, marginTop: 14, paddingHorizontal: 14, paddingVertical: 11 },
+  secondaryText: { color: palette.foreground, fontSize: 9, fontWeight: "900", letterSpacing: 0.55 },
   disabled: { opacity: 0.55 },
   buttonRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  lineRow: { alignItems: "flex-start", borderBottomColor: "#EAE4DB", borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", gap: 10, paddingVertical: 8 },
-  lineTotal: { color: "#1A1A1A", fontSize: 12, fontVariant: ["tabular-nums"], fontWeight: "900" },
-  removeLine: { alignItems: "center", borderColor: "#B9AFA3", borderRadius: 8, borderWidth: 1, height: 30, justifyContent: "center", marginTop: 18, width: 30 },
+  lineRow: { alignItems: "flex-start", borderBottomColor: palette.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: "row", flexWrap: "wrap", gap: 10, paddingVertical: 8 },
+  lineTotal: { color: palette.foreground, fontSize: 12, fontVariant: ["tabular-nums"], fontWeight: "900" },
+  removeLine: { alignItems: "center", borderColor: palette.field, borderRadius: 8, borderWidth: 1, height: 30, justifyContent: "center", marginTop: 18, width: 30 },
   lineFoot: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "space-between", marginTop: 12 },
-  subtotal: { color: "#6E6256", fontSize: 11, fontVariant: ["tabular-nums"], fontWeight: "900", letterSpacing: 0.5 },
-  totalLine: { color: "#1A1A1A", fontSize: 12, fontVariant: ["tabular-nums"], fontWeight: "900", letterSpacing: 0.5, marginTop: 14 },
-  success: { color: "#2F5E4B", fontSize: 11, fontWeight: "700", marginTop: 10 },
-  error: { color: "#9E3B30", fontSize: 11, fontWeight: "700", marginTop: 10 },
+  subtotal: { color: palette.muted, fontSize: 11, fontVariant: ["tabular-nums"], fontWeight: "900", letterSpacing: 0.5 },
+  totalLine: { color: palette.foreground, fontSize: 12, fontVariant: ["tabular-nums"], fontWeight: "900", letterSpacing: 0.5, marginTop: 14 },
+  success: { color: palette.successText, fontSize: 11, fontWeight: "700", marginTop: 10 },
+  error: { color: palette.dangerText, fontSize: 11, fontWeight: "700", marginTop: 10 },
 });
