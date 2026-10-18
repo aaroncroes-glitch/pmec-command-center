@@ -11,6 +11,7 @@
 
 export { PmecPressable, PmecPressableRow, type PmecPressableProps } from "./pressable";
 export { BackButton, useSafeBack, type BackButtonProps } from "./back-button";
+export { BrandMark, type BrandMarkProps } from "./brand-mark";
 export { Body, Eyebrow, Heading, Meta, Title } from "./text";
 export { Badge, Button, Card, Chip, type ButtonVariant } from "./controls";
 export { StatTile, type Figure, type Money } from "./stat-tile";
