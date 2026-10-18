@@ -12,7 +12,7 @@ const weekend = [0, 6].includes(new Date().getDay());
 const timesheetDue = demoWeekday(weekend ? 1 : 0, 4);
 
 export const starterProjects: Project[] = [
-  { id: "project-hotel", name: "Hotel Renovation", color: "#FF5A1F", status: "active", description: "Chiller plant, pumps and guest-floor fan coils for Renaissance Aruba.", createdAt: d(-60) },
+  { id: "project-hotel", name: "Hotel Renovation", color: "#1FB8C3", status: "active", description: "Chiller plant, pumps and guest-floor fan coils for Renaissance Aruba.", createdAt: d(-60) },
   { id: "project-yard", name: "Workshop Electrical", color: "#3A7563", status: "active", description: "Ventilation fan circuits for the PMEC yard workshop.", createdAt: d(-45) },
   { id: "project-office", name: "Office Fit-out", color: "#96734C", status: "active", description: "HVAC concept for Building C at Oranjestad Business Park.", createdAt: d(-12) },
   { id: "project-admin", name: "Training & admin", color: "#6059A8", status: "active", description: "Certificates, toolbox talks and timesheets.", createdAt: d(-90) },
@@ -38,4 +38,4 @@ export const starterTasks: Task[] = [
   { id: "task-fan-schedule", title: "Update the workshop fan schedule", projectId: "project-yard", dueDate: d(-4), priority: "medium", completed: true, completedAt: d(-4), createdAt: d(-8), tags: ["electrical"] },
 ];
 
-export const initialWorkspace: WorkspaceState = { projects: starterProjects, tasks: starterTasks, activeDate: today, themeMode: "light", motionMode: "full" };
+export const initialWorkspace: WorkspaceState = { projects: starterProjects, tasks: starterTasks, activeDate: today, themeMode: "dark", motionMode: "full", brandVersion: 2 };

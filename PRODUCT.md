@@ -55,9 +55,14 @@ reassure, apologize, celebrate, or explain its own architecture.
 **The strongest constraint on this product is preservation.** The existing visual language
 is settled and is not up for redesign:
 
-- warm paper ground, ink type, hairline rules instead of floating containers
+- a black ground by default (warm paper as the light option), hairline rules instead of
+  floating containers
 - condensed heavy display weights, uppercase letterspaced labels
-- a single held accent (signal orange), never a second accent colour
+- a single held accent (cyan), never a second accent colour
+
+The accent and default ground changed in October 2026 at the client's request: signal
+orange on warm paper became cyan `#49FAF1` on black, matching pmec.group. That was a
+decision of the owner, not a drift; the rest of the language is unchanged.
 
 Anything that departs from that language is the anti-reference, including well-intentioned
 "improvements". Do not introduce new hues, new type families, card-and-shadow layouts, or
@@ -107,8 +112,7 @@ light and gloved hands set the floor for contrast and target size.
 
 ### Resolved tension
 
-Signal orange `#FF5A1F` measures 2.82:1 on the paper ground and cannot carry small text at
-AA. The accent is **not** being changed. Instead it stops carrying label text and continues
-to do rules, marks, active states and brand moments, with ink carrying the words. Muted
-grey moves in lightness only, at the same hue, to clear 4.5:1 on all three surfaces. Both
-resolutions satisfy AA without altering the design language.
+On black, cyan `#49FAF1` measures 16.2:1 and carries text as well as fills. On the light
+(paper) option the fill cyan is too pale for words, so text in the accent uses the deep
+cyan `#0B5560` (7.6:1) and ink carries labels on accent fills. Every pairing in
+`lib/lumen-theme.ts` is measured against AA, and screens take colour only from that palette.

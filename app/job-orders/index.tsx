@@ -59,6 +59,8 @@ import { usePmecJobOrders } from "@/lib/pmec-job-order-workspace";
 import { type PmecWorkforcePerson, usePmecControl } from "@/lib/pmec-control-workspace";
 import * as DocumentPicker from "expo-document-picker";
 import { useLumen } from "@/lib/lumen-workspace";
+import type { LumenPalette } from "@/lib/lumen-theme";
+import { useThemedStyles } from "@/lib/use-themed-styles";
 import { BackButton, Chip, StatTile } from "@/components/pmec";
 import { ClientPortalPanel } from "@/components/client-portal-panel";
 
@@ -76,61 +78,61 @@ const phaseKinds = new Set([
   "ON_HOLD",
 ]);
 const budgetFilterOptions: BudgetFilter[] = ["ALL", "WATCH", "AT_RISK", "OVER_BUDGET"];
-const projectSearchStyles = StyleSheet.create({
+const makeProjectSearchStyles = (palette: LumenPalette) => StyleSheet.create({
   row: {
     alignItems: "center",
-    backgroundColor: "#F0ECE5",
-    borderColor: "#DDD6CC",
+    backgroundColor: palette.surfaceStrong,
+    borderColor: palette.border,
     borderRadius: 14,
     borderWidth: 1,
     flexDirection: "row",
     gap: 12,
     paddingHorizontal: 14,
   },
-  input: { color: "#1A1A1A", flex: 1, fontSize: 12, minHeight: 42 },
-  count: { color: "#A84B2A", fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
+  input: { color: palette.foreground, flex: 1, fontSize: 12, minHeight: 42 },
+  count: { color: palette.accentText, fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
 });
-const costDocumentStyles = StyleSheet.create({
+const makeCostDocumentBase = (palette: LumenPalette) => StyleSheet.create({
   filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 11 },
   filterChip: {
-    borderColor: "#D7CEC3",
+    borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 6,
   },
-  filterChipActive: { backgroundColor: "#1A1A1A", borderColor: "#1A1A1A" },
-  filterChipText: { color: "#6E6256", fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
-  filterChipTextActive: { color: "#FFFDF8" },
+  filterChipActive: { backgroundColor: palette.inverse, borderColor: palette.foreground },
+  filterChipText: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
+  filterChipTextActive: { color: palette.inverseText },
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 7 },
   tag: {
-    backgroundColor: "#F0E6DC",
-    color: "#A84B2A",
+    backgroundColor: palette.accentSoft,
+    color: palette.accentText,
     fontSize: 8,
     fontWeight: "900",
     paddingHorizontal: 6,
     paddingVertical: 3,
   },
-  reviewNote: { color: "#6E6256", fontSize: 9, lineHeight: 14, marginTop: 8 },
+  reviewNote: { color: palette.muted, fontSize: 9, lineHeight: 14, marginTop: 8 },
   rightColumn: { alignItems: "flex-end", gap: 9 },
   statusButton: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 7 },
-  pending: { backgroundColor: "#FFF1D8" },
-  approved: { backgroundColor: "#E8F1ED" },
+  pending: { backgroundColor: palette.warningSoft },
+  approved: { backgroundColor: palette.successSoft },
   statusButtonText: { fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
-  pendingText: { color: "#8A5A11" },
-  approvedText: { color: "#2A5F50" },
+  pendingText: { color: palette.warningText },
+  approvedText: { color: palette.successText },
   menu: {
-    backgroundColor: "#FFFDF8",
-    borderColor: "#D7CEC3",
+    backgroundColor: palette.surface,
+    borderColor: palette.border,
     borderWidth: 1,
     marginTop: 8,
     padding: 9,
   },
-  reviewLabel: { color: "#6E6256", fontSize: 8, fontWeight: "900", letterSpacing: 0.45 },
+  reviewLabel: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.45 },
   reviewInput: {
-    borderBottomColor: "#D7CEC3",
+    borderBottomColor: palette.border,
     borderBottomWidth: 1,
-    color: "#1A1A1A",
+    color: palette.foreground,
     fontSize: 11,
     marginTop: 5,
     minHeight: 44,
@@ -139,48 +141,47 @@ const costDocumentStyles = StyleSheet.create({
   },
   menuOptions: { flexDirection: "row", gap: 7, marginTop: 9 },
   menuOption: {
-    borderColor: "#D7CEC3",
+    borderColor: palette.border,
     borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: 9,
     paddingVertical: 8,
   },
-  menuOptionActive: { backgroundColor: "#1A1A1A", borderColor: "#1A1A1A" },
-  menuOptionText: { color: "#6E6256", fontSize: 8, fontWeight: "900" },
-  menuOptionTextActive: { color: "#FFFDF8" },
+  menuOptionActive: { backgroundColor: palette.inverse, borderColor: palette.foreground },
+  menuOptionText: { color: palette.muted, fontSize: 8, fontWeight: "900" },
+  menuOptionTextActive: { color: palette.inverseText },
 });
-const decisionAgingStyles = StyleSheet.create({
+const makeDecisionAgingStyles = (palette: LumenPalette) => StyleSheet.create({
   banner: {
-    backgroundColor: "#F7DDD8",
-    borderLeftColor: "#B4483E",
+    backgroundColor: palette.dangerSoft,
+    borderLeftColor: palette.danger,
     borderLeftWidth: 3,
     marginBottom: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  bannerTitle: { color: "#8D2E27", fontSize: 9, fontWeight: "900", letterSpacing: 0.55 },
-  bannerCopy: { color: "#7D4B46", fontSize: 10, lineHeight: 15, marginTop: 4 },
+  bannerTitle: { color: palette.dangerText, fontSize: 9, fontWeight: "900", letterSpacing: 0.55 },
+  bannerCopy: { color: palette.dangerText, fontSize: 10, lineHeight: 15, marginTop: 4 },
   badge: {
     alignSelf: "flex-start",
-    backgroundColor: "#F7DDD8",
-    borderColor: "#E2A39C",
+    backgroundColor: palette.dangerSoft,
+    borderColor: palette.danger,
     borderRadius: 7,
     borderWidth: 1,
     marginTop: 8,
     paddingHorizontal: 7,
     paddingVertical: 4,
   },
-  badgeText: { color: "#8D2E27", fontSize: 8, fontWeight: "900", letterSpacing: 0.4 },
+  badgeText: { color: palette.dangerText, fontSize: 8, fontWeight: "900", letterSpacing: 0.4 },
 });
-const decisionBulkStyles = StyleSheet.create({
-  // Same value as the palette's AA-checked muted token; this sheet is built without the palette.
-  hint: { color: "#69635D", fontSize: 13, lineHeight: 18, marginTop: 8 },
-  shell: { backgroundColor: "#1A1A1A", gap: 10, marginTop: 14, padding: 13 },
-  heading: { color: "#FFFDF8", fontSize: 9, fontWeight: "900", letterSpacing: 0.7 },
-  copy: { color: "#D7CEC3", fontSize: 10, lineHeight: 15 },
+const makeDecisionBulkStyles = (palette: LumenPalette) => StyleSheet.create({
+  hint: { color: palette.muted, fontSize: 13, lineHeight: 18, marginTop: 8 },
+  shell: { backgroundColor: palette.inverse, gap: 10, marginTop: 14, padding: 13 },
+  heading: { color: palette.inverseText, fontSize: 9, fontWeight: "900", letterSpacing: 0.7 },
+  copy: { color: palette.mutedOnInverse, fontSize: 10, lineHeight: 15 },
   note: {
-    backgroundColor: "#2A2A2A",
-    color: "#FFFDF8",
+    backgroundColor: palette.inverseSoft,
+    color: palette.inverseText,
     fontSize: 11,
     minHeight: 44,
     paddingHorizontal: 10,
@@ -193,51 +194,54 @@ const decisionBulkStyles = StyleSheet.create({
     gap: 9,
     justifyContent: "space-between",
   },
-  selectAll: { color: "#F7C5A8", fontSize: 9, fontWeight: "900", letterSpacing: 0.4 },
-  approve: { backgroundColor: "#FF5A1F", paddingHorizontal: 12, paddingVertical: 10 },
-  approveDisabled: { backgroundColor: "#6B625A" },
-  approveText: { color: "#FFFDF8", fontSize: 9, fontWeight: "900", letterSpacing: 0.4 },
+  selectAll: { color: palette.accentOnInverse, fontSize: 9, fontWeight: "900", letterSpacing: 0.4 },
+  approve: { backgroundColor: palette.accent, paddingHorizontal: 12, paddingVertical: 10 },
+  approveDisabled: { backgroundColor: palette.muted },
+  approveText: { color: palette.inverseText, fontSize: 9, fontWeight: "900", letterSpacing: 0.4 },
   select: {
     alignSelf: "flex-start",
-    borderColor: "#B4483E",
+    borderColor: palette.danger,
     borderWidth: 1,
     marginTop: 8,
     paddingHorizontal: 7,
     paddingVertical: 5,
   },
-  selectActive: { backgroundColor: "#B4483E" },
-  selectText: { color: "#8D2E27", fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
-  selectTextActive: { color: "#FFFDF8" },
+  selectActive: { backgroundColor: palette.danger },
+  selectText: { color: palette.dangerText, fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
+  selectTextActive: { color: palette.inverseText },
 });
-const budgetAlertStyles = StyleSheet.create({
+const makeBudgetAlertStyles = (palette: LumenPalette) => StyleSheet.create({
   shell: { borderLeftWidth: 3, marginTop: 13, paddingHorizontal: 10, paddingVertical: 9 },
-  watch: { backgroundColor: "#FFF1D8", borderLeftColor: "#B57618" },
-  risk: { backgroundColor: "#F7DDD8", borderLeftColor: "#B4483E" },
-  title: { color: "#573900", fontSize: 8, fontWeight: "900", letterSpacing: 0.55 },
-  riskTitle: { color: "#8D2E27" },
-  copy: { color: "#6E6256", fontSize: 9, fontWeight: "700", marginTop: 4 },
-  riskCopy: { color: "#7D4B46" },
+  watch: { backgroundColor: palette.warningSoft, borderLeftColor: palette.warningText },
+  risk: { backgroundColor: palette.dangerSoft, borderLeftColor: palette.danger },
+  title: { color: palette.foreground, fontSize: 8, fontWeight: "900", letterSpacing: 0.55 },
+  riskTitle: { color: palette.dangerText },
+  copy: { color: palette.muted, fontSize: 9, fontWeight: "700", marginTop: 4 },
+  riskCopy: { color: palette.dangerText },
 });
-Object.assign(costDocumentStyles, {
-  summaryHint: { color: "#6E6256", fontSize: 9, lineHeight: 14, marginTop: 12 },
+const makeCostDocumentExtras = (palette: LumenPalette) => ({
+  summaryHint: { color: palette.muted, fontSize: 9, lineHeight: 14, marginTop: 12 },
   history: {
-    borderTopColor: "#E2D9CE",
+    borderTopColor: palette.border,
     borderTopWidth: StyleSheet.hairlineWidth,
     marginTop: 10,
     paddingTop: 9,
   },
-  historyTitle: { color: "#A84B2A", fontSize: 8, fontWeight: "900", letterSpacing: 0.55 },
+  historyTitle: { color: palette.accentText, fontSize: 8, fontWeight: "900", letterSpacing: 0.55 },
   historyRow: { flexDirection: "row", gap: 8, marginTop: 8 },
   historyDot: { borderRadius: 4, height: 8, marginTop: 3, width: 8 },
-  historyDotApproved: { backgroundColor: "#2A5F50" },
-  historyDotPending: { backgroundColor: "#B57618" },
-  historyStatus: { color: "#3F3932", fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
-  historyMeta: { color: "#82766A", fontSize: 8, marginTop: 2 },
-  historyNote: { color: "#6E6256", fontSize: 9, lineHeight: 13, marginTop: 3 },
-  openProject: { color: "#A84B2A", fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
+  historyDotApproved: { backgroundColor: palette.success },
+  historyDotPending: { backgroundColor: palette.warningText },
+  historyStatus: { color: palette.foreground, fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
+  historyMeta: { color: palette.muted, fontSize: 8, marginTop: 2 },
+  historyNote: { color: palette.muted, fontSize: 9, lineHeight: 13, marginTop: 3 },
+  openProject: { color: palette.accentText, fontSize: 8, fontWeight: "900", letterSpacing: 0.35 },
 });
 
+const makeCostDocumentStyles = (palette: LumenPalette) => ({ ...makeCostDocumentBase(palette), ...makeCostDocumentExtras(palette) });
+
 export default function JobOrdersPage() {
+  const projectSearchStyles = useThemedStyles(makeProjectSearchStyles);
   const { width } = useWindowDimensions();
   const { projectId } = useLocalSearchParams<{ projectId?: string | string[] }>();
   const access = usePmecAccess();
@@ -311,7 +315,7 @@ export default function JobOrdersPage() {
         <Text style={styles.railCopy}>PROJECT MANAGER DEMO</Text>
         <BackButton
           variant="text"
-          tone="inverse"
+          tone="rail"
           text="← Control Center"
           label="Back to Control Center"
           fallback="/control-center"
@@ -463,6 +467,7 @@ function JobOrderCard({
   styles: ReturnType<typeof makeStyles>;
   onPress: () => void;
 }) {
+  const { palette } = useLumen();
   const progress = jobOrderProgress(job);
   const spent = jobOrderSpent(job);
   const burn = spentPctOfBudget(job);
@@ -491,7 +496,7 @@ function JobOrderCard({
           <Text style={styles.progressLabel}>OVERALL PROGRESS</Text>
           <Text style={styles.progressNumber}>{progress}%</Text>
         </View>
-        <Track styles={styles} value={progress} color="#FF5A1F" />
+        <Track styles={styles} value={progress} color={palette.accent} />
       </View>
       <View style={styles.progressGroup}>
         <View style={styles.progressMeta}>
@@ -503,7 +508,7 @@ function JobOrderCard({
         <Track
           styles={styles}
           value={burn}
-          color={isOverBudget(job) ? "#B4483E" : burn > 85 ? "#B57618" : "#3A7563"}
+          color={isOverBudget(job) ? palette.danger : burn > 85 ? palette.warningText : palette.success}
           marker={Math.round((job.budget / totalAuthorized(job)) * 100)}
         />
       </View>
@@ -517,6 +522,7 @@ function JobOrderCard({
   );
 }
 function BudgetAlert({ job }: { job: JobOrder }) {
+  const budgetAlertStyles = useThemedStyles(makeBudgetAlertStyles);
   const status = budgetAlertStatus(job);
   if (status === "ON_TRACK") return null;
   const isWatch = status === "WATCH";
@@ -629,6 +635,7 @@ function JobOrderPanel({
   onClose: () => void;
   styles: ReturnType<typeof makeStyles>;
 }) {
+  const { palette } = useLumen();
   const {
     jobOrders,
     updateTask,
@@ -745,7 +752,7 @@ function JobOrderPanel({
                 styles={styles}
                 value={spentPctOfBudget(job)}
                 color={
-                  isOverBudget(job) ? "#B4483E" : spentPctOfBudget(job) > 80 ? "#B57618" : "#FF5A1F"
+                  isOverBudget(job) ? palette.danger : spentPctOfBudget(job) > 80 ? palette.warningText : palette.accent
                 }
                 marker={Math.round((job.budget / totalAuthorized(job)) * 100)}
               />
@@ -980,6 +987,8 @@ function ManagerDecisionSummary({
   jobOrders: JobOrder[];
   styles: ReturnType<typeof makeStyles>;
 }) {
+  const { palette } = useLumen();
+  const costDocumentStyles = useThemedStyles(makeCostDocumentStyles); const decisionAgingStyles = useThemedStyles(makeDecisionAgingStyles); const decisionBulkStyles = useThemedStyles(makeDecisionBulkStyles);
   const { bulkApproveCostDocuments } = usePmecJobOrders();
   const [filter, setFilter] = useState<"ALL" | CostDocumentApprovalStatus>("PENDING");
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set());
@@ -1093,7 +1102,7 @@ function ManagerDecisionSummary({
                   onChangeText={setBulkNote}
                   multiline
                   placeholder="Shared approval rationale (required)..."
-                  placeholderTextColor="#B5AAA0"
+                  placeholderTextColor={palette.muted}
                   style={decisionBulkStyles.note}
                 />
                 <View style={decisionBulkStyles.actionRow}>
@@ -1291,6 +1300,8 @@ function CostDocumentList({
     decision: { status: CostDocumentApprovalStatus; reviewNote?: string },
   ) => void;
 }) {
+  const { palette } = useLumen();
+  const costDocumentStyles = useThemedStyles(makeCostDocumentStyles);
   const [statusFilter, setStatusFilter] = useState<"ALL" | CostDocumentApprovalStatus>("ALL");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
@@ -1409,7 +1420,7 @@ function CostDocumentList({
                         }
                         multiline
                         placeholder="Explain the approval decision..."
-                        placeholderTextColor="#8B8175"
+                        placeholderTextColor={palette.muted}
                         style={costDocumentStyles.reviewInput}
                       />
                       <View style={costDocumentStyles.menuOptions}>
@@ -1499,6 +1510,7 @@ function TaskRow({
   onToggle: () => void;
   onSave: (updates: Partial<WorkPackageTask>) => void;
 }) {
+  const { palette } = useLumen();
   const [progress, setProgress] = useState(String(task.progress));
   const [notes, setNotes] = useState(task.notes ?? "");
   const [status, setStatus] = useState(task.status);
@@ -1582,7 +1594,7 @@ function TaskRow({
             onChangeText={setNotes}
             multiline
             placeholder="Add a progress note..."
-            placeholderTextColor="#756F68"
+            placeholderTextColor={palette.muted}
             style={[styles.input, styles.note]}
           />
           <View style={styles.editorActions}>
@@ -1926,31 +1938,31 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     actionHint: { color: palette.muted, fontSize: 13, lineHeight: 18, marginTop: 12 },
     page: { backgroundColor: palette.background, flex: 1, flexDirection: "row" },
     rail: { backgroundColor: palette.rail, padding: 24, width: 220 },
-    brand: { color: "#F6F3EE", fontSize: 30, fontWeight: "900", letterSpacing: -1.2 },
+    brand: { color: palette.railText, fontSize: 30, fontWeight: "900", letterSpacing: -1.2 },
     brandSub: {
-      color: palette.accentText,
+      color: palette.railAccent,
       fontSize: 9,
       fontWeight: "900",
       letterSpacing: 1,
       marginTop: 6,
     },
-    railLine: { backgroundColor: "#3A3A3A", height: 1, marginTop: 45 },
+    railLine: { backgroundColor: palette.railLine, height: 1, marginTop: 45 },
     railLabel: {
-      color: palette.inverseText,
+      color: palette.railText,
       fontSize: 10,
       fontWeight: "900",
       letterSpacing: 0.8,
       marginTop: 18,
     },
-    railCopy: { color: "#8E8982", fontSize: 10, lineHeight: 15, marginTop: 6 },
+    railCopy: { color: palette.railMuted, fontSize: 10, lineHeight: 15, marginTop: 6 },
     railFoot: { bottom: 24, left: 24, position: "absolute", right: 24 },
     railFootTitle: {
-      color: palette.inverseText,
+      color: palette.railText,
       fontSize: 9,
       fontWeight: "900",
       letterSpacing: 0.7,
     },
-    railFootCopy: { color: "#8E8982", fontSize: 10, lineHeight: 15, marginTop: 6 },
+    railFootCopy: { color: palette.railMuted, fontSize: 10, lineHeight: 15, marginTop: 6 },
     main: { flex: 1 },
     mainScroll: { flex: 1 },
     header: {
@@ -2044,7 +2056,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     pill: { borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
     pillDark: { backgroundColor: palette.foreground },
     pillPlain: { backgroundColor: palette.surfaceStrong },
-    pillWarn: { backgroundColor: "#F7E8C8" },
+    pillWarn: { backgroundColor: palette.warningSoft },
     pillRisk: { backgroundColor: palette.dangerSoft },
     pillText: { color: palette.foreground, fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
     pillTextDark: { color: palette.inverseText },
@@ -2107,7 +2119,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     lifecycleItem: { alignItems: "center", flex: 1, flexDirection: "row" },
     lifecycleDot: { backgroundColor: palette.border, borderRadius: 5, height: 7, width: 7 },
     lifecycleDotActive: { backgroundColor: palette.accent, height: 10, width: 10 },
-    lifecycleDotPulse: { borderColor: "#FFB08F", borderWidth: 3 },
+    lifecycleDotPulse: { borderColor: palette.accentOnInverse, borderWidth: 3 },
     lifecycleLine: { backgroundColor: palette.border, flex: 1, height: 1, marginHorizontal: 2 },
     lifecycleLineDone: { backgroundColor: palette.foreground },
     empty: {
@@ -2242,7 +2254,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       width: 21,
     },
     milestoneCheckActive: { backgroundColor: palette.success, borderColor: palette.success },
-    milestoneTick: { color: "#FFFFFF", fontSize: 12, fontWeight: "900" },
+    milestoneTick: { color: palette.inverseText, fontSize: 12, fontWeight: "900" },
     flex: { flex: 1 },
     listTitle: { color: palette.foreground, fontSize: 13, fontWeight: "900" },
     listMeta: { color: palette.muted, fontSize: 10, lineHeight: 15, marginTop: 4 },
@@ -2347,7 +2359,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
     emptyInline: { color: palette.muted, fontSize: 11, padding: 14 },
     danger: { backgroundColor: palette.dangerSoft, marginTop: 28, padding: 15 },
     dangerTitle: { color: palette.dangerText, fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
-    dangerCopy: { color: "#7D4B46", fontSize: 11, lineHeight: 16, marginTop: 7 },
+    dangerCopy: { color: palette.dangerText, fontSize: 11, lineHeight: 16, marginTop: 7 },
     deleteText: {
       color: palette.dangerText,
       fontSize: 9,
@@ -2362,7 +2374,7 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       paddingHorizontal: 11,
       paddingVertical: 9,
     },
-    deleteConfirmText: { color: "#FFFFFF", fontSize: 8, fontWeight: "900", letterSpacing: 0.45 },
+    deleteConfirmText: { color: palette.inverseText, fontSize: 8, fontWeight: "900", letterSpacing: 0.45 },
     formOverlay: {
       alignItems: "center",
       backgroundColor: "rgba(25,25,25,.54)",
@@ -2399,25 +2411,25 @@ const makeStyles = (palette: ReturnType<typeof useLumen>["palette"]) =>
       minHeight: 47,
       justifyContent: "center",
     },
-    createSubmitText: { color: "#FFFFFF", fontSize: 10, fontWeight: "900", letterSpacing: 0.7 },
+    createSubmitText: { color: palette.inverseText, fontSize: 10, fontWeight: "900", letterSpacing: 0.7 },
     disabled: { opacity: 0.35 },
     gate: {
       alignItems: "flex-start",
-      backgroundColor: "#191919",
+      backgroundColor: palette.inverse,
       flex: 1,
       justifyContent: "center",
       padding: 32,
     },
-    gateBrand: { color: "#FF5A1F", fontSize: 11, fontWeight: "900", letterSpacing: 1 },
+    gateBrand: { color: palette.accentOnInverse, fontSize: 11, fontWeight: "900", letterSpacing: 1 },
     gateTitle: {
-      color: "#F6F3EE",
+      color: palette.inverseText,
       fontSize: 42,
       fontWeight: "900",
       letterSpacing: -2,
       lineHeight: 47,
       marginTop: 16,
     },
-    gateCopy: { color: "#B7B0A8", fontSize: 15, lineHeight: 22, marginTop: 17, maxWidth: 300 },
+    gateCopy: { color: palette.mutedOnInverse, fontSize: 15, lineHeight: 22, marginTop: 17, maxWidth: 300 },
     pressed: { opacity: 0.7 },
     budgetRisk: { backgroundColor: palette.danger },
     budgetWarn: { backgroundColor: palette.warningText },
@@ -2431,6 +2443,8 @@ function ProjectTeamPanel({
   job: JobOrder;
   control: ReturnType<typeof usePmecControl>;
 }) {
+  const { palette } = useLumen();
+  const projectTeamStyles = useThemedStyles(makeProjectTeamStyles);
   const [activeTaskId, setActiveTaskId] = useState(job.tasks[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const selectedTask = job.tasks.find((taskItem) => taskItem.id === activeTaskId);
@@ -2501,7 +2515,7 @@ function ProjectTeamPanel({
           value={query}
           onChangeText={setQuery}
           placeholder="Search all employees and contractors"
-          placeholderTextColor="#8B8175"
+          placeholderTextColor={palette.muted}
           style={projectTeamStyles.searchInput}
         />
         <Text style={projectTeamStyles.searchCount}>{filteredPeople.length} PEOPLE</Text>
@@ -2580,6 +2594,7 @@ function MilestoneScheduleForm({
   onSubmit: (input: Omit<JobOrderMilestone, "id" | "achieved">) => void;
   styles: ReturnType<typeof makeStyles>;
 }) {
+  const calendarStyles = useThemedStyles(makeCalendarStyles);
   const today = new Date();
   const [label, setLabel] = useState("");
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -2710,6 +2725,7 @@ function CostDocumentUploadForm({
   onSubmit: (input: Omit<CostDocument, "id" | "uploadedAt" | "uploadedBy">) => void;
   styles: ReturnType<typeof makeStyles>;
 }) {
+  const uploadStyles = useThemedStyles(makeUploadStyles);
   const [asset, setAsset] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -2948,9 +2964,9 @@ function CostDocumentUploadForm({
   );
 }
 
-const projectTeamStyles = StyleSheet.create({
+const makeProjectTeamStyles = (palette: LumenPalette) => StyleSheet.create({
   section: {
-    borderTopColor: "#DDD6CC",
+    borderTopColor: palette.border,
     borderTopWidth: StyleSheet.hairlineWidth,
     marginTop: 30,
     paddingTop: 24,
@@ -2960,36 +2976,36 @@ const projectTeamStyles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  kicker: { color: "#A84B2A", fontSize: 10, fontWeight: "900", letterSpacing: 0.8 },
-  title: { color: "#1A1A1A", fontSize: 14, fontWeight: "900", marginTop: 6 },
+  kicker: { color: palette.accentText, fontSize: 10, fontWeight: "900", letterSpacing: 0.8 },
+  title: { color: palette.foreground, fontSize: 14, fontWeight: "900", marginTop: 6 },
   local: {
-    backgroundColor: "#F2E6DB",
-    color: "#A84B2A",
+    backgroundColor: palette.accentSoft,
+    color: palette.accentText,
     fontSize: 8,
     fontWeight: "900",
     letterSpacing: 0.55,
     paddingHorizontal: 8,
     paddingVertical: 6,
   },
-  copy: { color: "#6E6256", fontSize: 11, lineHeight: 16, marginTop: 11, maxWidth: 720 },
-  label: { color: "#6E6256", fontSize: 8, fontWeight: "900", letterSpacing: 0.65, marginTop: 18 },
+  copy: { color: palette.muted, fontSize: 11, lineHeight: 16, marginTop: 11, maxWidth: 720 },
+  label: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.65, marginTop: 18 },
   taskChips: { gap: 8, paddingTop: 9 },
   taskChip: {
-    borderColor: "#DDD6CC",
+    borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
     maxWidth: 190,
     paddingHorizontal: 11,
     paddingVertical: 10,
   },
-  taskChipActive: { backgroundColor: "#1A1A1A", borderColor: "#1A1A1A" },
-  taskChipText: { color: "#1A1A1A", fontSize: 10, fontWeight: "900" },
-  taskChipTextActive: { color: "#FFFDF8" },
-  taskChipMeta: { color: "#8B8175", fontSize: 9, marginTop: 5 },
+  taskChipActive: { backgroundColor: palette.inverse, borderColor: palette.foreground },
+  taskChipText: { color: palette.foreground, fontSize: 10, fontWeight: "900" },
+  taskChipTextActive: { color: palette.inverseText },
+  taskChipMeta: { color: palette.muted, fontSize: 9, marginTop: 5 },
   searchShell: {
     alignItems: "center",
-    backgroundColor: "#F0ECE5",
-    borderColor: "#DDD6CC",
+    backgroundColor: palette.surfaceStrong,
+    borderColor: palette.border,
     borderRadius: 12,
     borderWidth: 1,
     flexDirection: "row",
@@ -2997,12 +3013,12 @@ const projectTeamStyles = StyleSheet.create({
     marginTop: 15,
     paddingHorizontal: 12,
   },
-  searchInput: { color: "#1A1A1A", flex: 1, fontSize: 12, minHeight: 40 },
-  searchCount: { color: "#A84B2A", fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
+  searchInput: { color: palette.foreground, flex: 1, fontSize: 12, minHeight: 40 },
+  searchCount: { color: palette.accentText, fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
   peopleList: { maxHeight: 320, marginTop: 9 },
   personRow: {
     alignItems: "center",
-    borderBottomColor: "#E7E1D8",
+    borderBottomColor: palette.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: 10,
@@ -3012,23 +3028,23 @@ const projectTeamStyles = StyleSheet.create({
   personPressed: { opacity: 0.72 },
   personAvatar: {
     alignItems: "center",
-    backgroundColor: "#F2E6DB",
+    backgroundColor: palette.accentSoft,
     borderRadius: 18,
     height: 36,
     justifyContent: "center",
     width: 36,
   },
-  personInitials: { color: "#A84B2A", fontSize: 10, fontWeight: "900" },
+  personInitials: { color: palette.accentText, fontSize: 10, fontWeight: "900" },
   personMain: { flex: 1 },
-  personName: { color: "#1A1A1A", fontSize: 11, fontWeight: "900" },
-  personMeta: { color: "#756F68", fontSize: 9, marginTop: 3 },
+  personName: { color: palette.foreground, fontSize: 11, fontWeight: "900" },
+  personMeta: { color: palette.muted, fontSize: 9, marginTop: 3 },
   personAction: { alignItems: "flex-end", gap: 5 },
-  availability: { color: "#1F6349", fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
-  unavailable: { color: "#9E3A31" },
-  assignText: { color: "#A84B2A", fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
+  availability: { color: palette.successText, fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
+  unavailable: { color: palette.dangerText },
+  assignText: { color: palette.accentText, fontSize: 9, fontWeight: "900", letterSpacing: 0.5 },
 });
-const calendarStyles = StyleSheet.create({
-  label: { color: "#6E6256", fontSize: 8, fontWeight: "900", letterSpacing: 0.65, marginTop: 15 },
+const makeCalendarStyles = (palette: LumenPalette) => StyleSheet.create({
+  label: { color: palette.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.65, marginTop: 15 },
   monthHeader: {
     alignItems: "center",
     flexDirection: "row",
@@ -3037,16 +3053,16 @@ const calendarStyles = StyleSheet.create({
   },
   monthButton: {
     alignItems: "center",
-    backgroundColor: "#F0ECE5",
+    backgroundColor: palette.surfaceStrong,
     borderRadius: 9,
     height: 31,
     justifyContent: "center",
     width: 31,
   },
-  monthButtonText: { color: "#1A1A1A", fontSize: 16, fontWeight: "900" },
-  monthTitle: { color: "#1A1A1A", fontSize: 12, fontWeight: "900" },
+  monthButtonText: { color: palette.foreground, fontSize: 16, fontWeight: "900" },
+  monthTitle: { color: palette.foreground, fontSize: 12, fontWeight: "900" },
   week: { flexDirection: "row", marginTop: 12 },
-  weekday: { color: "#8B8175", flex: 1, fontSize: 8, fontWeight: "900", textAlign: "center" },
+  weekday: { color: palette.muted, flex: 1, fontSize: 8, fontWeight: "900", textAlign: "center" },
   grid: { flexDirection: "row", flexWrap: "wrap", marginTop: 5 },
   day: {
     alignItems: "center",
@@ -3055,26 +3071,26 @@ const calendarStyles = StyleSheet.create({
     justifyContent: "center",
     width: "14.2857%",
   },
-  daySelected: { backgroundColor: "#A84B2A" },
-  dayText: { color: "#1A1A1A", fontSize: 10, fontWeight: "800" },
-  dayTextSelected: { color: "#FFFDF8" },
+  daySelected: { backgroundColor: palette.accent },
+  dayText: { color: palette.foreground, fontSize: 10, fontWeight: "800" },
+  dayTextSelected: { color: palette.inverseText },
 });
-const uploadStyles = StyleSheet.create({
+const makeUploadStyles = (palette: LumenPalette) => StyleSheet.create({
   dropZone: {
-    backgroundColor: "#F8F4ED",
-    borderColor: "#C9BBAA",
+    backgroundColor: palette.surface,
+    borderColor: palette.field,
     borderRadius: 14,
     borderStyle: "dashed",
     borderWidth: 1.5,
     marginTop: 16,
     padding: 16,
   },
-  dropZoneActive: { backgroundColor: "#F2E6DB", borderColor: "#A84B2A" },
-  dropKicker: { color: "#A84B2A", fontSize: 10, fontWeight: "900", letterSpacing: 0.7 },
-  dropCopy: { color: "#6E6256", fontSize: 10, lineHeight: 15, marginTop: 6 },
+  dropZoneActive: { backgroundColor: palette.accentSoft, borderColor: palette.accentText },
+  dropKicker: { color: palette.accentText, fontSize: 10, fontWeight: "900", letterSpacing: 0.7 },
+  dropCopy: { color: palette.muted, fontSize: 10, lineHeight: 15, marginTop: 6 },
   pickButton: {
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: palette.inverse,
     borderRadius: 9,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -3082,19 +3098,19 @@ const uploadStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  pickLabel: { color: "#FFFDF8", fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
-  pickName: { color: "#E7D9CB", flex: 1, fontSize: 9, marginLeft: 9, textAlign: "right" },
+  pickLabel: { color: palette.inverseText, fontSize: 9, fontWeight: "900", letterSpacing: 0.6 },
+  pickName: { color: palette.mutedOnInverse, flex: 1, fontSize: 9, marginLeft: 9, textAlign: "right" },
   selectedFile: {
-    backgroundColor: "#E8F1ED",
-    borderLeftColor: "#3A7563",
+    backgroundColor: palette.successSoft,
+    borderLeftColor: palette.success,
     borderLeftWidth: 3,
     marginTop: 11,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  selectedKicker: { color: "#2A5F50", fontSize: 8, fontWeight: "900", letterSpacing: 0.55 },
-  selectedName: { color: "#1A1A1A", fontSize: 11, fontWeight: "900", marginTop: 5 },
-  selectedMeta: { color: "#517062", fontSize: 9, marginTop: 4 },
-  notice: { color: "#A84B2A", fontSize: 10, fontWeight: "700", lineHeight: 15, marginTop: 10 },
-  tagHint: { color: "#6E6256", fontSize: 9, marginTop: 6 },
+  selectedKicker: { color: palette.successText, fontSize: 8, fontWeight: "900", letterSpacing: 0.55 },
+  selectedName: { color: palette.foreground, fontSize: 11, fontWeight: "900", marginTop: 5 },
+  selectedMeta: { color: palette.successText, fontSize: 9, marginTop: 4 },
+  notice: { color: palette.accentText, fontSize: 10, fontWeight: "700", lineHeight: 15, marginTop: 10 },
+  tagHint: { color: palette.muted, fontSize: 9, marginTop: 6 },
 });

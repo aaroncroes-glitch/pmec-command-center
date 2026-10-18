@@ -138,7 +138,7 @@ export function useEmployeeAttendance() {
   return { todayAttendance, clockIn, clockOut };
 }
 
-const PROJECT_COLORS = ["#FE8503", "#3A7563", "#96734C", "#6059A8", "#2F6690", "#A23B3B"];
+const PROJECT_COLORS = ["#1FB8C3", "#3A7563", "#96734C", "#6059A8", "#2F6690", "#A23B3B"];
 const taskStatus = (status: WorkPackageStatus): ProjectTaskStatus => (status === "COMPLETED" ? "done" : status === "NOT_STARTED" ? "todo" : "in_progress");
 const packageStatus: Record<ProjectTaskStatus, WorkPackageStatus> = { todo: "NOT_STARTED", in_progress: "IN_PROGRESS", done: "COMPLETED" };
 
