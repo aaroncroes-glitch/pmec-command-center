@@ -63,6 +63,7 @@ import type { LumenPalette } from "@/lib/lumen-theme";
 import { useThemedStyles } from "@/lib/use-themed-styles";
 import { BackButton, Chip, StatTile } from "@/components/pmec";
 import { ClientPortalPanel } from "@/components/client-portal-panel";
+import { BrandMark } from "@/components/pmec/brand-mark";
 
 type PortfolioTab = "ACTIVE" | "COMPLETED" | "ALL";
 type BudgetFilter = "ALL" | Exclude<BudgetAlertStatus, "ON_TRACK">;
@@ -308,7 +309,7 @@ export default function JobOrdersPage() {
   return (
     <View style={styles.page}>
       <View style={styles.rail}>
-        <Text style={styles.brand}>PMEC</Text>
+        <BrandMark onDark height={32} />
         <Text style={styles.brandSub}>PROJECT DELIVERY</Text>
         <View style={styles.railLine} />
         <Text style={styles.railLabel}>PROJECTS</Text>
