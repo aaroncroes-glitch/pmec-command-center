@@ -1,5 +1,8 @@
 import type { Express, Request, Response } from "express";
 
+import { sendNotFoundUnlessPublicDemoApi } from "./pmec-feature-flags";
+import { createRateLimiter } from "./pmec-rate-limit";
+
 /**
  * The project manager's side of the client delivery portal.
  *
@@ -161,6 +164,7 @@ const taxRate = (value: unknown) => {
 export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc | null) {
   let rpc: PortalRpc | null | undefined;
   const current = () => (rpc === undefined ? (rpc = getRpc()) : rpc);
+  const portalRateLimit = createRateLimiter({ windowMs: 60_000, max: 120, keyPrefix: "client-portal" });
 
   const fail = (res: Response, error: unknown) => {
     if (error instanceof PortalRpcError) {
@@ -176,6 +180,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
   /** Resolves the store and checks this project may be written from here. */
   async function guard(req: Request, res: Response): Promise<{ call: PortalRpc; projectId: string } | null> {
     res.setHeader("Cache-Control", "no-store");
+    if (!sendNotFoundUnlessPublicDemoApi(res)) return null;
     const call = current();
     if (!call) {
       res.status(503).json({ error: "client portal not configured" });
@@ -203,7 +208,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     return { call, projectId };
   }
 
-  app.get("/api/client-portal/:projectId", async (req, res) => {
+  app.get("/api/client-portal/:projectId", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     try {
@@ -213,7 +218,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     }
   });
 
-  app.post("/api/client-portal/:projectId/publish", async (req, res) => {
+  app.post("/api/client-portal/:projectId/publish", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const shaped = shapePublish(ok.projectId, req.body);
@@ -226,7 +231,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
   });
 
   // Milestones only: follows the job order automatically once the project is published.
-  app.post("/api/client-portal/:projectId/milestones", async (req, res) => {
+  app.post("/api/client-portal/:projectId/milestones", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const milestones = shapeMilestones(req.body?.milestones);
@@ -238,7 +243,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     }
   });
 
-  app.post("/api/client-portal/:projectId/change-orders", async (req, res) => {
+  app.post("/api/client-portal/:projectId/change-orders", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const title = text(req.body?.title, 200);
@@ -253,7 +258,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     }
   });
 
-  app.post("/api/client-portal/:projectId/change-orders/:id/withdraw", async (req, res) => {
+  app.post("/api/client-portal/:projectId/change-orders/:id/withdraw", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const id = String(req.params.id ?? "");
@@ -266,7 +271,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
   });
 
   // Invoices: issued against a project, then marked paid (or voided) by the PM.
-  app.post("/api/client-portal/:projectId/invoices", async (req, res) => {
+  app.post("/api/client-portal/:projectId/invoices", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const title = text(req.body?.title, 200);
@@ -290,7 +295,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     }
   });
 
-  app.post("/api/client-portal/:projectId/invoices/:id/settle", async (req, res) => {
+  app.post("/api/client-portal/:projectId/invoices/:id/settle", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const id = String(req.params.id ?? "");
@@ -306,7 +311,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
 
   // Quotes belong to the client, so they can be raised before a job order exists; this
   // route reaches them through a project the PM already has open.
-  app.post("/api/client-portal/:projectId/quotes", async (req, res) => {
+  app.post("/api/client-portal/:projectId/quotes", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const title = text(req.body?.title, 200);
@@ -334,7 +339,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     }
   });
 
-  app.post("/api/client-portal/:projectId/quotes/:id/withdraw", async (req, res) => {
+  app.post("/api/client-portal/:projectId/quotes/:id/withdraw", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const id = String(req.params.id ?? "");
@@ -346,7 +351,7 @@ export function registerClientPortalRoutes(app: Express, getRpc: () => PortalRpc
     }
   });
 
-  app.post("/api/client-portal/:projectId/updates", async (req, res) => {
+  app.post("/api/client-portal/:projectId/updates", portalRateLimit, async (req, res) => {
     const ok = await guard(req, res);
     if (!ok) return;
     const title = text(req.body?.title, 200);

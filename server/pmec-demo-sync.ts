@@ -1,5 +1,8 @@
 import type { Express, Request, Response } from "express";
 
+import { sendNotFoundUnlessPublicDemoApi } from "./pmec-feature-flags";
+import { createRateLimiter } from "./pmec-rate-limit";
+
 /**
  * Shared demo workspaces for the showcase.
  *
@@ -108,6 +111,7 @@ const isKey = (input: unknown): input is DemoSyncKey => DEMO_SYNC_KEYS.includes(
 export function registerDemoSyncRoutes(app: Express, getStore: () => DemoSyncStore | null) {
   let store: DemoSyncStore | null | undefined;
   const current = () => (store === undefined ? (store = getStore()) : store);
+  const demoRateLimit = createRateLimiter({ windowMs: 60_000, max: 120, keyPrefix: "demo-sync" });
 
   const unavailable = (res: Response, error?: unknown) => {
     if (error) console.error("[demo-sync] store error:", error instanceof Error ? error.message : String(error));
@@ -116,8 +120,9 @@ export function registerDemoSyncRoutes(app: Express, getStore: () => DemoSyncSto
   // Every response is live state; a cached poll would show a stale screen.
   const noStore = (res: Response) => res.setHeader("Cache-Control", "no-store");
 
-  app.get("/api/demo-sync/versions", async (req: Request, res: Response) => {
+  app.get("/api/demo-sync/versions", demoRateLimit, async (req: Request, res: Response) => {
     noStore(res);
+    if (!sendNotFoundUnlessPublicDemoApi(res)) return;
     const s = current();
     if (!s) return unavailable(res);
     const room = parseRoom(req.query.room);
@@ -129,8 +134,9 @@ export function registerDemoSyncRoutes(app: Express, getStore: () => DemoSyncSto
     }
   });
 
-  app.get("/api/demo-sync/value", async (req: Request, res: Response) => {
+  app.get("/api/demo-sync/value", demoRateLimit, async (req: Request, res: Response) => {
     noStore(res);
+    if (!sendNotFoundUnlessPublicDemoApi(res)) return;
     const s = current();
     if (!s) return unavailable(res);
     const room = parseRoom(req.query.room);
@@ -143,8 +149,9 @@ export function registerDemoSyncRoutes(app: Express, getStore: () => DemoSyncSto
     }
   });
 
-  app.put("/api/demo-sync/value", async (req: Request, res: Response) => {
+  app.put("/api/demo-sync/value", demoRateLimit, async (req: Request, res: Response) => {
     noStore(res);
+    if (!sendNotFoundUnlessPublicDemoApi(res)) return;
     const s = current();
     if (!s) return unavailable(res);
     const { room: rawRoom, key, value, baseVersion, force } = req.body ?? {};

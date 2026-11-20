@@ -1,28 +1,46 @@
 import type { Express } from "express";
-import { ENV } from "./env";
+import { TRPCError } from "@trpc/server";
+
+import { assertClerkBearerSession } from "../pmec-clerk-access";
+
+function trpcStatus(error: TRPCError) {
+  if (error.code === "UNAUTHORIZED") return 401;
+  if (error.code === "INTERNAL_SERVER_ERROR" || error.code === "PRECONDITION_FAILED") return 503;
+  return 403;
+}
 
 export function registerStorageProxy(app: Express) {
   app.get("/manus-storage/*", async (req, res) => {
+    const forgeApiUrl = process.env.BUILT_IN_FORGE_API_URL ?? "";
+    const forgeApiKey = process.env.BUILT_IN_FORGE_API_KEY ?? "";
+    if (!forgeApiUrl || !forgeApiKey) {
+      res.status(404).send("Not found");
+      return;
+    }
+
+    try {
+      await assertClerkBearerSession(req);
+    } catch (error) {
+      if (error instanceof TRPCError) {
+        res.status(trpcStatus(error)).json({ error: error.message });
+        return;
+      }
+      res.status(500).send("Storage proxy error");
+      return;
+    }
+
     const key = (req.params as Record<string, string>)[0];
     if (!key) {
       res.status(400).send("Missing storage key");
       return;
     }
 
-    if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
-      res.status(500).send("Storage proxy not configured");
-      return;
-    }
-
     try {
-      const forgeUrl = new URL(
-        "v1/storage/presign/get",
-        ENV.forgeApiUrl.replace(/\/+$/, "") + "/",
-      );
+      const forgeUrl = new URL("v1/storage/presign/get", forgeApiUrl.replace(/\/+$/, "") + "/");
       forgeUrl.searchParams.set("path", key);
 
       const forgeResp = await fetch(forgeUrl, {
-        headers: { Authorization: `Bearer ${ENV.forgeApiKey}` },
+        headers: { Authorization: `Bearer ${forgeApiKey}` },
       });
 
       if (!forgeResp.ok) {

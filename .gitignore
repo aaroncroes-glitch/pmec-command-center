@@ -33,6 +33,7 @@ yarn-error.*
 # local env files
 .env*.local
 .clerk-production.tmp
+.clerk-aaron-*.json
 .pmec-vercel-production-import.txt
 
 # typescript

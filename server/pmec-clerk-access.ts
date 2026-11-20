@@ -3,6 +3,8 @@ import { neon } from "@neondatabase/serverless";
 import { TRPCError } from "@trpc/server";
 import type { IncomingMessage } from "http";
 
+import { resolvePmecOrganizationId } from "./pmec-organization";
+
 export const PAYROLL_REVIEW_PERMISSION = "payroll.review";
 export const MEMBERSHIP_MANAGE_PERMISSION = "membership.manage";
 
@@ -13,6 +15,14 @@ export type PmecClerkPrincipal = {
   legacyEmployeeId: string | null;
   roles: string[];
   permissions: string[];
+};
+
+type MembershipRow = {
+  person_id: string;
+  legacy_employee_id: string | null;
+  organization_id: string;
+  role: string;
+  permission: string;
 };
 
 function readBearerToken(req: IncomingMessage) {
@@ -40,6 +50,38 @@ export function assertMembershipManagePermission(principal: PmecClerkPrincipal) 
   return principal;
 }
 
+/** Builds a principal using only memberships for the requested organization. */
+export function buildPmecClerkPrincipal(
+  clerkUserId: string,
+  organizationId: string,
+  rows: MembershipRow[],
+): PmecClerkPrincipal {
+  const scoped = rows.filter((row) => row.organization_id === organizationId);
+  if (scoped.length === 0) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "No active PMEC membership is linked to this Clerk account for this organization.",
+    });
+  }
+
+  const personIds = [...new Set(scoped.map((row) => row.person_id))];
+  if (personIds.length > 1) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Ambiguous PMEC person records for this organization.",
+    });
+  }
+
+  return {
+    clerkUserId,
+    personId: scoped[0]!.person_id,
+    organizationId,
+    legacyEmployeeId: scoped[0]!.legacy_employee_id,
+    roles: [...new Set(scoped.map((row) => row.role))],
+    permissions: [...new Set(scoped.map((row) => row.permission))],
+  };
+}
+
 export async function resolvePmecClerkPrincipal(req: IncomingMessage): Promise<PmecClerkPrincipal> {
   const token = readBearerToken(req);
   const secretKey = process.env.CLERK_SECRET_KEY;
@@ -60,9 +102,11 @@ export async function resolvePmecClerkPrincipal(req: IncomingMessage): Promise<P
 
   if (!clerkUserId) throw new TRPCError({ code: "UNAUTHORIZED", message: "The Clerk session has no user subject." });
 
+  const organizationId = resolvePmecOrganizationId(req);
+
   try {
     const sql = neon(connectionString);
-    const rows = await sql.query(
+    const rows = (await sql.query(
       `SELECT p.id AS person_id, p.legacy_employee_id, m.organization_id, m.role::text AS role, rp.permission
        FROM pmec.auth_identities ai
        JOIN pmec.people p ON p.id = ai.person_id AND p.active
@@ -70,23 +114,32 @@ export async function resolvePmecClerkPrincipal(req: IncomingMessage): Promise<P
        JOIN pmec.role_permissions rp ON rp.role = m.role
        WHERE ai.provider = 'clerk' AND ai.external_subject = $1`,
       [clerkUserId],
-    ) as Array<{ person_id: string; legacy_employee_id: string | null; organization_id: string; role: string; permission: string }>;
+    )) as MembershipRow[];
 
-    if (rows.length === 0) {
-      throw new TRPCError({ code: "FORBIDDEN", message: "No active PMEC membership is linked to this Clerk account." });
-    }
-
-    return {
-      clerkUserId,
-      personId: rows[0]!.person_id,
-      organizationId: rows[0]!.organization_id,
-      legacyEmployeeId: rows[0]!.legacy_employee_id,
-      roles: [...new Set(rows.map((row) => row.role))],
-      permissions: [...new Set(rows.map((row) => row.permission))],
-    };
+    return buildPmecClerkPrincipal(clerkUserId, organizationId, rows);
   } catch (error) {
     if (error instanceof TRPCError) throw error;
     console.error("[PMEC payroll authorization] Neon lookup failed", error);
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Payroll authorization is temporarily unavailable." });
+  }
+}
+
+/** Clerk verification without Neon membership — for routes that only need a signed-in user. */
+export async function assertClerkBearerSession(req: IncomingMessage): Promise<string> {
+  const token = readBearerToken(req);
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!token) throw new TRPCError({ code: "UNAUTHORIZED", message: "Sign in with Clerk to continue." });
+  if (!secretKey) {
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Clerk is not configured." });
+  }
+  try {
+    const verified = await verifyToken(token, { secretKey });
+    if (!verified.sub) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "The Clerk session has no user subject." });
+    }
+    return verified.sub;
+  } catch (error) {
+    if (error instanceof TRPCError) throw error;
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Your Clerk session could not be verified." });
   }
 }
