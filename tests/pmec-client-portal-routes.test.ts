@@ -19,6 +19,7 @@ function fakeRpc(scope: { exists: boolean; is_demo?: boolean }, fail?: PortalRpc
 
 let server: ReturnType<express.Express["listen"]> | null = null;
 async function start(rpc: PortalRpc | null) {
+  process.env.PMEC_PUBLIC_DEMO_API = "1";
   const app = express();
   app.use(express.json());
   registerClientPortalRoutes(app, () => rpc);

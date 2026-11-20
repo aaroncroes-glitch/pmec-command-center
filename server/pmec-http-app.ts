@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./_core/oauth";
 import { registerStorageProxy } from "./_core/storageProxy";
 import { registerDemoSyncRoutes, resolveDemoStore } from "./pmec-demo-sync";
 import { registerClientPortalRoutes, resolvePortalRpc } from "./pmec-client-portal";
+import { isLegacyManusAuthEnabled } from "./pmec-feature-flags";
 
 const PMEC_PRODUCTION_ORIGINS = new Set([
   "https://portal.pmec.group",
@@ -22,6 +23,7 @@ export function isAllowedPmecOrigin(origin: string | undefined) {
 
 export function createPmecHttpApp() {
   const app = express();
+  app.set("trust proxy", 1);
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
@@ -29,7 +31,10 @@ export function createPmecHttpApp() {
       if (origin) res.header("Access-Control-Allow-Origin", origin);
       res.header("Vary", "Origin");
       res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-pmec-organization-id",
+      );
       res.header("Access-Control-Allow-Credentials", "true");
     }
 
@@ -44,7 +49,9 @@ export function createPmecHttpApp() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   registerStorageProxy(app);
-  registerOAuthRoutes(app);
+  if (isLegacyManusAuthEnabled()) {
+    registerOAuthRoutes(app);
+  }
 
   // Showcase only: shares the demo workspaces across portal., hr. and pm. and across devices.
   registerDemoSyncRoutes(app, () => resolveDemoStore());

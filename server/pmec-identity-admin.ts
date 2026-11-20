@@ -1,6 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import { TRPCError } from "@trpc/server";
 
+import { normalizeWorkEmail } from "../shared/pmec-normalize-email";
+
 export const MAPPABLE_ROLES = ["employee", "project_manager", "hr_manager"] as const;
 export type MappableRole = (typeof MAPPABLE_ROLES)[number];
 
@@ -183,7 +185,7 @@ export async function mapProductionClerkUser(organizationId: string, actorPerson
     [
       organizationId,
       input.legacyEmployeeId ?? "",
-      input.workEmail.trim().toLowerCase(),
+      normalizeWorkEmail(input.workEmail),
       input.firstName.trim(),
       input.lastName.trim(),
       input.preferredName?.trim() ?? "",

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { isAllowedPmecOrigin } from "../server/pmec-http-app";
+import { isLegacyManusAuthEnabled } from "../server/pmec-feature-flags";
 
 describe("PMEC production API origin policy", () => {
   it("allows only approved PMEC web origins and local development origins", () => {
@@ -13,5 +14,9 @@ describe("PMEC production API origin policy", () => {
   it("does not reflect arbitrary production origins", () => {
     expect(isAllowedPmecOrigin("https://untrusted.example")).toBe(false);
     expect(isAllowedPmecOrigin(undefined)).toBe(true);
+  });
+
+  it("keeps legacy Manus OAuth disabled unless explicitly enabled", () => {
+    expect(isLegacyManusAuthEnabled({ NODE_ENV: "test" })).toBe(false);
   });
 });

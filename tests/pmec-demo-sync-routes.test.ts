@@ -23,10 +23,14 @@ const put = (path: string, body: unknown) =>
 const env = (epoch: number, data: unknown) => ({ epoch, data });
 
 beforeAll(async () => {
+  process.env.PMEC_PUBLIC_DEMO_API = "1";
   server = await listen(() => createMemoryDemoStore());
   base = url(server, "");
 });
-afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
+afterAll(async () => {
+  delete process.env.PMEC_PUBLIC_DEMO_API;
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+});
 
 describe("demo sync HTTP contract", () => {
   it("starts empty at version 0", async () => {
